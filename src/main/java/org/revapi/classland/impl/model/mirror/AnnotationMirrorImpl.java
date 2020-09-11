@@ -16,22 +16,16 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
-import static org.revapi.classland.impl.util.Memoized.memoize;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-
 import org.objectweb.asm.tree.AnnotationNode;
-import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.impl.model.BaseModelImpl;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.element.ExecutableElementImpl;
+
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import java.util.Collections;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public final class AnnotationMirrorImpl extends BaseModelImpl implements AnnotationMirror {
     private final AnnotationNode node;
@@ -41,18 +35,6 @@ public final class AnnotationMirrorImpl extends BaseModelImpl implements Annotat
         super(universe);
         this.node = node;
         this.getAnnotationType = getAnnotationType;
-    }
-
-    public static List<AnnotationMirrorImpl> convert(Universe universe, List<AnnotationNode> annos) {
-        return annos == null ? Collections.emptyList()
-                : annos.stream()
-                        .map(a -> new AnnotationMirrorImpl(a, universe,
-                                memoize(() -> universe.getDeclaredTypeByInternalName(a.desc))))
-                        .collect(Collectors.toList());
-    }
-
-    public static List<AnnotationMirrorImpl> parse(Universe universe, ClassNode cls) {
-        return convert(universe, cls.visibleAnnotations);
     }
 
     @Override

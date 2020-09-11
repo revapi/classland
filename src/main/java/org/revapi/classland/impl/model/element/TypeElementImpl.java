@@ -16,8 +16,6 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import static java.util.Collections.emptySet;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -36,9 +36,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeMirror;
 
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.signature.SignatureReader;
-import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 import org.revapi.classland.impl.model.NameImpl;
@@ -50,9 +47,13 @@ import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
-public class TypeElementImpl extends ElementImpl implements TypeElement {
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.concat;
+
+public final class TypeElementImpl extends ElementImpl implements TypeElement {
     private final String internalName;
     private final PackageElementImpl pkg;
+    private final Memoized<List<AnnotationMirrorImpl>> annos;
     private final Memoized<NameImpl> qualifiedName;
     private final Memoized<NameImpl> simpleName;
     private final Memoized<Element> enclosingElement;
@@ -60,6 +61,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
     private final Memoized<TypeMirrorImpl> superClass;
     private final Memoized<ElementKind> elementKind;
     private final Memoized<Set<Modifier>> modifiers;
+    private final Memoized<List<ElementImpl>> enclosedElements;
 
     public TypeElementImpl(Universe universe, String internalName, Memoized<ClassNode> node, PackageElementImpl pkg) {
         super(universe);
@@ -77,9 +79,8 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
             } else {
                 int classNameLength = cls.name.length();
                 ret.qualifiedNameParts = new HashMap<>(cls.innerClasses.size(), 1);
+                ret.innerClasses = new ArrayList<>();
                 for (InnerClassNode icn : cls.innerClasses) {
-                    // if any inner class up the chain is local, this class is local, too.
-                    // otherwise the nesting kind is based on the inner and outer name of the inner class node.
                     // The list of the inner classes recorded on a type seems to contain all the containing classes +
                     // all the directly contained classes + the type itself. Therefore we can rely simply on the length
                     // of the name to distinguish between them.
@@ -100,6 +101,10 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
                             }
                             ret.simpleName = icn.innerName == null ? "" : icn.innerName;
                             ret.effectiveAccess = icn.access;
+                        }
+                    } else if (cls.name.equals(icn.outerName)) {
+                        if (!Modifiers.isSynthetic(icn.access)) {
+                            ret.innerClasses.add(icn.name);
                         }
                     }
                 }
@@ -157,6 +162,8 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
         elementKind = node.map(n -> Modifiers.toTypeElementKind(n.access));
         modifiers = scan.map(r -> Modifiers.toTypeModifiers(r.effectiveAccess));
 
+        annos = scan.map(r -> parseAnnotations(r.classNode));
+
         enclosingElement = scan.map(r -> {
             switch (r.nestingKind) {
             case TOP_LEVEL:
@@ -173,8 +180,24 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
             }
         });
 
-        // TODO not right -
+        // TODO not right - need to make it a type instance with correct type parameters
         superClass = node.map(n -> universe.getDeclaredTypeByInternalName(n.superName));
+
+        enclosedElements = scan.map(r -> {
+            Stream<VariableElementImpl.Field> fields = r.classNode.fields.stream()
+                    .filter(f -> !Modifiers.isSynthetic(f.access))
+                    .map(f -> new VariableElementImpl.Field(universe, this, f));
+
+            Stream<ExecutableElementImpl> methods = r.classNode.methods.stream()
+                    .filter(m -> !Modifiers.isSynthetic(m.access))
+                    .map(m -> new ExecutableElementImpl(universe, this, m));
+
+            Stream<TypeElementImpl> innerClasses = r.innerClasses.stream()
+                    .map(c -> universe.getTypeByInternalName(c).orElse(null))
+                    .filter(Objects::nonNull);
+
+            return concat(concat(fields, methods), innerClasses).collect(toList());
+        });
     }
 
     public boolean isInPackage(PackageElementImpl pkg) {
@@ -188,8 +211,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        // TODO implement
-        return Collections.emptyList();
+        return annos.get();
     }
 
     @Override
@@ -209,16 +231,19 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 
     @Override
     public List<? extends TypeMirror> getInterfaces() {
+        // TODO implement
         return null;
     }
 
     @Override
     public List<? extends TypeParameterElement> getTypeParameters() {
+        // TODO implement
         return null;
     }
 
     @Override
     public DeclaredTypeImpl asType() {
+        // TODO implement
         return null;
     }
 
@@ -244,8 +269,7 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
 
     @Override
     public List<? extends Element> getEnclosedElements() {
-        // TODO implement
-        return Collections.emptyList();
+        return enclosedElements.get();
     }
 
     @Override
@@ -279,5 +303,6 @@ public class TypeElementImpl extends ElementImpl implements TypeElement {
         NestingKind nestingKind;
         String simpleName;
         Map<String, InnerClassNode> qualifiedNameParts;
+        List<String> innerClasses;
     }
 }

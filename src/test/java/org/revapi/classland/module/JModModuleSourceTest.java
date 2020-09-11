@@ -16,20 +16,20 @@
  */
 package org.revapi.classland.module;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.io.File;
+import java.nio.file.Path;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
 
-import java.io.File;
-import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 public class JModModuleSourceTest {
 
     @ParameterizedTest
-    @ValueSource(strings = {"java9.jmod", "java10.jmod", "java11.jmod", "java12.jmod", "java14.jmod"})
+    @ValueSource(strings = { "java9.jmod", "java10.jmod", "java11.jmod", "java12.jmod", "java14.jmod" })
     void loadTest(String jmodFile) throws Exception {
         Path jmod = new File(getClass().getClassLoader().getResource(jmodFile).getPath()).toPath();
         Universe universe = new Universe();

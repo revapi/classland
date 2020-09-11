@@ -50,7 +50,6 @@ public final class Universe implements AutoCloseable {
     private final Set<ModuleElementImpl> modules = newSetFromMap(new ConcurrentHashMap<>());
     private final Map<String, TypeElementImpl> typesByInternalName = new ConcurrentHashMap<>();
 
-    @SuppressWarnings("unchecked")
     public ElementsImpl getElements() {
         return new ElementsImpl(this);
     }
@@ -121,7 +120,7 @@ public final class Universe implements AutoCloseable {
 
     private List<AnnotationMirrorImpl> parseAnnotations(ClassData cd) {
         ClassNode cls = failWithRuntimeException(() -> parseClass(new ClassReader(cd.read())));
-        return AnnotationMirrorImpl.parse(this, cls);
+        return AnnotatedConstructImpl.parseAnnotations(this, cls);
     }
 
 }

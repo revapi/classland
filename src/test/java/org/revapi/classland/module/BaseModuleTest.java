@@ -16,13 +16,13 @@
  */
 package org.revapi.classland.module;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.io.File;
-import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BaseModuleTest {
@@ -39,13 +39,13 @@ public class BaseModuleTest {
 
     @Test
     void findsRtJar() throws IOException {
-        File javaHome=  new File(getClass().getClassLoader().getResource("fake-java-home").getPath());
+        File javaHome = new File(getClass().getClassLoader().getResource("fake-java-home").getPath());
         BaseModule.java8(javaHome);
     }
 
     @Test
     void findsJavaBaseModule() throws IOException {
-        File javaHome=  new File(getClass().getClassLoader().getResource("fake-java-home").getPath());
+        File javaHome = new File(getClass().getClassLoader().getResource("fake-java-home").getPath());
         BaseModule.java9(javaHome);
     }
 }

@@ -34,7 +34,7 @@ import javax.lang.model.type.TypeMirror;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 
-public class TypeParameterElementImpl extends ElementImpl implements TypeParameterElement {
+public final class TypeParameterElementImpl extends ElementImpl implements TypeParameterElement {
     protected TypeParameterElementImpl(Universe universe) {
         super(universe);
     }

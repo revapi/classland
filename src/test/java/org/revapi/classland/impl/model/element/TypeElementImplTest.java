@@ -25,11 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.ElementFilter;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -149,6 +152,22 @@ class TypeElementImplTest {
         assertEquals(singleton(Modifier.FINAL), Final.getModifiers());
         assertEquals(emptySet(), StrictFp.getModifiers()); // not set on class but on all its methods
         assertEquals(singleton(Modifier.ABSTRACT), Abstract.getModifiers());
+    }
+
+    @Test
+    void innerClasses() throws Exception {
+        Universe u = new Universe();
+        u.registerModule(new JarFileModuleSource(new JarFile(names.jarFile())));
+
+        TypeElementImpl top = u.getTypeByInternalName("pkg/names/Dollars").orElse(null);
+
+        assertNotNull(top);
+
+        List<TypeElement> innerClasses = ElementFilter.typesIn(top.getEnclosedElements());
+
+        assertEquals(2, innerClasses.size());
+        assertTrue(innerClasses.stream().anyMatch(t -> "pkg.names.Dollars.Member$1".contentEquals(t.getQualifiedName())));
+        assertTrue(innerClasses.stream().anyMatch(t -> "pkg.names.Dollars.Member".contentEquals(t.getQualifiedName())));
     }
 
     @SafeVarargs

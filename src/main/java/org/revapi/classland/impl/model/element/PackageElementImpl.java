@@ -40,7 +40,7 @@ import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.util.Memoized;
 
-public class PackageElementImpl extends ElementImpl implements PackageElement {
+public final class PackageElementImpl extends ElementImpl implements PackageElement {
     private final NameImpl name;
     private final ModuleElementImpl module;
     private final Memoized<List<AnnotationMirrorImpl>> annos;

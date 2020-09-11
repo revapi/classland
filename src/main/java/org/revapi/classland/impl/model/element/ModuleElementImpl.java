@@ -53,7 +53,7 @@ import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.util.Memoized;
 
-public class ModuleElementImpl extends ElementImpl implements ModuleElement {
+public final class ModuleElementImpl extends ElementImpl implements ModuleElement {
     private final NameImpl name;
     private final ModuleNode module;
     private final Memoized<List<AnnotationMirrorImpl>> annos;
@@ -66,7 +66,7 @@ public class ModuleElementImpl extends ElementImpl implements ModuleElement {
         this.module = moduleType.module;
         this.name = NameImpl.of(module.name);
         this.type = memoize(() -> new NoTypeImpl(universe,
-                memoize(() -> AnnotationMirrorImpl.parse(universe, moduleType)), TypeKind.MODULE));
+                memoize(() -> parseAnnotations(moduleType)), TypeKind.MODULE));
         this.packages = memoize(() -> universe.computePackagesForModule(this).collect(toList()));
         this.directives = memoize(() -> {
             Stream<ExportsDirective> exports = module.exports == null ? Stream.empty()
@@ -87,7 +87,7 @@ public class ModuleElementImpl extends ElementImpl implements ModuleElement {
             return concat(exports, concat(opens, concat(provides, concat(requires, uses)))).collect(toList());
         });
 
-        this.annos = memoize(() -> parseAnnotations(moduleType.visibleAnnotations));
+        this.annos = memoize(() -> parseAnnotations(moduleType));
     }
 
     @Override

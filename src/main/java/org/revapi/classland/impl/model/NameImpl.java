@@ -28,7 +28,7 @@ public final class NameImpl implements Name {
     }
 
     public static NameImpl of(String value) {
-        if (value != null && value.isEmpty()) {
+        if (value == null || value.isEmpty()) {
             return EMPTY;
         }
 

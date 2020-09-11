@@ -16,8 +16,14 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import java.util.List;
-import java.util.Set;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.MethodNode;
+import org.revapi.classland.impl.model.NameImpl;
+import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Modifiers;
 
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -29,93 +35,147 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
-import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import static java.util.Collections.emptyList;
+import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
 
-public class ExecutableElementImpl extends ElementImpl implements ExecutableElement {
-    public ExecutableElementImpl(Universe universe) {
+public final class ExecutableElementImpl extends ElementImpl implements ExecutableElement {
+    private final TypeElementImpl parent;
+    private final MethodNode method;
+    private final NameImpl name;
+    private final Memoized<List<AnnotationMirrorImpl>> annos;
+    private final Memoized<List<VariableElementImpl>> parameters;
+    private final Memoized<ElementKind> elementKind;
+    private final Memoized<Set<Modifier>> modifiers;
+
+    public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
         super(universe);
+        this.parent = parent;
+        this.method = method;
+        this.name = NameImpl.of(method.name);
+        this.annos = memoize(() -> parseMoreAnnotations(method.visibleAnnotations, method.invisibleAnnotations));
+        this.parameters = method.parameters == null || method.parameters.isEmpty()
+                ? obtained(emptyList())
+                : memoize(() -> {
+            List<VariableElementImpl> ret = new ArrayList<>(method.parameters.size());
+            for (int i = 0; i < method.parameters.size(); ++i) {
+                ret.add(new VariableElementImpl.Parameter(universe, this, i));
+            }
+
+            return ret;
+        });
+
+        this.elementKind = memoize(() -> {
+            if ("<init>".equals(method.name)) {
+                return ElementKind.CONSTRUCTOR;
+            } else if ("<clinit>".equals(method.name)) {
+                return ElementKind.STATIC_INIT;
+            } else if (method.name == null || "".equals(method.name)) {
+                if ((method.access & Opcodes.ACC_STATIC) == Opcodes.ACC_STATIC) {
+                    return ElementKind.STATIC_INIT;
+                } else {
+                    return ElementKind.INSTANCE_INIT;
+                }
+            } else {
+                return ElementKind.METHOD;
+            }
+        });
+
+        this.modifiers = memoize(() -> Modifiers.toMethodModifiers(method.access));
+    }
+
+    MethodNode getNode() {
+        return method;
     }
 
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return null;
+        return annos.get();
     }
 
     @Override
     public List<? extends TypeParameterElement> getTypeParameters() {
+        // TODO implement
         return null;
     }
 
     @Override
     public TypeMirrorImpl getReturnType() {
+        // TODO implement
         return null;
     }
 
     @Override
     public List<? extends VariableElement> getParameters() {
-        return null;
+        return parameters.get();
     }
 
     @Override
     public TypeMirrorImpl getReceiverType() {
+        // TODO implement
         return null;
     }
 
     @Override
     public boolean isVarArgs() {
-        return false;
+        return (method.access & Opcodes.ACC_VARARGS) == Opcodes.ACC_VARARGS;
     }
 
     @Override
     public boolean isDefault() {
-        return false;
+        return (method.access & Opcodes.ACC_ABSTRACT) != Opcodes.ACC_ABSTRACT
+                && parent.getKind() == ElementKind.INTERFACE;
     }
 
     @Override
     public List<TypeMirrorImpl> getThrownTypes() {
+        // TODO implement
         return null;
     }
 
     @Override
     public AnnotationValue getDefaultValue() {
+        // TODO implement
         return null;
     }
 
     @Override
     public TypeMirror asType() {
+        // TODO implement
         return null;
     }
 
     @Override
     public ElementKind getKind() {
-        return null;
+        return elementKind.get();
     }
 
     @Override
     public Set<Modifier> getModifiers() {
-        return null;
+        return modifiers.get();
     }
 
     @Override
     public Name getSimpleName() {
-        return null;
+        return name;
     }
 
     @Override
     public Element getEnclosingElement() {
-        return null;
+        return parent;
     }
 
     @Override
     public List<? extends Element> getEnclosedElements() {
-        return null;
+        return parameters.get();
     }
 
     @Override
     public <R, P> R accept(ElementVisitor<R, P> v, P p) {
-        return null;
+        return v.visitExecutable(this, p);
     }
 }

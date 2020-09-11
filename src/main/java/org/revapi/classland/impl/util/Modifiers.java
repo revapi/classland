@@ -16,17 +16,23 @@
  */
 package org.revapi.classland.impl.util;
 
-import java.util.EnumSet;
-import java.util.Set;
+import org.objectweb.asm.Opcodes;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
+import java.util.EnumSet;
+import java.util.Set;
 
-import org.objectweb.asm.Opcodes;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 
 public final class Modifiers {
     private Modifiers() {
 
+    }
+
+    public static boolean isSynthetic(int flags) {
+        return hasFlag(flags, Opcodes.ACC_SYNTHETIC) || hasFlag(flags, Opcodes.ACC_BRIDGE);
     }
 
     public static Set<Modifier> toTypeModifiers(int flags) {
@@ -56,6 +62,71 @@ public final class Modifiers {
         return ret;
     }
 
+    public static Set<Modifier> toFieldModifiers(int flags) {
+        Set<Modifier> ret = EnumSet.noneOf(Modifier.class);
+
+        if (hasFlag(flags, Opcodes.ACC_PUBLIC))
+            ret.add(Modifier.PUBLIC);
+
+        if (hasFlag(flags, Opcodes.ACC_PROTECTED))
+            ret.add(Modifier.PROTECTED);
+
+        if (hasFlag(flags, Opcodes.ACC_PRIVATE))
+            ret.add(Modifier.PRIVATE);
+
+        if (hasFlag(flags, Opcodes.ACC_STATIC))
+            ret.add(Modifier.STATIC);
+
+        if (hasFlag(flags, Opcodes.ACC_FINAL))
+            ret.add(Modifier.FINAL);
+
+        if (hasFlag(flags, Opcodes.ACC_VOLATILE))
+            ret.add(Modifier.VOLATILE);
+
+        if (hasFlag(flags, Opcodes.ACC_TRANSIENT))
+            ret.add(Modifier.TRANSIENT);
+
+        return ret;
+    }
+
+    public static Set<Modifier> toParameterModifiers(int flags) {
+        if (hasFlag(flags, Opcodes.ACC_FINAL)) {
+            return singleton(Modifier.FINAL);
+        } else {
+            return emptySet();
+        }
+    }
+
+    public static Set<Modifier> toMethodModifiers(int flags) {
+        Set<Modifier> ret = EnumSet.noneOf(Modifier.class);
+
+        if (hasFlag(flags, Opcodes.ACC_PUBLIC))
+            ret.add(Modifier.PUBLIC);
+
+        if (hasFlag(flags, Opcodes.ACC_PROTECTED))
+            ret.add(Modifier.PROTECTED);
+
+        if (hasFlag(flags, Opcodes.ACC_PRIVATE))
+            ret.add(Modifier.PRIVATE);
+
+        if (hasFlag(flags, Opcodes.ACC_STATIC))
+            ret.add(Modifier.STATIC);
+
+        if (hasFlag(flags, Opcodes.ACC_FINAL))
+            ret.add(Modifier.FINAL);
+
+        if (hasFlag(flags, Opcodes.ACC_NATIVE))
+            ret.add(Modifier.NATIVE);
+
+        if (hasFlag(flags, Opcodes.ACC_ABSTRACT))
+            ret.add(Modifier.ABSTRACT);
+
+        if (hasFlag(flags, Opcodes.ACC_STRICT))
+            ret.add(Modifier.STRICTFP);
+
+        return ret;
+    }
+
     public static ElementKind toTypeElementKind(int flags) {
         if (hasFlag(flags, Opcodes.ACC_INTERFACE)) {
             if (hasFlag(flags, Opcodes.ACC_ANNOTATION)) {
@@ -69,6 +140,14 @@ public final class Modifiers {
             return ElementKind.ENUM;
 
         return ElementKind.CLASS;
+    }
+
+    public static ElementKind toFieldElementKind(int flags) {
+        if (hasFlag(flags, Opcodes.ACC_ENUM)) {
+            return ElementKind.ENUM_CONSTANT;
+        }
+
+        return ElementKind.FIELD;
     }
 
     private static boolean hasFlag(int flags, int flag) {

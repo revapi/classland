@@ -36,6 +36,13 @@ public final class Memoized<T> implements Supplier<T> {
         }
     }
 
+    public static <T> Memoized<T> obtained(T value) {
+        Memoized<T> ret = new Memoized<>(null);
+        ret.obtained = true;
+        ret.value = value;
+        return ret;
+    }
+
     public boolean isObtained() {
         return obtained;
     }

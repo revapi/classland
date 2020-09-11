@@ -16,22 +16,53 @@
  */
 package org.revapi.classland.impl.model;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.concat;
+
 import static org.revapi.classland.impl.util.Memoized.memoize;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.lang.model.AnnotatedConstruct;
 
 import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class AnnotatedConstructImpl extends BaseModelImpl implements AnnotatedConstruct {
     protected AnnotatedConstructImpl(Universe universe) {
         super(universe);
+    }
+
+    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, @Nullable List<? extends AnnotationNode> annos) {
+        return annos == null ? Collections.emptyList() : annos.stream().map(a -> new AnnotationMirrorImpl(a, universe,
+                memoize(() -> universe.getDeclaredTypeByInternalName(a.desc)))).collect(toList());
+    }
+
+    @SafeVarargs
+    public static List<AnnotationMirrorImpl> parseMoreAnnotations(Universe universe, @Nullable List<? extends AnnotationNode>... annos) {
+        if (annos == null || annos.length == 0) {
+            return Collections.emptyList();
+        }
+
+        List<AnnotationMirrorImpl> ret = new ArrayList<>();
+        for (List<? extends AnnotationNode> l : annos) {
+            if (l == null) continue;
+
+            ret.addAll(parseAnnotations(universe, l));
+        }
+
+        return ret;
+    }
+
+    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, ClassNode cls) {
+        return parseMoreAnnotations(universe, cls.visibleAnnotations, cls.invisibleAnnotations);
     }
 
     @Override
@@ -47,11 +78,16 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
         throw new UnsupportedOperationException();
     }
 
-    protected List<AnnotationMirrorImpl> parseAnnotations(@Nullable List<AnnotationNode> annos) {
-        return annos == null ? Collections.emptyList()
-                : annos.stream()
-                        .map(a -> new AnnotationMirrorImpl(a, universe,
-                                memoize(() -> universe.getDeclaredTypeByInternalName(a.desc))))
-                        .collect(Collectors.toList());
+    protected final List<AnnotationMirrorImpl> parseAnnotations(@Nullable List<? extends AnnotationNode> annos) {
+        return parseAnnotations(universe, annos);
+    }
+
+    @SafeVarargs
+    protected final List<AnnotationMirrorImpl> parseMoreAnnotations(@Nullable List<? extends AnnotationNode>... annos) {
+        return parseMoreAnnotations(universe, annos);
+    }
+
+    protected final List<AnnotationMirrorImpl> parseAnnotations(ClassNode cls) {
+        return parseAnnotations(universe, cls);
     }
 }
