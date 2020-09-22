@@ -22,4 +22,8 @@ public abstract class BaseModelImpl {
     protected BaseModelImpl(Universe universe) {
         this.universe = universe;
     }
+
+    public Universe getUniverse() {
+        return universe;
+    }
 }

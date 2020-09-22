@@ -16,40 +16,35 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
-import org.revapi.classland.impl.model.Universe;
-
-import javax.lang.model.type.IntersectionType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeVisitor;
-import java.util.Collections;
 import java.util.List;
 
-public class IntersectionTypeImpl extends TypeMirrorImpl implements IntersectionType {
-    private final List<TypeMirrorImpl> bounds;
+import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeVisitor;
 
-    public IntersectionTypeImpl(Universe universe, List<TypeMirrorImpl> bounds) {
+import org.revapi.classland.impl.model.Universe;
+
+public final class PrimitiveTypeImpl extends TypeMirrorImpl implements PrimitiveType {
+    private final TypeKind typeKind;
+
+    public PrimitiveTypeImpl(Universe universe, TypeKind typeKind) {
         super(universe);
-        this.bounds = bounds;
-    }
-
-    @Override
-    public List<TypeMirrorImpl> getBounds() {
-        return bounds;
+        this.typeKind = typeKind;
     }
 
     @Override
     public TypeKind getKind() {
-        return TypeKind.INTERSECTION;
+        return typeKind;
     }
 
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
-        return v.visitIntersection(this, p);
+        return v.visitPrimitive(this, p);
     }
 
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
         // TODO implement
-        return Collections.emptyList();
+        return null;
     }
 }

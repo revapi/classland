@@ -16,6 +16,7 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.lang.model.type.DeclaredType;
@@ -24,31 +25,42 @@ import javax.lang.model.type.TypeVisitor;
 
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.element.ElementImpl;
+import org.revapi.classland.impl.util.Nullable;
 
 public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
+    private final ElementImpl source;
+    private final TypeMirrorImpl enclosingType;
+    private final List<TypeMirrorImpl> typeArguments;
 
-    public DeclaredTypeImpl(Universe universe) {
+    public DeclaredTypeImpl(Universe universe, ElementImpl source, @Nullable TypeMirrorImpl enclosingType,
+            List<TypeMirrorImpl> typeArguments) {
         super(universe);
+        this.source = source;
+        this.enclosingType = enclosingType == null
+                ? new NoTypeImpl(universe, Collections::emptyList, TypeKind.NONE)
+                : enclosingType;
+        this.typeArguments = typeArguments;
     }
 
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return null;
+        // TODO implement
+        return Collections.emptyList();
     }
 
     @Override
     public ElementImpl asElement() {
-        return null;
+        return source;
     }
 
     @Override
     public TypeMirrorImpl getEnclosingType() {
-        return null;
+        return enclosingType;
     }
 
     @Override
     public List<TypeMirrorImpl> getTypeArguments() {
-        return null;
+        return typeArguments;
     }
 
     @Override

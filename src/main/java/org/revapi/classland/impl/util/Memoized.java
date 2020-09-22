@@ -20,11 +20,11 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class Memoized<T> implements Supplier<T> {
-    private final Supplier<T> action;
+    private @Nullable Supplier<T> action;
     private volatile boolean obtained;
     private T value;
 
-    public Memoized(Supplier<T> action) {
+    private Memoized(@Nullable Supplier<T> action) {
         this.action = action;
     }
 
@@ -43,10 +43,6 @@ public final class Memoized<T> implements Supplier<T> {
         return ret;
     }
 
-    public boolean isObtained() {
-        return obtained;
-    }
-
     @Override
     public T get() {
         if (obtained) {
@@ -58,9 +54,12 @@ public final class Memoized<T> implements Supplier<T> {
                 return value;
             }
 
+            assert action != null;
             value = action.get();
 
             obtained = true;
+
+            action = null;
 
             return value;
         }

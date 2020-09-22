@@ -19,9 +19,13 @@ package org.revapi.classland.impl.model.element;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
-import java.util.Collections;
+import static java.util.Collections.singletonList;
+import static org.revapi.classland.impl.util.Memoized.memoize;
+
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -31,17 +35,56 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeMirror;
 
+import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.signature.TypeParameterBound;
+import org.revapi.classland.impl.util.Memoized;
 
 public final class TypeParameterElementImpl extends ElementImpl implements TypeParameterElement {
-    protected TypeParameterElementImpl(Universe universe) {
+    private final NameImpl name;
+    private final TypeElementImpl owner;
+    private final Memoized<List<TypeMirrorImpl>> bounds;
+    private final TypeParameterBound rawBound;
+
+    protected TypeParameterElementImpl(Universe universe, String name, TypeElementImpl owner,
+                                       TypeParameterBound bound) {
         super(universe);
+        this.name = NameImpl.of(name);
+        this.owner = owner;
+        this.rawBound = bound;
+        this.bounds = memoize(() -> {
+            switch (bound.boundType) {
+                case UNBOUNDED:
+                    return singletonList(TypeMirrorFactory.create(universe,
+                            Universe.JAVA_LANG_OBJECT_SIG, owner));
+                case EXACT:
+                    return singletonList(TypeMirrorFactory.create(universe, bound.classBound, owner));
+                case EXTENDS:
+                    return Stream.concat(
+                            bound.classBound == null
+                                    ? Stream.of(Universe.JAVA_LANG_OBJECT_SIG)
+                                    : Stream.of(bound.classBound),
+                            bound.interfaceBounds.stream())
+                            .map(b -> TypeMirrorFactory.create(universe, b, owner)).collect(Collectors.toList());
+                case SUPER:
+                    throw new IllegalStateException("Cannot understand a type parameter with super bounds." +
+                            " Has java changed that much?");
+                default:
+                    throw new IllegalStateException("Unhandled bound type: " + bound.boundType);
+            }
+        });
+    }
+
+    public TypeParameterBound getRawBound() {
+        return rawBound;
     }
 
     @Override
-    public TypeMirror asType() {
-        return null;
+    public TypeMirrorImpl asType() {
+        return TypeMirrorFactory.create(this);
     }
 
     @Override
@@ -56,26 +99,26 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
 
     @Override
     public Name getSimpleName() {
-        return null;
+        return name;
     }
 
     @Override
-    public Element getGenericElement() {
-        return null;
+    public ElementImpl getGenericElement() {
+        return owner;
     }
 
     @Override
-    public List<? extends TypeMirror> getBounds() {
-        return null;
+    public List<TypeMirrorImpl> getBounds() {
+        return bounds.get();
     }
 
     @Override
-    public Element getEnclosingElement() {
+    public ElementImpl getEnclosingElement() {
         return getGenericElement();
     }
 
     @Override
-    public List<? extends Element> getEnclosedElements() {
+    public List<ElementImpl> getEnclosedElements() {
         return emptyList();
     }
 
@@ -86,6 +129,7 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
 
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return null;
+        // TODO implement
+        return emptyList();
     }
 }

@@ -15,4 +15,5 @@
     limitations under the License.
 ====
 
-The jmod files are copies of jdk.internal.ed.jmod standard module from the JDK.
+The "mod" files are copies of jdk.internal.ed.jmod standard module from the JDK. They don't have
+the ".jmod" extension so that the compiler doesn't pick them up as proper modules.

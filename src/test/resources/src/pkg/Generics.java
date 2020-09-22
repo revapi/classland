@@ -16,12 +16,21 @@
  */
 package pkg;
 
-public class Fields {
-    static int staticWithoutValue = 1;
-    static final int staticWithValue = 2;
+public class Generics {
 
-    enum Enum {
-        VARIANT1;
-        static final Enum normalField = VARIANT1;
+    static class Base<T> {
+
     }
+
+    static class ConcreteWithGenericSuperClass extends Base<String> {
+
+    }
+
+    static class GenericWithParamUsedInSuperClass<T extends Number> extends Base<T> {
+
+    }
+
+    interface BaseIface<T> {}
+
+    static class GenericWithParamUsedInInterface<T extends String> implements Cloneable, BaseIface<T> {}
 }

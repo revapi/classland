@@ -14,14 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pkg;
+package org.revapi.classland.impl.model.signature;
 
-public class Fields {
-    static int staticWithoutValue = 1;
-    static final int staticWithValue = 2;
+import java.util.Optional;
 
-    enum Enum {
-        VARIANT1;
-        static final Enum normalField = VARIANT1;
-    }
+import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
+
+public interface TypeVariableResolutionContext {
+    TypeVariableResolutionContext EMPTY = new TypeVariableResolutionContext() {
+        @Override
+        public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
+            return Optional.empty();
+        }
+    };
+
+    Optional<TypeParameterElementImpl> resolveTypeVariable(String name);
 }

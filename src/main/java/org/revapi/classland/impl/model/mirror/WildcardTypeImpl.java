@@ -16,40 +16,49 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
-import org.revapi.classland.impl.model.Universe;
-
-import javax.lang.model.type.IntersectionType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeVisitor;
-import java.util.Collections;
 import java.util.List;
 
-public class IntersectionTypeImpl extends TypeMirrorImpl implements IntersectionType {
-    private final List<TypeMirrorImpl> bounds;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeVisitor;
+import javax.lang.model.type.WildcardType;
 
-    public IntersectionTypeImpl(Universe universe, List<TypeMirrorImpl> bounds) {
+import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.util.Nullable;
+
+public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
+    private final @Nullable TypeMirrorImpl extendsBound;
+    private final @Nullable TypeMirrorImpl superBound;
+
+    public WildcardTypeImpl(Universe universe, @Nullable TypeMirrorImpl extendsBound,
+            @Nullable TypeMirrorImpl superBound) {
         super(universe);
-        this.bounds = bounds;
+        this.extendsBound = extendsBound;
+        this.superBound = superBound;
     }
 
     @Override
-    public List<TypeMirrorImpl> getBounds() {
-        return bounds;
+    public TypeMirrorImpl getExtendsBound() {
+        return extendsBound;
+    }
+
+    @Override
+    public TypeMirrorImpl getSuperBound() {
+        return superBound;
     }
 
     @Override
     public TypeKind getKind() {
-        return TypeKind.INTERSECTION;
+        return TypeKind.WILDCARD;
     }
 
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
-        return v.visitIntersection(this, p);
+        return v.visitWildcard(this, p);
     }
 
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
         // TODO implement
-        return Collections.emptyList();
+        return null;
     }
 }

@@ -16,11 +16,9 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import static java.util.Collections.emptySet;
-import static java.util.stream.Collectors.toList;
+import static java.util.Collections.emptyList;
 
-import static org.revapi.classland.impl.util.Memoized.memoize;
-
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -29,82 +27,56 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
-import org.revapi.classland.impl.util.Memoized;
 
-public final class PackageElementImpl extends ElementImpl implements PackageElement {
-    private final NameImpl name;
-    private final ModuleElementImpl module;
-    private final Memoized<List<AnnotationMirrorImpl>> annos;
-    private final NoTypeImpl type;
-    private final Memoized<List<? extends TypeElement>> types;
-
-    public PackageElementImpl(Universe universe, String name, Memoized<List<AnnotationMirrorImpl>> annos,
-            ModuleElementImpl module) {
+public class NoElementImpl extends ElementImpl {
+    public NoElementImpl(Universe universe) {
         super(universe);
-        this.name = NameImpl.of(name);
-        this.module = module;
-        this.type = new NoTypeImpl(universe, annos, TypeKind.PACKAGE);
-        this.types = memoize(() -> universe.computeTypesForPackage(this).collect(toList()));
-        this.annos = annos;
-    }
-
-    @Override
-    public Name getQualifiedName() {
-        return name;
-    }
-
-    @Override
-    public boolean isUnnamed() {
-        return name.contentEquals("");
     }
 
     @Override
     public TypeMirrorImpl asType() {
-        return type;
+        return new NoTypeImpl(universe, Collections::emptyList, TypeKind.NONE);
     }
 
     @Override
     public ElementKind getKind() {
-        return ElementKind.PACKAGE;
+        return ElementKind.OTHER;
     }
 
     @Override
     public Set<Modifier> getModifiers() {
-        return emptySet();
+        return Collections.emptySet();
     }
 
     @Override
     public Name getSimpleName() {
-        return name;
+        return NameImpl.EMPTY;
     }
 
     @Override
     public Element getEnclosingElement() {
-        return module;
+        return null;
     }
 
     @Override
     public List<? extends Element> getEnclosedElements() {
-        return types.get();
+        return emptyList();
     }
 
     @Override
     public <R, P> R accept(ElementVisitor<R, P> v, P p) {
-        return v.visitPackage(this, p);
+        return v.visitUnknown(this, p);
     }
 
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return annos.get();
+        return emptyList();
     }
 }

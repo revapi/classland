@@ -16,15 +16,16 @@
  */
 package org.revapi.classland.impl.util;
 
-import org.objectweb.asm.Opcodes;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
 import java.util.EnumSet;
 import java.util.Set;
 
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
+
+import org.objectweb.asm.Opcodes;
 
 public final class Modifiers {
     private Modifiers() {

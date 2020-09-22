@@ -14,14 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pkg;
+package org.revapi.classland.impl.util;
 
-public class Fields {
-    static int staticWithoutValue = 1;
-    static final int staticWithValue = 2;
+import org.objectweb.asm.Opcodes;
 
-    enum Enum {
-        VARIANT1;
-        static final Enum normalField = VARIANT1;
-    }
+public class Asm {
+    public static final int VERSION = Opcodes.ASM8;
 }

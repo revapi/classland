@@ -16,14 +16,15 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.MethodNode;
-import org.revapi.classland.impl.model.NameImpl;
-import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
-import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
-import org.revapi.classland.impl.util.Memoized;
-import org.revapi.classland.impl.util.Modifiers;
+import static java.util.Collections.emptyList;
+
+import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -35,15 +36,19 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
-import static java.util.Collections.emptyList;
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.MethodNode;
+import org.revapi.classland.impl.model.NameImpl;
+import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
+import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Modifiers;
 
-public final class ExecutableElementImpl extends ElementImpl implements ExecutableElement {
+public final class ExecutableElementImpl extends ElementImpl
+        implements ExecutableElement, TypeVariableResolutionContext {
     private final TypeElementImpl parent;
     private final MethodNode method;
     private final NameImpl name;
@@ -58,16 +63,15 @@ public final class ExecutableElementImpl extends ElementImpl implements Executab
         this.method = method;
         this.name = NameImpl.of(method.name);
         this.annos = memoize(() -> parseMoreAnnotations(method.visibleAnnotations, method.invisibleAnnotations));
-        this.parameters = method.parameters == null || method.parameters.isEmpty()
-                ? obtained(emptyList())
+        this.parameters = method.parameters == null || method.parameters.isEmpty() ? obtained(emptyList())
                 : memoize(() -> {
-            List<VariableElementImpl> ret = new ArrayList<>(method.parameters.size());
-            for (int i = 0; i < method.parameters.size(); ++i) {
-                ret.add(new VariableElementImpl.Parameter(universe, this, i));
-            }
+                    List<VariableElementImpl> ret = new ArrayList<>(method.parameters.size());
+                    for (int i = 0; i < method.parameters.size(); ++i) {
+                        ret.add(new VariableElementImpl.Parameter(universe, this, i));
+                    }
 
-            return ret;
-        });
+                    return ret;
+                });
 
         this.elementKind = memoize(() -> {
             if ("<init>".equals(method.name)) {
@@ -90,6 +94,12 @@ public final class ExecutableElementImpl extends ElementImpl implements Executab
 
     MethodNode getNode() {
         return method;
+    }
+
+    @Override
+    public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
+        // TODO implement
+        return Optional.empty();
     }
 
     @Override
@@ -144,7 +154,7 @@ public final class ExecutableElementImpl extends ElementImpl implements Executab
     }
 
     @Override
-    public TypeMirror asType() {
+    public TypeMirrorImpl asType() {
         // TODO implement
         return null;
     }

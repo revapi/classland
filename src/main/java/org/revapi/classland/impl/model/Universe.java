@@ -16,6 +16,7 @@
  */
 package org.revapi.classland.impl.model;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.newSetFromMap;
 
 import static org.revapi.classland.impl.util.ByteCode.parseClass;
@@ -27,24 +28,26 @@ import static org.revapi.classland.impl.util.Packages.getPackageNameFromInternal
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
+import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.PackageElementImpl;
+import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
-import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
-import org.revapi.classland.impl.model.mirror.ErrorTypeImpl;
+import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.module.ClassData;
 import org.revapi.classland.module.ModuleSource;
 
 public final class Universe implements AutoCloseable {
+    public static final TypeSignature.Reference JAVA_LANG_OBJECT_SIG = new TypeSignature.Reference(0, "/java/lang/Object", emptyList(), null);
+
     private final Set<ModuleSource> moduleSources = newSetFromMap(new ConcurrentHashMap<>());
     private final Map<String, PackageElementImpl> packages = new ConcurrentHashMap<>();
     private final Set<ModuleElementImpl> modules = newSetFromMap(new ConcurrentHashMap<>());
@@ -78,12 +81,9 @@ public final class Universe implements AutoCloseable {
         return typesByInternalName.values().stream().filter(t -> t.isInPackage(pkg));
     }
 
-    public Optional<TypeElementImpl> getTypeByInternalName(String internalName) {
-        return Optional.ofNullable(typesByInternalName.get(internalName));
-    }
-
-    public DeclaredTypeImpl getDeclaredTypeByInternalName(String internalName) {
-        return getTypeByInternalName(internalName).map(TypeElementImpl::asType).orElse(new ErrorTypeImpl(this));
+    public TypeElementBase getTypeByInternalName(String internalName) {
+        TypeElementImpl ret = typesByInternalName.get(internalName);
+        return ret == null ? new MissingTypeImpl(this, internalName) : ret;
     }
 
     public void registerModule(ModuleSource source) {

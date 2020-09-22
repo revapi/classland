@@ -20,12 +20,26 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.lang.model.type.ErrorType;
+import javax.lang.model.type.TypeKind;
 
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.element.ElementImpl;
+import org.revapi.classland.impl.model.element.MissingTypeImpl;
+import org.revapi.classland.impl.util.Nullable;
 
 public class ErrorTypeImpl extends DeclaredTypeImpl implements ErrorType {
-    public ErrorTypeImpl(Universe universe) {
-        super(universe);
+    public ErrorTypeImpl(Universe universe, ElementImpl source) {
+        super(universe, source, null, Collections.emptyList());
+    }
+
+    public ErrorTypeImpl(Universe universe, ElementImpl source, @Nullable TypeMirrorImpl enclosingType,
+                         List<TypeMirrorImpl> typeArguments) {
+        super(universe, source, enclosingType, typeArguments);
+    }
+
+    @Override
+    public TypeKind getKind() {
+        return TypeKind.ERROR;
     }
 
     @Override

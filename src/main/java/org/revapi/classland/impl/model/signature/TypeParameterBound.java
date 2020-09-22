@@ -14,14 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pkg;
+package org.revapi.classland.impl.model.signature;
 
-public class Fields {
-    static int staticWithoutValue = 1;
-    static final int staticWithValue = 2;
+import java.util.List;
 
-    enum Enum {
-        VARIANT1;
-        static final Enum normalField = VARIANT1;
+public class TypeParameterBound {
+    public final Bound.Type boundType;
+    public final TypeSignature classBound;
+    public final List<TypeSignature> interfaceBounds;
+
+    public TypeParameterBound(Bound.Type boundType, TypeSignature classBound, List<TypeSignature> interfaceBounds) {
+        this.boundType = boundType;
+        this.classBound = classBound;
+        this.interfaceBounds = interfaceBounds;
     }
 }

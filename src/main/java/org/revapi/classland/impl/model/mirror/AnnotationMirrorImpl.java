@@ -16,29 +16,31 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.function.Supplier;
+
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.type.DeclaredType;
+
 import org.objectweb.asm.tree.AnnotationNode;
 import org.revapi.classland.impl.model.BaseModelImpl;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.element.ExecutableElementImpl;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import java.util.Collections;
-import java.util.Map;
-import java.util.function.Supplier;
-
 public final class AnnotationMirrorImpl extends BaseModelImpl implements AnnotationMirror {
     private final AnnotationNode node;
-    private final Supplier<DeclaredTypeImpl> getAnnotationType;
+    private final Supplier<DeclaredType> getAnnotationType;
 
-    public AnnotationMirrorImpl(AnnotationNode node, Universe universe, Supplier<DeclaredTypeImpl> getAnnotationType) {
+    public AnnotationMirrorImpl(AnnotationNode node, Universe universe, Supplier<DeclaredType> getAnnotationType) {
         super(universe);
         this.node = node;
         this.getAnnotationType = getAnnotationType;
     }
 
     @Override
-    public DeclaredTypeImpl getAnnotationType() {
+    public DeclaredType getAnnotationType() {
         return getAnnotationType.get();
     }
 

@@ -16,15 +16,13 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import org.objectweb.asm.tree.AnnotationNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.ParameterNode;
-import org.revapi.classland.impl.model.NameImpl;
-import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
-import org.revapi.classland.impl.util.Memoized;
-import org.revapi.classland.impl.util.Modifiers;
+import static java.util.Collections.emptyList;
+
+import static org.revapi.classland.impl.util.Memoized.memoize;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -33,12 +31,17 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
-import static java.util.Collections.emptyList;
-import static org.revapi.classland.impl.util.Memoized.memoize;
+import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.ParameterNode;
+import org.revapi.classland.impl.model.NameImpl;
+import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Modifiers;
 
 public abstract class VariableElementImpl extends ElementImpl implements VariableElement {
     private final Memoized<List<AnnotationMirrorImpl>> annos;
@@ -81,7 +84,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         }
 
         @Override
-        public TypeMirror asType() {
+        public TypeMirrorImpl asType() {
             // TODO implement
             return null;
         }
@@ -136,7 +139,8 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
             return ret;
         }
 
-        private static List<AnnotationNode> annos(int shiftCount, int paramCount, int index, List<AnnotationNode>[] allAnnos) {
+        private static List<AnnotationNode> annos(int shiftCount, int paramCount, int index,
+                List<AnnotationNode>[] allAnnos) {
             if (allAnnos == null) {
                 return emptyList();
             }
@@ -146,13 +150,14 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
             List<AnnotationNode> ret = allAnnos[index - indexShift];
             return ret == null ? emptyList() : ret;
         }
+
         @Override
         public Object getConstantValue() {
             return null;
         }
 
         @Override
-        public TypeMirror asType() {
+        public TypeMirrorImpl asType() {
             // TODO implement
             return null;
         }

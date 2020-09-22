@@ -17,12 +17,17 @@
 package org.revapi.classland.impl.model.element;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.type.TypeMirror;
 
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 
 public abstract class ElementImpl extends AnnotatedConstructImpl implements Element {
     protected ElementImpl(Universe universe) {
         super(universe);
     }
+
+    @Override
+    public abstract TypeMirrorImpl asType();
 }

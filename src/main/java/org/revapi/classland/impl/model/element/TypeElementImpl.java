@@ -16,13 +16,23 @@
  */
 package org.revapi.classland.impl.model.element;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Stream.concat;
+import static org.revapi.classland.impl.util.Memoized.obtained;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,31 +52,39 @@ import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
+import org.revapi.classland.impl.model.mirror.PrimitiveTypeImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.mirror.TypeVariableImpl;
+import org.revapi.classland.impl.model.signature.GenericTypeParameters;
+import org.revapi.classland.impl.model.signature.SignatureParser;
+import org.revapi.classland.impl.model.signature.TypeSignature;
+import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Stream.concat;
-
-public final class TypeElementImpl extends ElementImpl implements TypeElement {
+public final class TypeElementImpl extends TypeElementBase implements TypeVariableResolutionContext {
     private final String internalName;
-    private final PackageElementImpl pkg;
     private final Memoized<List<AnnotationMirrorImpl>> annos;
     private final Memoized<NameImpl> qualifiedName;
     private final Memoized<NameImpl> simpleName;
-    private final Memoized<Element> enclosingElement;
+    private final Memoized<ClassNode> node;
+    private final Memoized<ElementImpl> enclosingElement;
     private final Memoized<NestingKind> nestingKind;
     private final Memoized<TypeMirrorImpl> superClass;
+    private final Memoized<List<TypeMirrorImpl>> interfaces;
     private final Memoized<ElementKind> elementKind;
     private final Memoized<Set<Modifier>> modifiers;
     private final Memoized<List<ElementImpl>> enclosedElements;
+    private final Memoized<Map<String, TypeParameterElementImpl>> typeParametersMap;
+    private final Memoized<DeclaredTypeImpl> type;
+    private final Memoized<List<TypeParameterElementImpl>> typeParameters;
 
     public TypeElementImpl(Universe universe, String internalName, Memoized<ClassNode> node, PackageElementImpl pkg) {
-        super(universe);
+        super(universe, internalName, obtained(pkg));
         this.internalName = internalName;
-        this.pkg = pkg;
+        this.node = node;
 
         Memoized<ScanningResult> scan = node.map(cls -> {
             ScanningResult ret = new ScanningResult();
@@ -88,16 +106,14 @@ public final class TypeElementImpl extends ElementImpl implements TypeElement {
                         ret.qualifiedNameParts.put(icn.name, icn);
 
                         if (icn.name.length() == classNameLength) {
-                            // we probably could detect this using outerClass and outerMethod but that would
-                            // make it difficult to detect anonymous classes anyway. So let's just use this
-                            // logic instead that is able to detect all the cases.
-
                             if (icn.innerName == null) {
                                 ret.nestingKind = NestingKind.ANONYMOUS;
+                                ret.outerClass = icn.name.substring(0, icn.name.lastIndexOf('$'));
                             } else if (icn.outerName == null) {
                                 ret.nestingKind = NestingKind.LOCAL;
                             } else {
                                 ret.nestingKind = NestingKind.MEMBER;
+                                ret.outerClass = icn.outerName;
                             }
                             ret.simpleName = icn.innerName == null ? "" : icn.innerName;
                             ret.effectiveAccess = icn.access;
@@ -170,18 +186,43 @@ public final class TypeElementImpl extends ElementImpl implements TypeElement {
                 return pkg;
             case MEMBER:
             case ANONYMOUS:
-                return universe.getTypeByInternalName(r.classNode.outerClass).orElse(null);
+                return universe.getTypeByInternalName(r.outerClass);
             case LOCAL:
-                return universe.getTypeByInternalName(r.classNode.outerClass)
-                        .map(c -> c.getMethod(r.classNode.outerMethod, r.classNode.outerMethodDesc)).orElse(null);
+                return universe.getTypeByInternalName(r.classNode.outerClass).getMethod(r.classNode.outerMethod, r.classNode.outerMethodDesc);
             default:
                 throw new IllegalStateException("Unhandled nesting kind, " + r.nestingKind
                         + ", while determining the enclosing element of class " + internalName);
             }
+
         });
 
-        // TODO not right - need to make it a type instance with correct type parameters
-        superClass = node.map(n -> universe.getDeclaredTypeByInternalName(n.superName));
+        Memoized<GenericTypeParameters> signature = node.map(n -> {
+            TypeElementBase outerClass = n.outerClass == null ? null
+                    : universe.getTypeByInternalName(n.outerClass);
+
+            if (n.signature == null) {
+                return new GenericTypeParameters(new LinkedHashMap<>(0, 0.01f),
+                        new TypeSignature.Reference(0, n.superName, emptyList(), null), n.interfaces.stream()
+                                .map(i -> new TypeSignature.Reference(0, i, emptyList(), null)).collect(toList()),
+                        outerClass);
+            } else {
+                return SignatureParser.parseType(n.signature, outerClass);
+            }
+        });
+
+        type = signature.map(p -> TypeMirrorFactory.create(universe, this));
+
+        superClass = signature.map(ts -> TypeMirrorFactory.create(universe, ts.superClass, this));
+
+        interfaces = signature.map(
+                ts -> ts.interfaces.stream().map(i -> TypeMirrorFactory.create(universe, i, this)).collect(toList()));
+
+        typeParametersMap = signature.map(ts -> ts.typeParameters.entrySet().stream()
+                .collect(toMap(Map.Entry::getKey,
+                        e -> new TypeParameterElementImpl(universe, e.getKey(), this, e.getValue()), (a, b) -> a,
+                        LinkedHashMap::new)));
+
+        typeParameters = typeParametersMap.map(m -> new ArrayList<>(m.values()));
 
         enclosedElements = scan.map(r -> {
             Stream<VariableElementImpl.Field> fields = r.classNode.fields.stream()
@@ -192,21 +233,31 @@ public final class TypeElementImpl extends ElementImpl implements TypeElement {
                     .filter(m -> !Modifiers.isSynthetic(m.access))
                     .map(m -> new ExecutableElementImpl(universe, this, m));
 
-            Stream<TypeElementImpl> innerClasses = r.innerClasses.stream()
-                    .map(c -> universe.getTypeByInternalName(c).orElse(null))
-                    .filter(Objects::nonNull);
+            Stream<TypeElementBase> innerClasses = r.innerClasses.stream()
+                    .map(universe::getTypeByInternalName);
 
             return concat(concat(fields, methods), innerClasses).collect(toList());
         });
     }
 
     public boolean isInPackage(PackageElementImpl pkg) {
-        return getNestingKind() == NestingKind.TOP_LEVEL && this.pkg.equals(pkg);
+        return getNestingKind() == NestingKind.TOP_LEVEL && this.pkg.get().equals(pkg);
     }
 
     public @Nullable ExecutableElementImpl getMethod(String methodName, String methodDescriptor) {
         // TODO implement
         return null;
+    }
+
+    @Override
+    public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
+        TypeParameterElementImpl p = typeParametersMap.get().get(name);
+        if (p == null && node.get().outerClass != null) {
+            TypeElementImpl outerClass = (TypeElementImpl) getEnclosingElement();
+            return outerClass.resolveTypeVariable(name);
+        } else {
+            return Optional.ofNullable(p);
+        }
     }
 
     @Override
@@ -230,21 +281,18 @@ public final class TypeElementImpl extends ElementImpl implements TypeElement {
     }
 
     @Override
-    public List<? extends TypeMirror> getInterfaces() {
-        // TODO implement
-        return null;
+    public List<TypeMirrorImpl> getInterfaces() {
+        return interfaces.get();
     }
 
     @Override
-    public List<? extends TypeParameterElement> getTypeParameters() {
-        // TODO implement
-        return null;
+    public List<TypeParameterElementImpl> getTypeParameters() {
+        return typeParameters.get();
     }
 
     @Override
     public DeclaredTypeImpl asType() {
-        // TODO implement
-        return null;
+        return type.get();
     }
 
     @Override
@@ -263,12 +311,12 @@ public final class TypeElementImpl extends ElementImpl implements TypeElement {
     }
 
     @Override
-    public Element getEnclosingElement() {
+    public ElementImpl getEnclosingElement() {
         return enclosingElement.get();
     }
 
     @Override
-    public List<? extends Element> getEnclosedElements() {
+    public List<ElementImpl> getEnclosedElements() {
         return enclosedElements.get();
     }
 
@@ -301,6 +349,7 @@ public final class TypeElementImpl extends ElementImpl implements TypeElement {
         ClassNode classNode;
         int effectiveAccess;
         NestingKind nestingKind;
+        String outerClass;
         String simpleName;
         Map<String, InnerClassNode> qualifiedNameParts;
         List<String> innerClasses;

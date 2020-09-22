@@ -51,6 +51,7 @@ import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
 
 public final class ModuleElementImpl extends ElementImpl implements ModuleElement {
@@ -65,8 +66,8 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
         super(universe);
         this.module = moduleType.module;
         this.name = NameImpl.of(module.name);
-        this.type = memoize(() -> new NoTypeImpl(universe,
-                memoize(() -> parseAnnotations(moduleType)), TypeKind.MODULE));
+        this.type = memoize(
+                () -> new NoTypeImpl(universe, memoize(() -> parseAnnotations(moduleType)), TypeKind.MODULE));
         this.packages = memoize(() -> universe.computePackagesForModule(this).collect(toList()));
         this.directives = memoize(() -> {
             Stream<ExportsDirective> exports = module.exports == null ? Stream.empty()
@@ -106,7 +107,7 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
     }
 
     @Override
-    public TypeMirror asType() {
+    public TypeMirrorImpl asType() {
         return type.get();
     }
 
@@ -213,13 +214,13 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
     }
 
     private class ProvidesDirectiveImpl implements ProvidesDirective {
-        private final Memoized<TypeElementImpl> service;
+        private final Memoized<TypeElement> service;
         private final Memoized<List<? extends TypeElement>> impls;
 
         public ProvidesDirectiveImpl(ModuleProvideNode n) {
-            service = memoize(() -> universe.getTypeByInternalName(n.service).orElse(null));
-            impls = memoize(() -> n.providers.stream().map(p -> universe.getTypeByInternalName(p).orElse(null))
-                    .filter(Objects::nonNull).collect(toList()));
+            service = memoize(() -> universe.getTypeByInternalName(n.service));
+            impls = memoize(() -> n.providers.stream().map(universe::getTypeByInternalName)
+                    .collect(toList()));
         }
 
         @Override
@@ -280,10 +281,10 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
     }
 
     private class UsesDirectiveImpl implements UsesDirective {
-        private final Memoized<TypeElementImpl> service;
+        private final Memoized<TypeElement> service;
 
         public UsesDirectiveImpl(String n) {
-            service = memoize(() -> universe.getTypeByInternalName(n).orElse(null));
+            service = memoize(() -> universe.getTypeByInternalName(n));
         }
 
         @Override

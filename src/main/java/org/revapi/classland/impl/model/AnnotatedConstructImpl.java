@@ -40,20 +40,23 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
         super(universe);
     }
 
-    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, @Nullable List<? extends AnnotationNode> annos) {
+    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe,
+            @Nullable List<? extends AnnotationNode> annos) {
         return annos == null ? Collections.emptyList() : annos.stream().map(a -> new AnnotationMirrorImpl(a, universe,
-                memoize(() -> universe.getDeclaredTypeByInternalName(a.desc)))).collect(toList());
+                memoize(() -> universe.getTypeByInternalName(a.desc).asType()))).collect(toList());
     }
 
     @SafeVarargs
-    public static List<AnnotationMirrorImpl> parseMoreAnnotations(Universe universe, @Nullable List<? extends AnnotationNode>... annos) {
+    public static List<AnnotationMirrorImpl> parseMoreAnnotations(Universe universe,
+            @Nullable List<? extends AnnotationNode>... annos) {
         if (annos == null || annos.length == 0) {
             return Collections.emptyList();
         }
 
         List<AnnotationMirrorImpl> ret = new ArrayList<>();
         for (List<? extends AnnotationNode> l : annos) {
-            if (l == null) continue;
+            if (l == null)
+                continue;
 
             ret.addAll(parseAnnotations(universe, l));
         }

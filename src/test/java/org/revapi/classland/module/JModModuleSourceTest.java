@@ -16,28 +16,29 @@
  */
 package org.revapi.classland.module;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.io.File;
-import java.nio.file.Path;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.impl.model.element.TypeElementImpl;
+import org.revapi.classland.impl.model.element.TypeElementBase;
+
+import javax.lang.model.type.TypeKind;
+import java.io.File;
+import java.nio.file.Path;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JModModuleSourceTest {
 
     @ParameterizedTest
-    @ValueSource(strings = { "java9.jmod", "java10.jmod", "java11.jmod", "java12.jmod", "java14.jmod" })
+    @ValueSource(strings = { "java9.mod", "java10.mod", "java11.mod", "java12.mod", "java14.mod" })
     void loadTest(String jmodFile) throws Exception {
         Path jmod = new File(getClass().getClassLoader().getResource(jmodFile).getPath()).toPath();
         Universe universe = new Universe();
         universe.registerModule(new JModModuleSource(jmod));
 
-        TypeElementImpl obj = universe.getTypeByInternalName("jdk/internal/editor/external/ExternalEditor")
-                .orElse(null);
-
-        assertNotNull(obj);
+        TypeElementBase obj = universe.getTypeByInternalName("jdk/internal/editor/external/ExternalEditor");
+        assertEquals(TypeKind.DECLARED, obj.asType().getKind());
+        obj = universe.getTypeByInternalName("not/there/like");
+        assertEquals(TypeKind.ERROR, obj.asType().getKind());
     }
 }
