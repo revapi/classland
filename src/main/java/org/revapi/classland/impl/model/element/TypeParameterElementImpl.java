@@ -18,8 +18,8 @@ package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
-
 import static java.util.Collections.singletonList;
+
 import static org.revapi.classland.impl.util.Memoized.memoize;
 
 import java.util.List;
@@ -50,30 +50,27 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
     private final TypeParameterBound rawBound;
 
     protected TypeParameterElementImpl(Universe universe, String name, TypeElementImpl owner,
-                                       TypeParameterBound bound) {
+            TypeParameterBound bound) {
         super(universe);
         this.name = NameImpl.of(name);
         this.owner = owner;
         this.rawBound = bound;
         this.bounds = memoize(() -> {
             switch (bound.boundType) {
-                case UNBOUNDED:
-                    return singletonList(TypeMirrorFactory.create(universe,
-                            Universe.JAVA_LANG_OBJECT_SIG, owner));
-                case EXACT:
-                    return singletonList(TypeMirrorFactory.create(universe, bound.classBound, owner));
-                case EXTENDS:
-                    return Stream.concat(
-                            bound.classBound == null
-                                    ? Stream.of(Universe.JAVA_LANG_OBJECT_SIG)
-                                    : Stream.of(bound.classBound),
-                            bound.interfaceBounds.stream())
-                            .map(b -> TypeMirrorFactory.create(universe, b, owner)).collect(Collectors.toList());
-                case SUPER:
-                    throw new IllegalStateException("Cannot understand a type parameter with super bounds." +
-                            " Has java changed that much?");
-                default:
-                    throw new IllegalStateException("Unhandled bound type: " + bound.boundType);
+            case UNBOUNDED:
+                return singletonList(TypeMirrorFactory.create(universe, Universe.JAVA_LANG_OBJECT_SIG, owner));
+            case EXACT:
+                return singletonList(TypeMirrorFactory.create(universe, bound.classBound, owner));
+            case EXTENDS:
+                return Stream
+                        .concat(bound.classBound == null ? Stream.of(Universe.JAVA_LANG_OBJECT_SIG)
+                                : Stream.of(bound.classBound), bound.interfaceBounds.stream())
+                        .map(b -> TypeMirrorFactory.create(universe, b, owner)).collect(Collectors.toList());
+            case SUPER:
+                throw new IllegalStateException(
+                        "Cannot understand a type parameter with super bounds." + " Has java changed that much?");
+            default:
+                throw new IllegalStateException("Unhandled bound type: " + bound.boundType);
             }
         });
     }

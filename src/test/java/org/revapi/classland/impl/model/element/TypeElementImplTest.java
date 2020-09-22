@@ -189,7 +189,8 @@ class TypeElementImplTest {
 
         TypeElementBase base = u.getTypeByInternalName("pkg/Generics$Base");
         TypeElementBase genericSuperClass = u.getTypeByInternalName("pkg/Generics$ConcreteWithGenericSuperClass");
-        TypeElementBase genericWithGenericSuperclass = u.getTypeByInternalName("pkg/Generics$GenericWithParamUsedInSuperClass");
+        TypeElementBase genericWithGenericSuperclass = u
+                .getTypeByInternalName("pkg/Generics$GenericWithParamUsedInSuperClass");
 
         assertNotNull(base);
         assertNotNull(genericSuperClass);
@@ -226,7 +227,8 @@ class TypeElementImplTest {
 
         arg = sc.getTypeArguments().get(0);
         assertTrue(arg instanceof DeclaredTypeImpl);
-        assertTrue("java.lang.String".contentEquals(((TypeElement) ((DeclaredTypeImpl) arg).asElement()).getQualifiedName()));
+        assertTrue("java.lang.String"
+                .contentEquals(((TypeElement) ((DeclaredTypeImpl) arg).asElement()).getQualifiedName()));
         assertEquals(TypeKind.ERROR, arg.getKind()); // we're not loading types from the base module...
     }
 
@@ -235,7 +237,8 @@ class TypeElementImplTest {
         Universe u = new Universe();
         u.registerModule(new JarFileModuleSource(new JarFile(generics.jarFile())));
 
-        TypeElementBase genericWithGenericInterface = u.getTypeByInternalName("pkg/Generics$GenericWithParamUsedInInterface");
+        TypeElementBase genericWithGenericInterface = u
+                .getTypeByInternalName("pkg/Generics$GenericWithParamUsedInInterface");
 
         List<TypeMirrorImpl> ifaces = genericWithGenericInterface.getInterfaces();
         assertEquals(2, ifaces.size());
@@ -248,8 +251,8 @@ class TypeElementImplTest {
         assertEquals(1, baseIface.getTypeArguments().size());
         TypeVariableImpl tv = (TypeVariableImpl) baseIface.getTypeArguments().get(0);
         assertEquals("T", tv.asElement().getSimpleName().toString());
-        assertEquals("java.lang.String", ((TypeElement) ((DeclaredTypeImpl) tv.getLowerBound()).asElement())
-                .getQualifiedName().toString());
+        assertEquals("java.lang.String",
+                ((TypeElement) ((DeclaredTypeImpl) tv.getLowerBound()).asElement()).getQualifiedName().toString());
     }
 
     @Test
@@ -261,16 +264,15 @@ class TypeElementImplTest {
         TypeElementImpl StaticMember = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses$StaticMember");
         TypeElementImpl StaticAnonymous = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses$StaticMember$1");
         TypeElementImpl StaticLocal = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses$StaticMember$1Local");
+        ExecutableElementImpl method = StaticMember.getMethod("method", "()V");
 
-        ElementImpl enclosing = InnerClasses.getEnclosingElement();
-        assertTrue(enclosing instanceof PackageElementImpl);
-        assertTrue("pkg".contentEquals(((PackageElementImpl) enclosing).getQualifiedName()));
+        assertSame(u.getPackage("pkg"), InnerClasses.getEnclosingElement());
 
-        enclosing = StaticMember.getEnclosingElement();
-        assertSame(InnerClasses, enclosing);
-        enclosing = StaticAnonymous.getEnclosingElement();
-        assertSame(StaticMember, enclosing);
-        // TODO assert the method as the enclosing element once methods are implemented
+        assertSame(InnerClasses, StaticMember.getEnclosingElement());
+
+        assertSame(StaticMember, StaticAnonymous.getEnclosingElement());
+
+        assertSame(method, StaticLocal.getEnclosingElement());
     }
 
     @SafeVarargs

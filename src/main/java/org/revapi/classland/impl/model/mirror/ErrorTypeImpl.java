@@ -33,7 +33,7 @@ public class ErrorTypeImpl extends DeclaredTypeImpl implements ErrorType {
     }
 
     public ErrorTypeImpl(Universe universe, ElementImpl source, @Nullable TypeMirrorImpl enclosingType,
-                         List<TypeMirrorImpl> typeArguments) {
+            List<TypeMirrorImpl> typeArguments) {
         super(universe, source, enclosingType, typeArguments);
     }
 

@@ -21,6 +21,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
+
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     private final Memoized<List<AnnotationMirrorImpl>> annos;
     private final Memoized<NameImpl> qualifiedName;
     private final Memoized<NameImpl> simpleName;
-    private final Memoized<ClassNode> node;
+    private final Memoized<ScanningResult> scan;
     private final Memoized<ElementImpl> enclosingElement;
     private final Memoized<NestingKind> nestingKind;
     private final Memoized<TypeMirrorImpl> superClass;
@@ -80,13 +81,13 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     private final Memoized<Map<String, TypeParameterElementImpl>> typeParametersMap;
     private final Memoized<DeclaredTypeImpl> type;
     private final Memoized<List<TypeParameterElementImpl>> typeParameters;
+    private final Memoized<Map<String, ExecutableElementImpl>> methods;
 
     public TypeElementImpl(Universe universe, String internalName, Memoized<ClassNode> node, PackageElementImpl pkg) {
         super(universe, internalName, obtained(pkg));
         this.internalName = internalName;
-        this.node = node;
 
-        Memoized<ScanningResult> scan = node.map(cls -> {
+        this.scan = node.map(cls -> {
             ScanningResult ret = new ScanningResult();
             ret.classNode = cls;
             ret.nestingKind = NestingKind.TOP_LEVEL;
@@ -188,7 +189,8 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
             case ANONYMOUS:
                 return universe.getTypeByInternalName(r.outerClass);
             case LOCAL:
-                return universe.getTypeByInternalName(r.classNode.outerClass).getMethod(r.classNode.outerMethod, r.classNode.outerMethodDesc);
+                return universe.getTypeByInternalName(r.classNode.outerClass).getMethod(r.classNode.outerMethod,
+                        r.classNode.outerMethodDesc);
             default:
                 throw new IllegalStateException("Unhandled nesting kind, " + r.nestingKind
                         + ", while determining the enclosing element of class " + internalName);
@@ -196,9 +198,10 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
 
         });
 
-        Memoized<GenericTypeParameters> signature = node.map(n -> {
-            TypeElementBase outerClass = n.outerClass == null ? null
-                    : universe.getTypeByInternalName(n.outerClass);
+        Memoized<GenericTypeParameters> signature = scan.map(s -> {
+            TypeElementBase outerClass = s.outerClass == null ? null : universe.getTypeByInternalName(s.outerClass);
+
+            ClassNode n = s.classNode;
 
             if (n.signature == null) {
                 return new GenericTypeParameters(new LinkedHashMap<>(0, 0.01f),
@@ -224,19 +227,17 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
 
         typeParameters = typeParametersMap.map(m -> new ArrayList<>(m.values()));
 
+        methods = node.map(n -> n.methods.stream().filter(m -> !Modifiers.isSynthetic(m.access))
+                .collect(toMap(m -> m.name + "#" + m.desc, m -> new ExecutableElementImpl(universe, this, m))));
+
         enclosedElements = scan.map(r -> {
             Stream<VariableElementImpl.Field> fields = r.classNode.fields.stream()
                     .filter(f -> !Modifiers.isSynthetic(f.access))
                     .map(f -> new VariableElementImpl.Field(universe, this, f));
 
-            Stream<ExecutableElementImpl> methods = r.classNode.methods.stream()
-                    .filter(m -> !Modifiers.isSynthetic(m.access))
-                    .map(m -> new ExecutableElementImpl(universe, this, m));
+            Stream<TypeElementBase> innerClasses = r.innerClasses.stream().map(universe::getTypeByInternalName);
 
-            Stream<TypeElementBase> innerClasses = r.innerClasses.stream()
-                    .map(universe::getTypeByInternalName);
-
-            return concat(concat(fields, methods), innerClasses).collect(toList());
+            return concat(concat(fields, methods.get().values().stream()), innerClasses).collect(toList());
         });
     }
 
@@ -245,14 +246,13 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     }
 
     public @Nullable ExecutableElementImpl getMethod(String methodName, String methodDescriptor) {
-        // TODO implement
-        return null;
+        return methods.get().get(methodName + "#" + methodDescriptor);
     }
 
     @Override
     public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
         TypeParameterElementImpl p = typeParametersMap.get().get(name);
-        if (p == null && node.get().outerClass != null) {
+        if (p == null && scan.get().outerClass != null) {
             TypeElementImpl outerClass = (TypeElementImpl) getEnclosingElement();
             return outerClass.resolveTypeVariable(name);
         } else {

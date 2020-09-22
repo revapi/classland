@@ -16,13 +16,14 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
-import org.revapi.classland.impl.model.Universe;
+import java.util.Collections;
+import java.util.List;
 
 import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
-import java.util.Collections;
-import java.util.List;
+
+import org.revapi.classland.impl.model.Universe;
 
 public class IntersectionTypeImpl extends TypeMirrorImpl implements IntersectionType {
     private final List<TypeMirrorImpl> bounds;

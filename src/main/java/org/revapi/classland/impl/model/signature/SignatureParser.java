@@ -16,19 +16,20 @@
  */
 package org.revapi.classland.impl.model.signature;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import javax.lang.model.type.TypeKind;
+
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.util.Asm;
 import org.revapi.classland.impl.util.Nullable;
-
-import javax.lang.model.type.TypeKind;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 
 public final class SignatureParser {
     private SignatureParser() {

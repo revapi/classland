@@ -46,7 +46,8 @@ import org.revapi.classland.module.ClassData;
 import org.revapi.classland.module.ModuleSource;
 
 public final class Universe implements AutoCloseable {
-    public static final TypeSignature.Reference JAVA_LANG_OBJECT_SIG = new TypeSignature.Reference(0, "/java/lang/Object", emptyList(), null);
+    public static final TypeSignature.Reference JAVA_LANG_OBJECT_SIG = new TypeSignature.Reference(0,
+            "/java/lang/Object", emptyList(), null);
 
     private final Set<ModuleSource> moduleSources = newSetFromMap(new ConcurrentHashMap<>());
     private final Map<String, PackageElementImpl> packages = new ConcurrentHashMap<>();

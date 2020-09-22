@@ -16,13 +16,14 @@
  */
 package org.revapi.classland.impl.model.signature;
 
-import org.revapi.classland.impl.util.Nullable;
+import static java.util.Collections.emptyList;
 
-import javax.lang.model.type.TypeKind;
 import java.util.List;
 import java.util.Objects;
 
-import static java.util.Collections.emptyList;
+import javax.lang.model.type.TypeKind;
+
+import org.revapi.classland.impl.util.Nullable;
 
 public abstract class TypeSignature {
     private TypeSignature() {

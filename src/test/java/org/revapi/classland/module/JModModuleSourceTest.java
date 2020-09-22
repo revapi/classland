@@ -16,16 +16,17 @@
  */
 package org.revapi.classland.module;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.File;
+import java.nio.file.Path;
+
+import javax.lang.model.type.TypeKind;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.element.TypeElementBase;
-
-import javax.lang.model.type.TypeKind;
-import java.io.File;
-import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JModModuleSourceTest {
 

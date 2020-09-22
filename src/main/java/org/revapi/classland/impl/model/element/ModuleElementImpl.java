@@ -219,8 +219,7 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
 
         public ProvidesDirectiveImpl(ModuleProvideNode n) {
             service = memoize(() -> universe.getTypeByInternalName(n.service));
-            impls = memoize(() -> n.providers.stream().map(universe::getTypeByInternalName)
-                    .collect(toList()));
+            impls = memoize(() -> n.providers.stream().map(universe::getTypeByInternalName).collect(toList()));
         }
 
         @Override

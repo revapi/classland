@@ -36,8 +36,7 @@ public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
             List<TypeMirrorImpl> typeArguments) {
         super(universe);
         this.source = source;
-        this.enclosingType = enclosingType == null
-                ? new NoTypeImpl(universe, Collections::emptyList, TypeKind.NONE)
+        this.enclosingType = enclosingType == null ? new NoTypeImpl(universe, Collections::emptyList, TypeKind.NONE)
                 : enclosingType;
         this.typeArguments = typeArguments;
     }

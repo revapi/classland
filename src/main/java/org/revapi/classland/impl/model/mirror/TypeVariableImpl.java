@@ -16,18 +16,19 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import java.util.Collections;
+import java.util.List;
+
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeVariable;
+import javax.lang.model.type.TypeVisitor;
+
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.NoElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Nullable;
-
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeVariable;
-import javax.lang.model.type.TypeVisitor;
-import java.util.Collections;
-import java.util.List;
 
 public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     private final ElementImpl owner;
