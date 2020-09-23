@@ -35,8 +35,10 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeMirror;
 
+import org.objectweb.asm.TypeReference;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
@@ -49,9 +51,10 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
     private final Memoized<List<TypeMirrorImpl>> bounds;
     private final TypeParameterBound rawBound;
 
-    protected TypeParameterElementImpl(Universe universe, String name, TypeElementImpl owner,
-            TypeParameterBound bound) {
-        super(universe);
+    protected TypeParameterElementImpl(Universe universe, String name, TypeElementImpl owner, TypeParameterBound bound,
+            int index) {
+        super(universe, owner.asAnnotationSource(), new AnnotationTargetPath(
+                TypeReference.newTypeParameterReference(TypeReference.CLASS_TYPE_PARAMETER, index)));
         this.name = NameImpl.of(name);
         this.owner = owner;
         this.rawBound = bound;
@@ -122,11 +125,5 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
     @Override
     public <R, P> R accept(ElementVisitor<R, P> v, P p) {
         return v.visitTypeParameter(this, p);
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        // TODO implement
-        return emptyList();
     }
 }

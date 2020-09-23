@@ -41,7 +41,7 @@ public class ElementsImpl implements Elements {
 
     @Override
     public PackageElement getPackageElement(CharSequence name) {
-        return null;
+        return universe.getPackage(name.toString());
     }
 
     @Override
@@ -76,7 +76,7 @@ public class ElementsImpl implements Elements {
 
     @Override
     public Set<? extends ModuleElement> getAllModuleElements() {
-        return null;
+        return universe.getModules();
     }
 
     @Override

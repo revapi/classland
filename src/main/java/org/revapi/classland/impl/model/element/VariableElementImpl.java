@@ -17,10 +17,11 @@
 package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -30,37 +31,35 @@ import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
 
-import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
+import org.revapi.classland.impl.util.Nullable;
 
 public abstract class VariableElementImpl extends ElementImpl implements VariableElement {
-    private final Memoized<List<AnnotationMirrorImpl>> annos;
+    private VariableElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource) {
+        super(universe, annotationSource);
+    }
 
-    @SafeVarargs
-    private VariableElementImpl(Universe universe, List<? extends AnnotationNode>... annos) {
-        super(universe);
-
-        this.annos = memoize(() -> parseMoreAnnotations(annos));
+    private VariableElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
+            AnnotationTargetPath path) {
+        super(universe, annotationSource, path);
     }
 
     @Override
     public <R, P> R accept(ElementVisitor<R, P> v, P p) {
         return v.visitVariable(this, p);
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return annos.get();
     }
 
     public static final class Field extends VariableElementImpl {
@@ -70,8 +69,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         private final TypeElementImpl parent;
 
         public Field(Universe universe, TypeElementImpl parent, FieldNode field) {
-            super(universe, field.visibleAnnotations, field.invisibleAnnotations, field.visibleTypeAnnotations,
-                    field.invisibleTypeAnnotations);
+            super(universe, obtained(AnnotationSource.fromField(field)));
             this.field = field;
             this.modifiers = Modifiers.toFieldModifiers(field.access);
             this.name = NameImpl.of(field.name);
@@ -116,50 +114,34 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
     }
 
     public static final class Parameter extends VariableElementImpl {
-        private final ExecutableElementImpl parent;
+        private final ExecutableElementImpl method;
         private final NameImpl name;
         private final Set<Modifier> modifiers;
+        private final Memoized<TypeMirrorImpl> type;
 
-        public Parameter(Universe universe, ExecutableElementImpl parent, int index) {
-            super(universe, annos(parent, index));
-            this.parent = parent;
-            ParameterNode node = parent.getNode().parameters.get(index);
-            this.name = NameImpl.of(node.name);
-            this.modifiers = Modifiers.toParameterModifiers(node.access);
-        }
+        public Parameter(Universe universe, ExecutableElementImpl method, int index) {
+            super(universe, obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
+                    new AnnotationTargetPath(TypeReference.newFormalParameterReference(index)));
+            this.method = method;
+            List<ParameterNode> paramsInfo = method.getNode().parameters;
+            ParameterNode node = paramsInfo == null ? null : paramsInfo.get(index);
+            this.name = NameImpl.of(node == null ? null : node.name);
+            this.modifiers = node == null ? emptySet() : Modifiers.toParameterModifiers(node.access);
 
-        private static List<AnnotationNode> annos(ExecutableElementImpl method, int index) {
-            MethodNode n = method.getNode();
-
-            int paramCount = n.parameters.size();
-
-            ArrayList<AnnotationNode> ret = new ArrayList<>();
-            ret.addAll(annos(n.visibleAnnotableParameterCount, paramCount, index, n.visibleParameterAnnotations));
-            ret.addAll(annos(n.invisibleAnnotableParameterCount, paramCount, index, n.invisibleParameterAnnotations));
-            return ret;
-        }
-
-        private static List<AnnotationNode> annos(int shiftCount, int paramCount, int index,
-                List<AnnotationNode>[] allAnnos) {
-            if (allAnnos == null) {
-                return emptyList();
-            }
-
-            int indexShift = shiftCount == 0 ? 0 : paramCount - shiftCount;
-
-            List<AnnotationNode> ret = allAnnos[index - indexShift];
-            return ret == null ? emptyList() : ret;
+            this.type = method.getSignature().map(ms -> {
+                TypeSignature paramType = ms.parameterTypes.get(index);
+                return TypeMirrorFactory.create(universe, paramType, method);
+            });
         }
 
         @Override
-        public Object getConstantValue() {
+        public @Nullable Object getConstantValue() {
             return null;
         }
 
         @Override
         public TypeMirrorImpl asType() {
-            // TODO implement
-            return null;
+            return type.get();
         }
 
         @Override
@@ -179,7 +161,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
 
         @Override
         public Element getEnclosingElement() {
-            return parent;
+            return method;
         }
 
         @Override

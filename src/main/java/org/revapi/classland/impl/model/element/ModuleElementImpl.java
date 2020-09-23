@@ -24,6 +24,7 @@ import static org.objectweb.asm.Opcodes.ACC_OPEN;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
 import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.List;
 import java.util.Objects;
@@ -49,6 +50,7 @@ import org.objectweb.asm.tree.ModuleProvideNode;
 import org.objectweb.asm.tree.ModuleRequireNode;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
@@ -63,7 +65,7 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
     private final Memoized<List<? extends Directive>> directives;
 
     public ModuleElementImpl(Universe universe, ClassNode moduleType) {
-        super(universe);
+        super(universe, obtained(AnnotationSource.fromType(moduleType)));
         this.module = moduleType.module;
         this.name = NameImpl.of(module.name);
         this.type = memoize(

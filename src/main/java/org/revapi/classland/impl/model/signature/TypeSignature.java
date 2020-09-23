@@ -16,8 +16,6 @@
  */
 package org.revapi.classland.impl.model.signature;
 
-import static java.util.Collections.emptyList;
-
 import java.util.List;
 import java.util.Objects;
 

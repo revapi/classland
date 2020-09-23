@@ -16,6 +16,7 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -44,25 +45,45 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
     }
 
     @Override
+    public String toString() {
+        // TODO implement - this is required to be implemented by AnnotationValue in a particular way
+        return "AnnotationValueImpl{}";
+    }
+
+    @Override
     public <R, P> R accept(AnnotationValueVisitor<R, P> v, P p) {
         Object value = getValue.get();
         switch (kind) {
         case BOOLEAN:
             return v.visitBoolean((Boolean) value, p);
-        case INT:
-            return v.visitInt((Integer) value, p);
-        case ANNO:
-            return v.visitAnnotation((AnnotationMirror) value, p);
         case BYTE:
             return v.visitByte((Byte) value, p);
+        case SHORT:
+            return v.visitShort((Short) value, p);
+        case INT:
+            return v.visitInt((Integer) value, p);
+        case LONG:
+            return v.visitLong((Long) value, p);
+        case FLOAT:
+            return v.visitFloat((Float) value, p);
+        case DOUBLE:
+            return v.visitDouble((Double) value, p);
         case CHAR:
             return v.visitChar((Character) value, p);
-        case ENUM:
-            return v.visitEnumConstant((VariableElement) value, p);
+        case STRING:
+            return v.visitString((String) value, p);
         case TYPE:
             return v.visitType((TypeMirror) value, p);
+        case ENUM:
+            return v.visitEnumConstant((VariableElement) value, p);
+        case ANNO:
+            return v.visitAnnotation((AnnotationMirror) value, p);
+        case ARRAY:
+            // noinspection unchecked
+            return v.visitArray((List<? extends AnnotationValue>) value, p);
+        default:
+            throw new IllegalStateException("Unsupported annotation value kind: " + kind + ". This is a bug.");
         }
-        return null;
     }
 
     private enum Kind {

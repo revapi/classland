@@ -21,6 +21,7 @@ import java.util.List;
 import javax.lang.model.element.TypeElement;
 
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
@@ -30,8 +31,9 @@ public abstract class TypeElementBase extends ElementImpl implements TypeElement
     protected final String internalName;
     protected final Memoized<PackageElementImpl> pkg;
 
-    protected TypeElementBase(Universe universe, String internalName, Memoized<PackageElementImpl> pkg) {
-        super(universe);
+    protected TypeElementBase(Universe universe, String internalName, Memoized<PackageElementImpl> pkg,
+            Memoized<AnnotationSource> annos) {
+        super(universe, annos);
         this.internalName = internalName;
         this.pkg = pkg;
     }

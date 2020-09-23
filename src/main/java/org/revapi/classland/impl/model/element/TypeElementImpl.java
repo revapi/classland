@@ -22,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
 
+import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.PrimitiveTypeImpl;
@@ -59,6 +61,7 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.mirror.TypeVariableImpl;
 import org.revapi.classland.impl.model.signature.GenericTypeParameters;
 import org.revapi.classland.impl.model.signature.SignatureParser;
+import org.revapi.classland.impl.model.signature.TypeParameterBound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
@@ -67,7 +70,6 @@ import org.revapi.classland.impl.util.Nullable;
 
 public final class TypeElementImpl extends TypeElementBase implements TypeVariableResolutionContext {
     private final String internalName;
-    private final Memoized<List<AnnotationMirrorImpl>> annos;
     private final Memoized<NameImpl> qualifiedName;
     private final Memoized<NameImpl> simpleName;
     private final Memoized<ScanningResult> scan;
@@ -82,9 +84,10 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     private final Memoized<DeclaredTypeImpl> type;
     private final Memoized<List<TypeParameterElementImpl>> typeParameters;
     private final Memoized<Map<String, ExecutableElementImpl>> methods;
+    private final Memoized<GenericTypeParameters> signature;
 
     public TypeElementImpl(Universe universe, String internalName, Memoized<ClassNode> node, PackageElementImpl pkg) {
-        super(universe, internalName, obtained(pkg));
+        super(universe, internalName, obtained(pkg), node.map(AnnotationSource::fromType));
         this.internalName = internalName;
 
         this.scan = node.map(cls -> {
@@ -179,8 +182,6 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
         elementKind = node.map(n -> Modifiers.toTypeElementKind(n.access));
         modifiers = scan.map(r -> Modifiers.toTypeModifiers(r.effectiveAccess));
 
-        annos = scan.map(r -> parseAnnotations(r.classNode));
-
         enclosingElement = scan.map(r -> {
             switch (r.nestingKind) {
             case TOP_LEVEL:
@@ -198,7 +199,7 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
 
         });
 
-        Memoized<GenericTypeParameters> signature = scan.map(s -> {
+        signature = scan.map(s -> {
             TypeElementBase outerClass = s.outerClass == null ? null : universe.getTypeByInternalName(s.outerClass);
 
             ClassNode n = s.classNode;
@@ -213,17 +214,21 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
             }
         });
 
-        type = signature.map(p -> TypeMirrorFactory.create(universe, this));
+        type = memoize(() -> TypeMirrorFactory.create(universe, this));
 
         superClass = signature.map(ts -> TypeMirrorFactory.create(universe, ts.superClass, this));
 
         interfaces = signature.map(
                 ts -> ts.interfaces.stream().map(i -> TypeMirrorFactory.create(universe, i, this)).collect(toList()));
 
-        typeParametersMap = signature.map(ts -> ts.typeParameters.entrySet().stream()
-                .collect(toMap(Map.Entry::getKey,
-                        e -> new TypeParameterElementImpl(universe, e.getKey(), this, e.getValue()), (a, b) -> a,
-                        LinkedHashMap::new)));
+        typeParametersMap = signature.map(ts -> {
+            int i = 0;
+            LinkedHashMap<String, TypeParameterElementImpl> typeParams = new LinkedHashMap<>();
+            for (Map.Entry<String, TypeParameterBound> e : ts.typeParameters.entrySet()) {
+                typeParams.put(e.getKey(), new TypeParameterElementImpl(universe, e.getKey(), this, e.getValue(), i++));
+            }
+            return typeParams;
+        });
 
         typeParameters = typeParametersMap.map(m -> new ArrayList<>(m.values()));
 
@@ -249,6 +254,14 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
         return methods.get().get(methodName + "#" + methodDescriptor);
     }
 
+    public Memoized<AnnotationSource> asAnnotationSource() {
+        return scan.map(s -> AnnotationSource.fromType(s.classNode));
+    }
+
+    public Memoized<GenericTypeParameters> getSignature() {
+        return signature;
+    }
+
     @Override
     public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
         TypeParameterElementImpl p = typeParametersMap.get().get(name);
@@ -258,11 +271,6 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
         } else {
             return Optional.ofNullable(p);
         }
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return annos.get();
     }
 
     @Override

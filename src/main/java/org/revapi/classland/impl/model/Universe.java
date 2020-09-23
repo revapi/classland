@@ -23,6 +23,7 @@ import static org.revapi.classland.impl.util.ByteCode.parseClass;
 import static org.revapi.classland.impl.util.Exceptions.callWithRuntimeException;
 import static org.revapi.classland.impl.util.Exceptions.failWithRuntimeException;
 import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
 import static org.revapi.classland.impl.util.Packages.getPackageNameFromInternalName;
 
 import java.util.Collections;
@@ -42,6 +43,7 @@ import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 import org.revapi.classland.module.ClassData;
 import org.revapi.classland.module.ModuleSource;
 
@@ -91,24 +93,20 @@ public final class Universe implements AutoCloseable {
         moduleSources.add(source);
         ModuleContents contents = new ModuleContents(source);
         ModuleElementImpl module = contents.getModule().map(cd -> {
-            ClassNode cls = failWithRuntimeException(() -> parseClass(new ClassReader(cd.read())));
+            ClassNode cls = eagerParse(cd);
             ModuleElementImpl m = new ModuleElementImpl(this, cls);
             modules.add(m);
             return m;
         }).orElse(null);
 
         contents.getPackages().forEach((name, data) -> {
-            Memoized<List<AnnotationMirrorImpl>> annos = data == null ? memoize(Collections::emptyList)
-                    : memoize(() -> parseAnnotations(data));
-            packages.put(name, new PackageElementImpl(this, name, annos, module));
+            packages.put(name, new PackageElementImpl(this, name, lazyParse(data), module));
         });
 
         contents.getTypes().forEach(cd -> {
             String pkgName = getPackageNameFromInternalName(cd.getName());
             typesByInternalName.put(cd.getName(),
-                    new TypeElementImpl(this, cd.getName(),
-                            memoize(callWithRuntimeException(() -> parseClass(new ClassReader(cd.read())))),
-                            getPackage(pkgName)));
+                    new TypeElementImpl(this, cd.getName(), lazyParse(cd), getPackage(pkgName)));
         });
     }
 
@@ -124,4 +122,11 @@ public final class Universe implements AutoCloseable {
         return AnnotatedConstructImpl.parseAnnotations(this, cls);
     }
 
+    private Memoized<@Nullable ClassNode> lazyParse(@Nullable ClassData data) {
+        return data == null ? obtained(null) : memoize(() -> eagerParse(data));
+    }
+
+    private @Nullable ClassNode eagerParse(@Nullable ClassData data) {
+        return data == null ? null : failWithRuntimeException(() -> parseClass(new ClassReader(data.read())));
+    }
 }

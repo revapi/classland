@@ -17,14 +17,17 @@
 package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 
 import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -34,15 +37,17 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
 
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.signature.GenericMethodParameters;
+import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
@@ -52,26 +57,42 @@ public final class ExecutableElementImpl extends ElementImpl
     private final TypeElementImpl parent;
     private final MethodNode method;
     private final NameImpl name;
-    private final Memoized<List<AnnotationMirrorImpl>> annos;
+    private final Memoized<GenericMethodParameters> signature;
+    private final Memoized<TypeMirrorImpl> returnType;
     private final Memoized<List<VariableElementImpl>> parameters;
     private final Memoized<ElementKind> elementKind;
     private final Memoized<Set<Modifier>> modifiers;
 
     public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
-        super(universe);
+        super(universe, obtained(AnnotationSource.fromMethod(method)));
         this.parent = parent;
         this.method = method;
         this.name = NameImpl.of(method.name);
-        this.annos = memoize(() -> parseMoreAnnotations(method.visibleAnnotations, method.invisibleAnnotations));
-        this.parameters = method.parameters == null || method.parameters.isEmpty() ? obtained(emptyList())
-                : memoize(() -> {
-                    List<VariableElementImpl> ret = new ArrayList<>(method.parameters.size());
-                    for (int i = 0; i < method.parameters.size(); ++i) {
-                        ret.add(new VariableElementImpl.Parameter(universe, this, i));
-                    }
+        Type methodType = Type.getMethodType(method.desc);
+        Type[] parameterTypes = methodType.getArgumentTypes();
 
-                    return ret;
-                });
+        this.signature = memoize(() -> {
+            if (method.signature == null) {
+                return new GenericMethodParameters(new LinkedHashMap<>(0, 0.01f),
+                        SignatureParser.parseTypeRef(methodType.getReturnType().getInternalName()),
+                        Stream.of(methodType.getArgumentTypes())
+                                .map(t -> SignatureParser.parseTypeRef(t.getInternalName())).collect(toList()),
+                        method.exceptions.stream().map(SignatureParser::parseTypeRef).collect(toList()), parent);
+            } else {
+                return SignatureParser.parseMethod(method.signature, parent);
+            }
+        });
+
+        this.returnType = signature.map(s -> TypeMirrorFactory.create(universe, s.returnType, this));
+
+        this.parameters = parameterTypes.length == 0 ? obtained(emptyList()) : memoize(() -> {
+            List<VariableElementImpl> ret = new ArrayList<>(parameterTypes.length);
+            for (int i = 0; i < parameterTypes.length; ++i) {
+                ret.add(new VariableElementImpl.Parameter(universe, this, i));
+            }
+
+            return ret;
+        });
 
         this.elementKind = memoize(() -> {
             if ("<init>".equals(method.name)) {
@@ -96,15 +117,14 @@ public final class ExecutableElementImpl extends ElementImpl
         return method;
     }
 
+    Memoized<GenericMethodParameters> getSignature() {
+        return signature;
+    }
+
     @Override
     public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
         // TODO implement
         return Optional.empty();
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return annos.get();
     }
 
     @Override
@@ -120,7 +140,7 @@ public final class ExecutableElementImpl extends ElementImpl
     }
 
     @Override
-    public List<? extends VariableElement> getParameters() {
+    public List<VariableElementImpl> getParameters() {
         return parameters.get();
     }
 

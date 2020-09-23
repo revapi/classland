@@ -36,7 +36,7 @@ public class SignatureParserTest {
     @ParameterizedTest
     @MethodSource("fields")
     void fields(String signature, TypeSignature expected) {
-        TypeSignature sig = SignatureParser.parseField(signature);
+        TypeSignature sig = SignatureParser.parseTypeRef(signature);
         assertEquals(expected, sig);
     }
 

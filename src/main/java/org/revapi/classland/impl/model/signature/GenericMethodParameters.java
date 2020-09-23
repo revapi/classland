@@ -19,7 +19,6 @@ package org.revapi.classland.impl.model.signature;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.revapi.classland.impl.model.element.TypeElementImpl;
 
@@ -28,13 +27,15 @@ public class GenericMethodParameters {
     public final TypeSignature returnType;
     public final List<TypeSignature> parameterTypes;
     public final List<TypeSignature> exceptionTypes;
+    public final TypeElementImpl declaringType;
 
     public GenericMethodParameters(LinkedHashMap<String, TypeParameterBound> typeParameters, TypeSignature returnType,
-            List<TypeSignature> parameterTypes, List<TypeSignature> exceptionTypes) {
+            List<TypeSignature> parameterTypes, List<TypeSignature> exceptionTypes, TypeElementImpl declaringType) {
         this.typeParameters = typeParameters;
         this.returnType = returnType;
         this.parameterTypes = parameterTypes;
         this.exceptionTypes = exceptionTypes;
+        this.declaringType = declaringType;
     }
 
     @Override
@@ -45,17 +46,19 @@ public class GenericMethodParameters {
             return false;
         GenericMethodParameters that = (GenericMethodParameters) o;
         return typeParameters.equals(that.typeParameters) && returnType.equals(that.returnType)
-                && parameterTypes.equals(that.parameterTypes) && exceptionTypes.equals(that.exceptionTypes);
+                && parameterTypes.equals(that.parameterTypes) && exceptionTypes.equals(that.exceptionTypes)
+                && declaringType.equals(that.declaringType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(typeParameters, returnType, parameterTypes, exceptionTypes);
+        return Objects.hash(typeParameters, returnType, parameterTypes, exceptionTypes, declaringType);
     }
 
     @Override
     public String toString() {
         return "GenericMethodParameters{" + "typeParameters=" + typeParameters + ", returnType=" + returnType
-                + ", parameterTypes=" + parameterTypes + ", exceptionTypes=" + exceptionTypes + '}';
+                + ", parameterTypes=" + parameterTypes + ", exceptionTypes=" + exceptionTypes + ", owningType="
+                + declaringType + '}';
     }
 }

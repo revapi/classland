@@ -30,6 +30,7 @@ import javax.lang.model.type.TypeKind;
 
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.ErrorTypeImpl;
@@ -48,7 +49,7 @@ public class MissingTypeImpl extends TypeElementBase {
         super(universe, internalName, Memoized.memoize(() -> {
             String packageName = Packages.getPackageNameFromInternalName(internalName);
             return universe.getPackage(packageName);
-        }));
+        }), Memoized.obtained(AnnotationSource.EMPTY));
         type = new ErrorTypeImpl(universe, this);
 
         qualifiedName = NameImpl.of(internalName.replace('/', '.'));

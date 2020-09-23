@@ -32,20 +32,36 @@ import javax.lang.model.AnnotatedConstruct;
 
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.revapi.classland.impl.model.anno.AnnotationFinder;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class AnnotatedConstructImpl extends BaseModelImpl implements AnnotatedConstruct {
+    @Deprecated
     protected AnnotatedConstructImpl(Universe universe) {
         super(universe);
     }
 
-    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe,
-            @Nullable List<? extends AnnotationNode> annos) {
-        return annos == null ? Collections.emptyList() : annos.stream().map(a -> new AnnotationMirrorImpl(a, universe,
-                memoize(() -> universe.getTypeByInternalName(a.desc).asType()))).collect(toList());
+    protected AnnotatedConstructImpl(Universe universe, AnnotationTargetPath path) {
+        super(universe);
     }
 
+    @Deprecated
+    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe,
+            @Nullable List<? extends AnnotationNode> annos) {
+        return annos == null ? Collections.emptyList()
+                : annos.stream().map(a -> new AnnotationMirrorImpl(a, universe)).collect(toList());
+    }
+
+    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, AnnotationSource source,
+            AnnotationTargetPath path) {
+        return AnnotationFinder.find(path, source).stream().map(a -> new AnnotationMirrorImpl(a, universe))
+                .collect(toList());
+    }
+
+    @Deprecated
     @SafeVarargs
     public static List<AnnotationMirrorImpl> parseMoreAnnotations(Universe universe,
             @Nullable List<? extends AnnotationNode>... annos) {
@@ -65,7 +81,7 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
     }
 
     public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, ClassNode cls) {
-        return parseMoreAnnotations(universe, cls.visibleAnnotations, cls.invisibleAnnotations);
+        return parseAnnotations(universe, AnnotationSource.fromType(cls), new AnnotationTargetPath(null));
     }
 
     @Override
@@ -81,10 +97,7 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
         throw new UnsupportedOperationException();
     }
 
-    protected final List<AnnotationMirrorImpl> parseAnnotations(@Nullable List<? extends AnnotationNode> annos) {
-        return parseAnnotations(universe, annos);
-    }
-
+    @Deprecated
     @SafeVarargs
     protected final List<AnnotationMirrorImpl> parseMoreAnnotations(@Nullable List<? extends AnnotationNode>... annos) {
         return parseMoreAnnotations(universe, annos);

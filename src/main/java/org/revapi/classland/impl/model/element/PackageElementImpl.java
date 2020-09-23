@@ -34,28 +34,29 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
+import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 
 public final class PackageElementImpl extends ElementImpl implements PackageElement {
     private final NameImpl name;
     private final ModuleElementImpl module;
-    private final Memoized<List<AnnotationMirrorImpl>> annos;
     private final NoTypeImpl type;
     private final Memoized<List<? extends TypeElement>> types;
 
-    public PackageElementImpl(Universe universe, String name, Memoized<List<AnnotationMirrorImpl>> annos,
+    public PackageElementImpl(Universe universe, String name, Memoized<@Nullable ClassNode> node,
             ModuleElementImpl module) {
-        super(universe);
+        super(universe, node.map(n -> n == null ? AnnotationSource.EMPTY : AnnotationSource.fromType(n)));
         this.name = NameImpl.of(name);
         this.module = module;
-        this.type = new NoTypeImpl(universe, annos, TypeKind.PACKAGE);
+        this.type = new NoTypeImpl(universe, this.annos, TypeKind.PACKAGE);
         this.types = memoize(() -> universe.computeTypesForPackage(this).collect(toList()));
-        this.annos = annos;
     }
 
     @Override
@@ -101,10 +102,5 @@ public final class PackageElementImpl extends ElementImpl implements PackageElem
     @Override
     public <R, P> R accept(ElementVisitor<R, P> v, P p) {
         return v.visitPackage(this, p);
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return annos.get();
     }
 }

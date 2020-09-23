@@ -28,6 +28,7 @@ import javax.lang.model.type.TypeKind;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.revapi.classland.impl.model.element.TypeElementBase;
+import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.classland.impl.util.Asm;
 import org.revapi.classland.impl.util.Nullable;
 
@@ -42,14 +43,14 @@ public final class SignatureParser {
         return visitor.get(outerClass);
     }
 
-    public static GenericMethodParameters parseMethod(String signature, GenericTypeParameters declaringClass) {
+    public static GenericMethodParameters parseMethod(String signature, TypeElementImpl declaringClass) {
         MethodDecl visitor = new MethodDecl();
         SignatureReader rdr = new SignatureReader(signature);
         rdr.accept(visitor);
         return visitor.get(declaringClass);
     }
 
-    public static TypeSignature parseField(String signature) {
+    public static TypeSignature parseTypeRef(String signature) {
         TypeSig visitor = new TypeSig();
         SignatureReader rdr = new SignatureReader(signature);
         rdr.acceptType(visitor);
@@ -117,7 +118,7 @@ public final class SignatureParser {
         TypeSig returnType;
         List<TypeSig> exceptions;
 
-        GenericMethodParameters get(GenericTypeParameters declaringClass) {
+        GenericMethodParameters get(TypeElementImpl declaringClass) {
             List<TypeSignature> params = parameters == null ? emptyList()
                     : parameters.stream().map(TypeSig::get).collect(toList());
             TypeSignature ret = returnType == null ? null : returnType.get();
@@ -125,7 +126,7 @@ public final class SignatureParser {
             List<TypeSignature> exs = exceptions == null ? emptyList()
                     : exceptions.stream().map(TypeSig::get).collect(toList());
 
-            return new GenericMethodParameters(typeParams, ret, params, exs);
+            return new GenericMethodParameters(typeParams, ret, params, exs, declaringClass);
         }
 
         @Override

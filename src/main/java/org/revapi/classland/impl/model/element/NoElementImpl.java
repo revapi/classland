@@ -18,6 +18,8 @@ package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
 
+import static org.revapi.classland.impl.util.Memoized.obtained;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -31,13 +33,15 @@ import javax.lang.model.type.TypeKind;
 
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.util.Memoized;
 
 public class NoElementImpl extends ElementImpl {
     public NoElementImpl(Universe universe) {
-        super(universe);
+        super(universe, obtained(AnnotationSource.EMPTY));
     }
 
     @Override
