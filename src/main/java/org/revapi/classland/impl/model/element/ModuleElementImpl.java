@@ -27,7 +27,6 @@ import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -40,7 +39,6 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.ModuleExportNode;
@@ -48,8 +46,8 @@ import org.objectweb.asm.tree.ModuleNode;
 import org.objectweb.asm.tree.ModuleOpenNode;
 import org.objectweb.asm.tree.ModuleProvideNode;
 import org.objectweb.asm.tree.ModuleRequireNode;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;

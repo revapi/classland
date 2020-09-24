@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.impl.model;
+package org.revapi.classland.impl;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.newSetFromMap;
@@ -33,6 +33,9 @@ import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
+import org.revapi.classland.archive.Archive;
+import org.revapi.classland.archive.ClassData;
+import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.PackageElementImpl;
@@ -42,8 +45,6 @@ import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
-import org.revapi.classland.archive.ClassData;
-import org.revapi.classland.archive.Archive;
 
 public final class Universe implements AutoCloseable {
     public static final TypeSignature.Reference JAVA_LANG_OBJECT_SIG = new TypeSignature.Reference(0,

@@ -21,7 +21,7 @@ import java.util.List;
 import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.TypeKind;
 
-import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.TypeElementBase;

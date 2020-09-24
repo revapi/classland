@@ -18,7 +18,6 @@ package org.revapi.classland.impl.model.mirror;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -26,10 +25,9 @@ import javax.lang.model.type.DeclaredType;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.BaseModelImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.element.ExecutableElementImpl;
-import org.revapi.classland.impl.model.element.TypeElementBase;
 
 public final class AnnotationMirrorImpl extends BaseModelImpl implements AnnotationMirror {
     private final AnnotationNode node;

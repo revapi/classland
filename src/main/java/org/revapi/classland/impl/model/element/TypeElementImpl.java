@@ -17,7 +17,6 @@
 package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
@@ -26,7 +25,6 @@ import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,33 +32,24 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.type.TypeMirror;
 
 import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
-import org.revapi.classland.impl.model.mirror.PrimitiveTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
-import org.revapi.classland.impl.model.mirror.TypeVariableImpl;
 import org.revapi.classland.impl.model.signature.GenericTypeParameters;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeParameterBound;

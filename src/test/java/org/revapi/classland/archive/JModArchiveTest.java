@@ -25,7 +25,7 @@ import javax.lang.model.type.TypeKind;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 
 public class JModArchiveTest {

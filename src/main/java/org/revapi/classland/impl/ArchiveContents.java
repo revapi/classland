@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.impl.model;
+package org.revapi.classland.impl;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,9 +23,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.revapi.classland.impl.util.Nullable;
-import org.revapi.classland.archive.ClassData;
 import org.revapi.classland.archive.Archive;
+import org.revapi.classland.archive.ClassData;
+import org.revapi.classland.impl.util.Nullable;
 
 public class ArchiveContents {
     private static final int PACKAGE_CLASS_NAME_LENGTH = "package-info.class".length();

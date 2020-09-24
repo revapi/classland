@@ -16,6 +16,8 @@
  */
 package org.revapi.classland.impl.model;
 
+import org.revapi.classland.impl.Universe;
+
 public abstract class BaseModelImpl {
     protected final Universe universe;
 

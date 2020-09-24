@@ -16,19 +16,13 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
-import static java.util.Collections.emptyList;
-
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
-
 import java.util.List;
-import java.util.function.Supplier;
 
 import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
-import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.util.Memoized;
 
 public class NoTypeImpl extends TypeMirrorImpl implements NoType {

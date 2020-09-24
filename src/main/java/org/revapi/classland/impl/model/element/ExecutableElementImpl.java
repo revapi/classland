@@ -42,10 +42,9 @@ import javax.lang.model.element.TypeParameterElement;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.MethodNode;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;

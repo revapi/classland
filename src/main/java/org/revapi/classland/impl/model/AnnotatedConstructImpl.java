@@ -17,28 +17,19 @@
 package org.revapi.classland.impl.model;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Stream.concat;
-
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.lang.model.AnnotatedConstruct;
 
-import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationFinder;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
-import org.revapi.classland.impl.util.Nullable;
 
 public abstract class AnnotatedConstructImpl extends BaseModelImpl implements AnnotatedConstruct {
     protected final Memoized<List<AnnotationMirrorImpl>> annos;

@@ -20,7 +20,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 import static org.objectweb.asm.TypeReference.newFormalParameterReference;
-import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.List;
@@ -33,12 +32,10 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.VariableElement;
 
-import org.objectweb.asm.Type;
-import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.ParameterNode;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;

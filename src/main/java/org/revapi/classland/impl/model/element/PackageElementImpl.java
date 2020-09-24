@@ -32,13 +32,11 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 import org.objectweb.asm.tree.ClassNode;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;

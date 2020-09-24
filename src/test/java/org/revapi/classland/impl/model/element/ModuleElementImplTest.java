@@ -30,8 +30,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.impl.Universe;
 
 @TestInstance(PER_CLASS)
 class ModuleElementImplTest {

@@ -20,7 +20,7 @@ import java.util.List;
 
 import javax.lang.model.element.TypeElement;
 
-import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;

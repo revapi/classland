@@ -17,9 +17,8 @@
 package org.revapi.classland.archive;
 
 /**
- * This is an abstraction of some kind of archive representing java class data.
- * This data represents all kinds of Java elements stored in a class file like types, modules or
- * package info classes.
+ * This is an abstraction of some kind of archive representing java class data. This data represents all kinds of Java
+ * elements stored in a class file like types, modules or package info classes.
  */
 public interface Archive extends Iterable<ClassData>, AutoCloseable {
 }

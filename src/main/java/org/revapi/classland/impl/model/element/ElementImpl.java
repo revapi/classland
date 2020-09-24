@@ -16,15 +16,12 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import java.util.List;
-
 import javax.lang.model.element.Element;
 
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
 

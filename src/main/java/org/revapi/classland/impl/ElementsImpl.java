@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.impl.model;
+package org.revapi.classland.impl;
 
 import java.io.Writer;
 import java.util.List;

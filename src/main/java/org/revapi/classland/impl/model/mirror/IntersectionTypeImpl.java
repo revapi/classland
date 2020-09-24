@@ -26,7 +26,7 @@ import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
-import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.Universe;
 
 public class IntersectionTypeImpl extends TypeMirrorImpl implements IntersectionType {
     private final List<TypeMirrorImpl> bounds;

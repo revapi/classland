@@ -25,8 +25,8 @@ import javax.lang.model.element.AnnotationValueVisitor;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.BaseModelImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.util.Memoized;
 
 public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValue {

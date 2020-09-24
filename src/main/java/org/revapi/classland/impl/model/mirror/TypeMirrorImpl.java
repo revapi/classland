@@ -20,8 +20,8 @@ import java.util.List;
 
 import javax.lang.model.type.TypeMirror;
 
+import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
-import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.util.Memoized;

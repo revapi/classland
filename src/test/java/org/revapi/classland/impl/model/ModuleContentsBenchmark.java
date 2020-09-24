@@ -24,8 +24,9 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
-import org.revapi.classland.archive.JarFileArchive;
 import org.revapi.classland.archive.Archive;
+import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.impl.ArchiveContents;
 
 public class ModuleContentsBenchmark {
 
