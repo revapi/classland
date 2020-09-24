@@ -19,6 +19,8 @@ package org.revapi.classland.impl.model.element;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
+import static org.objectweb.asm.TypeReference.METHOD_RETURN;
+import static org.objectweb.asm.TypeReference.newTypeReference;
 import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
@@ -40,10 +42,12 @@ import javax.lang.model.element.TypeParameterElement;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.MethodNode;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.GenericMethodParameters;
@@ -83,7 +87,10 @@ public final class ExecutableElementImpl extends ElementImpl
             }
         });
 
-        this.returnType = signature.map(s -> TypeMirrorFactory.create(universe, s.returnType, this));
+        AnnotationSource annotationSource = AnnotationSource.fromMethod(method);
+
+        this.returnType = signature.map(s -> TypeMirrorFactory.create(universe, s.returnType, this,
+                obtained(annotationSource), new AnnotationTargetPath(newTypeReference(METHOD_RETURN))));
 
         this.parameters = parameterTypes.length == 0 ? obtained(emptyList()) : memoize(() -> {
             List<VariableElementImpl> ret = new ArrayList<>(parameterTypes.length);

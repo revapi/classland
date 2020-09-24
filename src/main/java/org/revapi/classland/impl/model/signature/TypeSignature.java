@@ -73,7 +73,7 @@ public abstract class TypeSignature {
         public PrimitiveType(int arrayDimension, TypeKind type) {
             super(arrayDimension);
             this.type = type;
-            if (!type.isPrimitive()) {
+            if (type != TypeKind.VOID && !type.isPrimitive()) {
                 throw new IllegalArgumentException("A primitive type constructed with a non-primitive class.");
             }
         }

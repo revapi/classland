@@ -18,6 +18,9 @@ package org.revapi.classland.impl.model.mirror;
 
 import static java.util.stream.Collectors.toList;
 
+import static org.revapi.classland.impl.util.Memoized.memoize;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.lang.model.element.ElementVisitor;
@@ -25,13 +28,17 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.SimpleElementVisitor8;
 
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
+import org.revapi.classland.impl.model.signature.Bound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
+import org.revapi.classland.impl.util.Memoized;
 
 public final class TypeMirrorFactory {
     private TypeMirrorFactory() {
@@ -41,42 +48,56 @@ public final class TypeMirrorFactory {
     private static final TypeSignature.Visitor<TypeMirrorImpl, ResolutionContext> SIGNATURE_VISITOR = new TypeSignature.Visitor<>() {
         @Override
         public TypeMirrorImpl visitPrimitiveType(TypeSignature.PrimitiveType type, ResolutionContext ctx) {
-            return new PrimitiveTypeImpl(ctx.universe, type.type);
+            return new PrimitiveTypeImpl(ctx.universe, type.type, ctx.annotationSource, ctx.path);
         }
 
         @Override
         public TypeMirrorImpl visitTypeVariable(TypeSignature.Variable typeVariable, ResolutionContext ctx) {
             // TODO this is probably not correct... Type variables can also represent wildcard capture, which
             // is currently not covered here...
-            return ctx.context.resolveTypeVariable(typeVariable.name).map(ElementImpl::asType).orElse(null);
+            return ctx.variables.resolveTypeVariable(typeVariable.name).map(ElementImpl::asType).orElse(null);
         }
 
         @Override
         public TypeMirrorImpl visitType(TypeSignature.Reference typeReference, ResolutionContext ctx) {
             TypeElementBase t = ctx.universe.getTypeByInternalName(typeReference.internalTypeName);
 
-            List<TypeMirrorImpl> args = typeReference.typeArguments.stream().map(b -> {
+            List<TypeMirrorImpl> args = new ArrayList<>(typeReference.typeArguments.size());
+            int i = 0;
+            for (Bound b : typeReference.typeArguments) {
+                AnnotationTargetPath oldPath = ctx.path;
+                AnnotationTargetPath newPath = ctx.path.clone().typeArgument(i++);
+                ctx.path = newPath;
                 switch (b.boundType) {
                 case UNBOUNDED:
-                    return new WildcardTypeImpl(ctx.universe, null, null);
+                    args.add(new WildcardTypeImpl(ctx.universe, null, null, ctx.annotationSource, ctx.path));
+                    break;
                 case EXACT:
-                    return b.type.accept(this, ctx);
+                    args.add(b.type.accept(this, ctx));
+                    break;
                 case SUPER:
-                    return new WildcardTypeImpl(ctx.universe, null, b.type.accept(this, ctx));
+                    newPath.wildcardBound();
+                    args.add(new WildcardTypeImpl(ctx.universe, null, b.type.accept(this, ctx), ctx.annotationSource,
+                            ctx.path));
+                    break;
                 case EXTENDS:
-                    return new WildcardTypeImpl(ctx.universe, b.type.accept(this, ctx), null);
+                    newPath.wildcardBound();
+                    args.add(new WildcardTypeImpl(ctx.universe, b.type.accept(this, ctx), null, ctx.annotationSource,
+                            ctx.path));
+                    break;
+                default:
+                    throw new IllegalStateException("Unhandled bound " + b);
                 }
-
-                throw new IllegalStateException("Unhandled bound: " + b);
-            }).collect(toList());
+                ctx.path = oldPath;
+            }
 
             TypeMirrorImpl enclosing = typeReference.outerClass == null ? null
                     : typeReference.outerClass.accept(this, ctx);
 
             if (t instanceof MissingTypeImpl) {
-                return new ErrorTypeImpl(ctx.universe, t, enclosing, args);
+                return new ErrorTypeImpl(ctx.universe, t, enclosing, args, ctx.annotationSource, ctx.path);
             } else {
-                return new DeclaredTypeImpl(ctx.universe, t, enclosing, args);
+                return new DeclaredTypeImpl(ctx.universe, t, enclosing, args, ctx.annotationSource, ctx.path);
             }
         }
     };
@@ -90,16 +111,19 @@ public final class TypeMirrorFactory {
 
     public static DeclaredTypeImpl create(Universe universe, TypeElementImpl element) {
         return new DeclaredTypeImpl(universe, element, MIRROR_OF_TYPE.visit(element.getEnclosingElement()),
-                element.getTypeParameters().stream().map(TypeMirrorFactory::create).collect(toList()));
+                element.getTypeParameters().stream().map(TypeMirrorFactory::create).collect(toList()),
+                memoize(element::getAnnotationMirrors));
     }
 
     public static DeclaredTypeImpl createJavaLangObject(Universe universe) {
-        return (DeclaredTypeImpl) create(universe, Universe.JAVA_LANG_OBJECT_SIG, TypeVariableResolutionContext.EMPTY);
+        return (DeclaredTypeImpl) create(universe, Universe.JAVA_LANG_OBJECT_SIG, TypeVariableResolutionContext.EMPTY,
+                AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT);
     }
 
     public static TypeMirrorImpl create(Universe universe, TypeSignature type,
-            TypeVariableResolutionContext resolutionContext) {
-        return create(type, new ResolutionContext(universe, resolutionContext));
+            TypeVariableResolutionContext resolutionContext, Memoized<AnnotationSource> annotationSource,
+            AnnotationTargetPath startPath) {
+        return create(type, new ResolutionContext(universe, resolutionContext, annotationSource, startPath));
     }
 
     private static TypeMirrorImpl create(TypeSignature type, ResolutionContext ctx) {
@@ -110,21 +134,18 @@ public final class TypeMirrorFactory {
         return new TypeVariableImpl(element);
     }
 
-    public static TypeVariableImpl create(Universe universe, TypeSignature upperBound, TypeSignature lowerBound,
-            TypeVariableResolutionContext resolutionContext) {
-        ResolutionContext ctx = new ResolutionContext(universe, resolutionContext);
-        TypeMirrorImpl u = upperBound == null ? null : create(upperBound, ctx);
-        TypeMirrorImpl l = lowerBound == null ? null : create(lowerBound, ctx);
-        return new TypeVariableImpl(universe, u, l);
-    }
-
     private static final class ResolutionContext {
         final Universe universe;
-        final TypeVariableResolutionContext context;
+        final TypeVariableResolutionContext variables;
+        final Memoized<AnnotationSource> annotationSource;
+        AnnotationTargetPath path;
 
-        ResolutionContext(Universe universe, TypeVariableResolutionContext context) {
+        ResolutionContext(Universe universe, TypeVariableResolutionContext variables,
+                Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path) {
             this.universe = universe;
-            this.context = context;
+            this.variables = variables;
+            this.annotationSource = annotationSource;
+            this.path = path;
         }
     }
 }

@@ -16,7 +16,6 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.lang.model.element.Element;
@@ -30,20 +29,13 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
 
 public abstract class ElementImpl extends AnnotatedConstructImpl implements Element {
-    protected final Memoized<List<AnnotationMirrorImpl>> annos;
 
     protected ElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource) {
         this(universe, annotationSource, AnnotationTargetPath.ROOT);
     }
 
     protected ElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path) {
-        super(universe, path);
-        annos = annotationSource.map(s -> parseAnnotations(universe, s, path));
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return annos.get();
+        super(universe, annotationSource, path);
     }
 
     @Override

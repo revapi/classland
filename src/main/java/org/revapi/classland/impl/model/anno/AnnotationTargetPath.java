@@ -20,7 +20,7 @@ import org.objectweb.asm.TypePath;
 import org.objectweb.asm.TypeReference;
 import org.revapi.classland.impl.util.Nullable;
 
-public class AnnotationTargetPath {
+public class AnnotationTargetPath implements Cloneable {
     public static final AnnotationTargetPath ROOT = new AnnotationTargetPath(null);
 
     public final @Nullable TypeReference ref;
@@ -40,7 +40,7 @@ public class AnnotationTargetPath {
         return this;
     }
 
-    public AnnotationTargetPath wildcard() {
+    public AnnotationTargetPath wildcardBound() {
         typePathSteps.append('*');
         return this;
     }
@@ -52,5 +52,13 @@ public class AnnotationTargetPath {
 
     public TypePath stepsAsTypePath() {
         return TypePath.fromString(typePathSteps.toString());
+    }
+
+    @Override
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public AnnotationTargetPath clone() {
+        AnnotationTargetPath ret = new AnnotationTargetPath(ref);
+        ret.typePathSteps.append(this.typePathSteps);
+        return ret;
     }
 }

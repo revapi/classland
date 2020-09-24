@@ -18,6 +18,8 @@ package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
 
+import static org.revapi.classland.impl.util.Memoized.obtained;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -49,8 +51,8 @@ public class MissingTypeImpl extends TypeElementBase {
         super(universe, internalName, Memoized.memoize(() -> {
             String packageName = Packages.getPackageNameFromInternalName(internalName);
             return universe.getPackage(packageName);
-        }), Memoized.obtained(AnnotationSource.EMPTY));
-        type = new ErrorTypeImpl(universe, this);
+        }), AnnotationSource.MEMOIZED_EMPTY);
+        type = new ErrorTypeImpl(universe, this, null, emptyList(), this.annos);
 
         qualifiedName = NameImpl.of(internalName.replace('/', '.'));
         int lastSlash = internalName.lastIndexOf('/');
@@ -84,7 +86,7 @@ public class MissingTypeImpl extends TypeElementBase {
 
     @Override
     public TypeMirrorImpl getSuperclass() {
-        return new NoTypeImpl(universe, Collections::emptyList, TypeKind.NONE);
+        return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
     }
 
     @Override

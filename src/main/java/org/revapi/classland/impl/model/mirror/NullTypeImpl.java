@@ -16,6 +16,10 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import static java.util.Collections.emptyList;
+
+import static org.revapi.classland.impl.util.Memoized.obtained;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -27,7 +31,7 @@ import org.revapi.classland.impl.model.Universe;
 
 public class NullTypeImpl extends TypeMirrorImpl implements NullType {
     public NullTypeImpl(Universe universe) {
-        super(universe);
+        super(universe, obtained(emptyList()));
     }
 
     @Override
@@ -38,11 +42,6 @@ public class NullTypeImpl extends TypeMirrorImpl implements NullType {
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitNull(this, p);
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return Collections.emptyList();
     }
 
     @Override

@@ -16,13 +16,23 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import java.util.List;
+
 import javax.lang.model.type.TypeMirror;
 
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.util.Memoized;
 
 public abstract class TypeMirrorImpl extends AnnotatedConstructImpl implements TypeMirror {
-    public TypeMirrorImpl(Universe universe) {
-        super(universe);
+    protected TypeMirrorImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
+            AnnotationTargetPath path) {
+        super(universe, annotationSource, path);
+    }
+
+    protected TypeMirrorImpl(Universe universe, Memoized<List<AnnotationMirrorImpl>> annos) {
+        super(universe, annos);
     }
 }

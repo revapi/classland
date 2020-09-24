@@ -41,12 +41,12 @@ import org.revapi.classland.impl.util.Memoized;
 
 public class NoElementImpl extends ElementImpl {
     public NoElementImpl(Universe universe) {
-        super(universe, obtained(AnnotationSource.EMPTY));
+        super(universe, AnnotationSource.MEMOIZED_EMPTY);
     }
 
     @Override
     public TypeMirrorImpl asType() {
-        return new NoTypeImpl(universe, Collections::emptyList, TypeKind.NONE);
+        return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
     }
 
     @Override

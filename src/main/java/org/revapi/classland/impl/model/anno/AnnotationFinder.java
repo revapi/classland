@@ -26,6 +26,7 @@ import org.objectweb.asm.TypePath;
 import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.TypeAnnotationNode;
+import org.revapi.classland.impl.util.Nullable;
 
 public class AnnotationFinder {
 
@@ -47,8 +48,8 @@ public class AnnotationFinder {
         }
     }
 
-    private static boolean matches(TypeAnnotationNode anno, TypeReference ref, TypePath path) {
+    private static boolean matches(TypeAnnotationNode anno, TypeReference ref, @Nullable TypePath path) {
         return anno.typeRef == ref.getValue() && ((anno.typePath == null && path == null)
-                || (anno.typePath != null && anno.typePath.toString().equals(path.toString())));
+                || (anno.typePath != null && path != null && anno.typePath.toString().equals(path.toString())));
     }
 }

@@ -16,6 +16,11 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import static java.util.Collections.emptyList;
+
+import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -24,27 +29,35 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
+import org.revapi.classland.impl.model.element.TypeElementBase;
+import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
 
 public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
-    private final ElementImpl source;
+    private final TypeElementBase source;
     private final TypeMirrorImpl enclosingType;
     private final List<TypeMirrorImpl> typeArguments;
 
-    public DeclaredTypeImpl(Universe universe, ElementImpl source, @Nullable TypeMirrorImpl enclosingType,
-            List<TypeMirrorImpl> typeArguments) {
-        super(universe);
+    public DeclaredTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
+            List<TypeMirrorImpl> typeArguments, Memoized<AnnotationSource> annotationSource,
+            AnnotationTargetPath path) {
+        super(universe, annotationSource, path);
         this.source = source;
-        this.enclosingType = enclosingType == null ? new NoTypeImpl(universe, Collections::emptyList, TypeKind.NONE)
+        this.enclosingType = enclosingType == null ? new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE)
                 : enclosingType;
         this.typeArguments = typeArguments;
     }
 
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        // TODO implement
-        return Collections.emptyList();
+    public DeclaredTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
+            List<TypeMirrorImpl> typeArguments, Memoized<List<AnnotationMirrorImpl>> annos) {
+        super(universe, annos);
+        this.source = source;
+        this.enclosingType = enclosingType == null ? new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE)
+                : enclosingType;
+        this.typeArguments = typeArguments;
     }
 
     @Override

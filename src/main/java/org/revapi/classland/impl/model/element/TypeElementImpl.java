@@ -48,11 +48,13 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeMirror;
 
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.PrimitiveTypeImpl;
@@ -216,10 +218,20 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
 
         type = memoize(() -> TypeMirrorFactory.create(universe, this));
 
-        superClass = signature.map(ts -> TypeMirrorFactory.create(universe, ts.superClass, this));
+        superClass = signature.map(ts -> TypeMirrorFactory.create(universe, ts.superClass, this, asAnnotationSource(),
+                new AnnotationTargetPath(TypeReference.newSuperTypeReference(-1))));
 
-        interfaces = signature.map(
-                ts -> ts.interfaces.stream().map(i -> TypeMirrorFactory.create(universe, i, this)).collect(toList()));
+        interfaces = signature.map(ts -> {
+            List<TypeMirrorImpl> ret = new ArrayList<>(ts.interfaces.size());
+
+            int i = 0;
+            for (TypeSignature iface : ts.interfaces) {
+                ret.add(TypeMirrorFactory.create(universe, iface, this, asAnnotationSource(),
+                        new AnnotationTargetPath(TypeReference.newSuperTypeReference(i++))));
+            }
+
+            return ret;
+        });
 
         typeParametersMap = signature.map(ts -> {
             int i = 0;

@@ -19,6 +19,7 @@ package org.revapi.classland.impl.model.element;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
+import static org.objectweb.asm.TypeReference.newFormalParameterReference;
 import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
@@ -121,7 +122,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
 
         public Parameter(Universe universe, ExecutableElementImpl method, int index) {
             super(universe, obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
-                    new AnnotationTargetPath(TypeReference.newFormalParameterReference(index)));
+                    new AnnotationTargetPath(newFormalParameterReference(index)));
             this.method = method;
             List<ParameterNode> paramsInfo = method.getNode().parameters;
             ParameterNode node = paramsInfo == null ? null : paramsInfo.get(index);
@@ -130,7 +131,9 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
 
             this.type = method.getSignature().map(ms -> {
                 TypeSignature paramType = ms.parameterTypes.get(index);
-                return TypeMirrorFactory.create(universe, paramType, method);
+                return TypeMirrorFactory.create(universe, paramType, method,
+                        obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
+                        new AnnotationTargetPath(newFormalParameterReference(index)));
             });
         }
 

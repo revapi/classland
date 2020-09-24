@@ -16,6 +16,9 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -24,10 +27,13 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.TypeVisitor;
 
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.NoElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
+import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
 
 public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
@@ -36,19 +42,19 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     private final TypeMirrorImpl lowerBound;
 
     // used to construct a wildcard capture
-    public TypeVariableImpl(Universe universe, @Nullable TypeMirrorImpl upperBound,
-            @Nullable TypeMirrorImpl lowerBound) {
-        super(universe);
+    public TypeVariableImpl(Universe universe, @Nullable TypeMirrorImpl upperBound, @Nullable TypeMirrorImpl lowerBound,
+            Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path) {
+        super(universe, annotationSource, path);
         this.owner = new NoElementImpl(universe);
         this.upperBound = upperBound == null ? new NullTypeImpl(universe) : upperBound;
-        this.lowerBound = lowerBound == null
-                ? TypeMirrorFactory.create(universe, Universe.JAVA_LANG_OBJECT_SIG, TypeVariableResolutionContext.EMPTY)
+        this.lowerBound = lowerBound == null ? TypeMirrorFactory.create(universe, Universe.JAVA_LANG_OBJECT_SIG,
+                TypeVariableResolutionContext.EMPTY, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT)
                 : lowerBound;
     }
 
     // used to construct a typevar based on the type parameter
     public TypeVariableImpl(TypeParameterElementImpl owner) {
-        super(owner.getUniverse());
+        super(owner.getUniverse(), memoize(owner::getAnnotationMirrors));
         this.owner = owner;
         this.upperBound = new NullTypeImpl(universe);
         List<TypeMirrorImpl> bounds = owner.getBounds();

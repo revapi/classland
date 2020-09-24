@@ -16,7 +16,10 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import static java.util.Collections.emptyList;
+
 import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -30,12 +33,10 @@ import org.revapi.classland.impl.util.Memoized;
 
 public class NoTypeImpl extends TypeMirrorImpl implements NoType {
     private final TypeKind kind;
-    private final Memoized<List<AnnotationMirrorImpl>> annos;
 
-    public NoTypeImpl(Universe universe, Supplier<List<AnnotationMirrorImpl>> annos, TypeKind kind) {
-        super(universe);
+    public NoTypeImpl(Universe universe, Memoized<List<AnnotationMirrorImpl>> annos, TypeKind kind) {
+        super(universe, annos);
         this.kind = kind;
-        this.annos = memoize(annos);
     }
 
     @Override
@@ -46,10 +47,5 @@ public class NoTypeImpl extends TypeMirrorImpl implements NoType {
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitNoType(this, p);
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return annos.get();
     }
 }

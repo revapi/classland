@@ -16,7 +16,10 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
-import java.util.Collections;
+import static java.util.Collections.emptyList;
+
+import static org.revapi.classland.impl.util.Memoized.obtained;
+
 import java.util.List;
 
 import javax.lang.model.type.IntersectionType;
@@ -29,7 +32,7 @@ public class IntersectionTypeImpl extends TypeMirrorImpl implements Intersection
     private final List<TypeMirrorImpl> bounds;
 
     public IntersectionTypeImpl(Universe universe, List<TypeMirrorImpl> bounds) {
-        super(universe);
+        super(universe, obtained(emptyList()));
         this.bounds = bounds;
     }
 
@@ -46,11 +49,5 @@ public class IntersectionTypeImpl extends TypeMirrorImpl implements Intersection
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitIntersection(this, p);
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        // TODO implement
-        return Collections.emptyList();
     }
 }

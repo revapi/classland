@@ -23,12 +23,16 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
 import org.revapi.classland.impl.model.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.util.Memoized;
 
 public final class PrimitiveTypeImpl extends TypeMirrorImpl implements PrimitiveType {
     private final TypeKind typeKind;
 
-    public PrimitiveTypeImpl(Universe universe, TypeKind typeKind) {
-        super(universe);
+    public PrimitiveTypeImpl(Universe universe, TypeKind typeKind, Memoized<AnnotationSource> annotationSource,
+            AnnotationTargetPath path) {
+        super(universe, annotationSource, path);
         this.typeKind = typeKind;
     }
 

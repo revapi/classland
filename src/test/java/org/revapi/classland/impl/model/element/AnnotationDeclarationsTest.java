@@ -19,6 +19,7 @@ package org.revapi.classland.impl.model.element;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.jar.JarFile;
@@ -30,6 +31,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.module.JarFileModuleSource;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
@@ -80,6 +83,7 @@ class AnnotationDeclarationsTest {
     }
 
     @Test
+    @Disabled("until implemented")
     void onMethod() throws Exception {
         // TODO implement
     }
@@ -106,7 +110,6 @@ class AnnotationDeclarationsTest {
     }
 
     @Test
-    @Disabled("until implemented")
     void onMethodParameterTypeVariable() throws Exception {
         TypeElementImpl AnnotatedMethodParameterTypeVariable = (TypeElementImpl) u
                 .getTypeByInternalName("pkg/Annotations$AnnotatedMethodParameterTypeVariable");
@@ -118,7 +121,53 @@ class AnnotationDeclarationsTest {
         VariableElementImpl param = method.getParameters().get(0);
 
         List<AnnotationMirrorImpl> annos = param.getAnnotationMirrors();
+        assertTrue(annos.isEmpty());
+
+        TypeMirrorImpl t = param.asType();
+        assertTrue(t instanceof DeclaredTypeImpl);
+        DeclaredTypeImpl pt = (DeclaredTypeImpl) t;
+
+        assertEquals(1, pt.getTypeArguments().size());
+        TypeMirrorImpl paramTypeVar = pt.getTypeArguments().get(0);
+
+        annos = paramTypeVar.getAnnotationMirrors();
         assertEquals(1, annos.size());
+        assertSame(InvisibleAnno, annos.get(0).getAnnotationType().asElement());
+    }
+
+    @Test
+    @Disabled
+    void onField() throws Exception {
+        // TODO implement
+    }
+
+    @Test
+    @Disabled
+    void onFieldArray() throws Exception {
+        // TODO implement
+    }
+
+    @Test
+    @Disabled
+    void onFieldArrayDimension() throws Exception {
+        // TODO implement
+    }
+
+    @Test
+    @Disabled
+    void onMethodException() throws Exception {
+        // TODO implement
+    }
+
+    @Test
+    @Disabled
+    void onMethodReturnType() throws Exception {
+        // TODO implement
+    }
+
+    @Test
+    @Disabled
+    void onMethodDefaultValue() throws Exception {
         // TODO implement
     }
 }
