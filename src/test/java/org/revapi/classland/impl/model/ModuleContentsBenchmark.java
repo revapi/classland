@@ -24,19 +24,18 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.Blackhole;
-import org.revapi.classland.module.JarFileModuleSource;
-import org.revapi.classland.module.JarFileModuleSourceTest;
-import org.revapi.classland.module.ModuleSource;
+import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.archive.Archive;
 
 public class ModuleContentsBenchmark {
 
     @State(Scope.Thread)
     public static class StateHolder {
-        final ModuleSource source;
+        final Archive source;
         {
             try {
                 JarFile testJar = new JarFile(getClass().getClassLoader().getResource("asm-8.0.1.jar").getPath());
-                source = new JarFileModuleSource(testJar);
+                source = new JarFileArchive(testJar);
             } catch (IOException e) {
                 throw new IllegalStateException("Could not find the test jar.", e);
             }
@@ -50,6 +49,6 @@ public class ModuleContentsBenchmark {
 
     @Benchmark
     public void scanFullJar(StateHolder state, Blackhole hole) throws IOException {
-        hole.consume(new ModuleContents(state.source).getModule());
+        hole.consume(new ArchiveContents(state.source).getModule());
     }
 }

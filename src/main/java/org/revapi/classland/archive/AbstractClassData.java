@@ -14,28 +14,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
-import java.util.Iterator;
+import java.io.File;
 import java.util.Objects;
-import java.util.jar.JarFile;
 
-public class JarFileModuleSource implements ModuleSource {
-    private final JarFile jarFile;
+public abstract class AbstractClassData implements ClassData {
+    private final String name;
 
-    public JarFileModuleSource(JarFile jarFile) {
-        this.jarFile = jarFile;
+    protected AbstractClassData(String name) {
+        if (name.endsWith(".class")) {
+            name = name.substring(0, name.length() - 6);
+        }
+
+        if (File.separatorChar != '/') {
+            name = name.replace(File.separatorChar, '/');
+        }
+
+        this.name = name;
     }
 
     @Override
-    public Iterator<ClassData> iterator() {
-        return jarFile.stream().filter(e -> e.getName().endsWith(".class"))
-                .map(e -> (ClassData) new ZipEntryClassData(jarFile, e)).iterator();
-    }
-
-    @Override
-    public void close() throws Exception {
-        jarFile.close();
+    public String getName() {
+        return name;
     }
 
     @Override
@@ -44,17 +45,12 @@ public class JarFileModuleSource implements ModuleSource {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        JarFileModuleSource classData = (JarFileModuleSource) o;
-        return jarFile.equals(classData.jarFile);
+        AbstractClassData that = (AbstractClassData) o;
+        return name.equals(that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(jarFile);
-    }
-
-    @Override
-    public String toString() {
-        return "JarFileModuleSource{" + "jarFile=" + jarFile + '}';
+        return Objects.hash(name);
     }
 }

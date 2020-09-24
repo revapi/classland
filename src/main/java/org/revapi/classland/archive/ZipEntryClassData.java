@@ -14,19 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class JModEntryClassData extends AbstractClassData {
+public class ZipEntryClassData extends AbstractClassData {
     private final ZipFile file;
     private final ZipEntry entry;
 
-    public JModEntryClassData(ZipFile file, ZipEntry entry) {
-        super(entry.getName().substring("classes/".length()));
+    public ZipEntryClassData(ZipFile file, ZipEntry entry) {
+        super(entry.getName());
         this.file = file;
         this.entry = entry;
     }
@@ -38,6 +38,6 @@ public class JModEntryClassData extends AbstractClassData {
 
     @Override
     public String toString() {
-        return "JmodEntryClassData{" + "file=" + file + ", entry=" + entry + '}';
+        return "ZipEntryClassData{" + "file=" + file + ", entry=" + entry + '}';
     }
 }

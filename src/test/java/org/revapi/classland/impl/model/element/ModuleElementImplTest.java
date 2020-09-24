@@ -31,7 +31,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.module.JarFileModuleSource;
+import org.revapi.classland.archive.JarFileArchive;
 
 @TestInstance(PER_CLASS)
 class ModuleElementImplTest {
@@ -43,7 +43,7 @@ class ModuleElementImplTest {
     void setup() throws Exception {
         JarFile jar = new JarFile(getClass().getClassLoader().getResource("asm-8.0.1.jar").getPath());
         universe = new Universe();
-        universe.registerModule(new JarFileModuleSource(jar));
+        universe.registerArchive(new JarFileArchive(jar));
         assertEquals(1, universe.getModules().size());
         module = universe.getModules().iterator().next();
     }

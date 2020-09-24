@@ -14,29 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
-import java.io.File;
+import java.util.Iterator;
 import java.util.Objects;
+import java.util.jar.JarFile;
 
-public abstract class AbstractClassData implements ClassData {
-    private final String name;
+public class JarFileArchive implements Archive {
+    private final JarFile jarFile;
 
-    protected AbstractClassData(String name) {
-        if (name.endsWith(".class")) {
-            name = name.substring(0, name.length() - 6);
-        }
-
-        if (File.separatorChar != '/') {
-            name = name.replace(File.separatorChar, '/');
-        }
-
-        this.name = name;
+    public JarFileArchive(JarFile jarFile) {
+        this.jarFile = jarFile;
     }
 
     @Override
-    public String getName() {
-        return name;
+    public Iterator<ClassData> iterator() {
+        return jarFile.stream().filter(e -> e.getName().endsWith(".class"))
+                .map(e -> (ClassData) new ZipEntryClassData(jarFile, e)).iterator();
+    }
+
+    @Override
+    public void close() throws Exception {
+        jarFile.close();
     }
 
     @Override
@@ -45,12 +44,17 @@ public abstract class AbstractClassData implements ClassData {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        AbstractClassData that = (AbstractClassData) o;
-        return name.equals(that.name);
+        JarFileArchive classData = (JarFileArchive) o;
+        return jarFile.equals(classData.jarFile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(jarFile);
+    }
+
+    @Override
+    public String toString() {
+        return "JarFileModuleSource{" + "jarFile=" + jarFile + '}';
     }
 }

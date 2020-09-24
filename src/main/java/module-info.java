@@ -22,5 +22,5 @@ open module org.revapi.classland {
     requires jdk.compiler;
 
     exports org.revapi.classland;
-    exports org.revapi.classland.module;
+    exports org.revapi.classland.archive;
 }

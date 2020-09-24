@@ -24,19 +24,19 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.revapi.classland.impl.util.Nullable;
-import org.revapi.classland.module.ClassData;
-import org.revapi.classland.module.ModuleSource;
+import org.revapi.classland.archive.ClassData;
+import org.revapi.classland.archive.Archive;
 
-public class ModuleContents {
+public class ArchiveContents {
     private static final int PACKAGE_CLASS_NAME_LENGTH = "package-info.class".length();
-    private final ModuleSource source;
+    private final Archive source;
     private volatile boolean scanned = false;
     private final Map<String, @Nullable ClassData> packages = new HashMap<>();
     private final Set<ClassData> classes = new HashSet<>();
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<ClassData> module;
 
-    public ModuleContents(ModuleSource source) {
+    public ArchiveContents(Archive source) {
         this.source = source;
     }
 
@@ -95,7 +95,7 @@ public class ModuleContents {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        ModuleContents that = (ModuleContents) o;
+        ArchiveContents that = (ArchiveContents) o;
         return source.equals(that.source);
     }
 
@@ -106,6 +106,6 @@ public class ModuleContents {
 
     @Override
     public String toString() {
-        return "ModuleContents{" + "source=" + source + '}';
+        return "ArchiveContents{" + "source=" + source + '}';
     }
 }

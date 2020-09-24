@@ -22,22 +22,22 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.module.ModuleSource;
+import org.revapi.classland.archive.Archive;
 
 public final class Classland implements AutoCloseable {
     private final Universe universe = new Universe();
 
     /**
-     * Registers the module source with Classland. The module source is then managed by Classland and closed upon
-     * closing this instance. This is why this method doesn't accept a mere instance of a module source but rather a
-     * "factory" for it, so that it is made more clear that the caller is not supposed to manage the module source
+     * Registers the archive with Classland. The archive is then managed by Classland and closed upon
+     * closing this instance. This is why this method doesn't accept a mere instance of an archive but rather a
+     * "factory" for it, so that it is made more clear that the caller is not supposed to manage the archive
      * instance after it has been passed here.
      *
      * @param supplier
-     *            the supplier of a module source
+     *            the supplier of an archive
      */
-    public void registerModule(Supplier<ModuleSource> supplier) {
-        universe.registerModule(supplier.get());
+    public void registerArchive(Supplier<Archive> supplier) {
+        universe.registerArchive(supplier.get());
     }
 
     public Elements getElements() {

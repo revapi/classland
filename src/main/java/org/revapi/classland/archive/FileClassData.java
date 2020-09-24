@@ -14,7 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
-public class JarFileModuleSourceTest {
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+
+public class FileClassData extends AbstractClassData {
+    private final Path file;
+
+    public FileClassData(Path path) {
+        super(path.toString());
+        this.file = path;
+    }
+
+    @Override
+    public InputStream read() throws IOException {
+        return new FileInputStream(file.toFile());
+    }
+
+    @Override
+    public String toString() {
+        return "FileClassData{" + "file=" + file + '}';
+    }
 }

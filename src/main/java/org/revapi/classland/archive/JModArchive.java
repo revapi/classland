@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,10 +24,10 @@ import java.util.zip.ZipFile;
 /**
  * Reads classes from the jmod files (i.e. the files used for the JDK modules).
  */
-public class JModModuleSource implements ModuleSource {
+public class JModArchive implements Archive {
     private final ZipFile jmodFile;
 
-    public JModModuleSource(Path jmodFile) throws IOException {
+    public JModArchive(Path jmodFile) throws IOException {
         this.jmodFile = new ZipFile(jmodFile.toFile());
     }
 

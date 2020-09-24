@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +27,10 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class DirectoryModuleSource implements ModuleSource {
+public class DirectoryArchive implements Archive {
     private final File rootDir;
 
-    public DirectoryModuleSource(File rootDir) {
+    public DirectoryArchive(File rootDir) {
         this.rootDir = rootDir;
     }
 
@@ -57,7 +57,7 @@ public class DirectoryModuleSource implements ModuleSource {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        DirectoryModuleSource classData = (DirectoryModuleSource) o;
+        DirectoryArchive classData = (DirectoryArchive) o;
         return rootDir.equals(classData.rootDir);
     }
 

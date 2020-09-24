@@ -25,19 +25,18 @@ import java.util.jar.JarFile;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
-import org.revapi.classland.module.ClassData;
-import org.revapi.classland.module.JarFileModuleSource;
-import org.revapi.classland.module.JarFileModuleSourceTest;
-import org.revapi.classland.module.ModuleSource;
+import org.revapi.classland.archive.ClassData;
+import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.archive.Archive;
 
-class ModuleContentsTest {
+class ArchiveContentsTest {
 
     @Test
     void testReadingJarFile() throws Exception {
         JarFile jar = new JarFile(getClass().getClassLoader().getResource("asm-8.0.1.jar").getPath());
 
-        try (ModuleSource source = new JarFileModuleSource(jar)) {
-            ModuleContents contents = new ModuleContents(source);
+        try (Archive source = new JarFileArchive(jar)) {
+            ArchiveContents contents = new ArchiveContents(source);
 
             assertTrue(contents.getModule().isPresent());
             ClassData module = contents.getModule().get();

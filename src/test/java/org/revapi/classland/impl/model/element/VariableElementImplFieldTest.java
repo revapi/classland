@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.module.JarFileModuleSource;
+import org.revapi.classland.archive.JarFileArchive;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
 import org.revapi.testjars.junit5.JarSources;
@@ -50,7 +50,7 @@ public class VariableElementImplFieldTest {
     @Test
     void constantValue() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(fields.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(fields.jarFile())));
 
         TypeElementBase Fields = u.getTypeByInternalName("pkg/Fields");
         assertNotNull(Fields);
@@ -72,7 +72,7 @@ public class VariableElementImplFieldTest {
     @Test
     void enumConstant() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(fields.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(fields.jarFile())));
 
         TypeElementBase Enum = u.getTypeByInternalName("pkg/Fields$Enum");
         assertNotNull(Enum);

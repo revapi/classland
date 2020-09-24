@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.impl.model.Universe;
-import org.revapi.classland.module.JarFileModuleSource;
+import org.revapi.classland.archive.JarFileArchive;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
 import org.revapi.testjars.junit5.JarSources;
@@ -46,7 +46,7 @@ public class ExecutableElementImplTest {
     @Test
     void defaultMethods() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(methods.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(methods.jarFile())));
 
         TypeElementBase DefaultMethods = u.getTypeByInternalName("pkg/Methods$DefaultMethods");
 
@@ -62,7 +62,7 @@ public class ExecutableElementImplTest {
     @Test
     void elementKinds() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(methods.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(methods.jarFile())));
 
         TypeElementBase ElementKinds = u.getTypeByInternalName("pkg/Methods$ElementKinds");
 

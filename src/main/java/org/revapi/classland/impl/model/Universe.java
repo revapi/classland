@@ -20,13 +20,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.newSetFromMap;
 
 import static org.revapi.classland.impl.util.ByteCode.parseClass;
-import static org.revapi.classland.impl.util.Exceptions.callWithRuntimeException;
 import static org.revapi.classland.impl.util.Exceptions.failWithRuntimeException;
 import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 import static org.revapi.classland.impl.util.Packages.getPackageNameFromInternalName;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,14 +42,14 @@ import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
-import org.revapi.classland.module.ClassData;
-import org.revapi.classland.module.ModuleSource;
+import org.revapi.classland.archive.ClassData;
+import org.revapi.classland.archive.Archive;
 
 public final class Universe implements AutoCloseable {
     public static final TypeSignature.Reference JAVA_LANG_OBJECT_SIG = new TypeSignature.Reference(0,
             "/java/lang/Object", emptyList(), null);
 
-    private final Set<ModuleSource> moduleSources = newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<Archive> archives = newSetFromMap(new ConcurrentHashMap<>());
     private final Map<String, PackageElementImpl> packages = new ConcurrentHashMap<>();
     private final Set<ModuleElementImpl> modules = newSetFromMap(new ConcurrentHashMap<>());
     private final Map<String, TypeElementImpl> typesByInternalName = new ConcurrentHashMap<>();
@@ -89,9 +87,9 @@ public final class Universe implements AutoCloseable {
         return ret == null ? new MissingTypeImpl(this, internalName) : ret;
     }
 
-    public void registerModule(ModuleSource source) {
-        moduleSources.add(source);
-        ModuleContents contents = new ModuleContents(source);
+    public void registerArchive(Archive source) {
+        archives.add(source);
+        ArchiveContents contents = new ArchiveContents(source);
         ModuleElementImpl module = contents.getModule().map(cd -> {
             ClassNode cls = eagerParse(cd);
             ModuleElementImpl m = new ModuleElementImpl(this, cls);
@@ -112,7 +110,7 @@ public final class Universe implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        for (ModuleSource s : moduleSources) {
+        for (Archive s : archives) {
             s.close();
         }
     }

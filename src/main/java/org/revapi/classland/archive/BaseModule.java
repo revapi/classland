@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,7 @@ public final class BaseModule {
 
     }
 
-    public static ModuleSource forCurrentJvm() throws IOException {
+    public static Archive forCurrentJvm() throws IOException {
         String javaVersion = System.getProperty("java.specification.version");
         if (javaVersion.startsWith("1.")) {
             return java8();
@@ -44,7 +44,7 @@ public final class BaseModule {
      * @throws IOException
      *             on error to open the file
      */
-    public static ModuleSource java8() throws IOException {
+    public static Archive java8() throws IOException {
         return java8(new File(System.getProperty("java.home")));
     }
 
@@ -54,7 +54,7 @@ public final class BaseModule {
      * @throws IOException
      *             on error to open the file
      */
-    public static ModuleSource java8(File javaHome) throws IOException {
+    public static Archive java8(File javaHome) throws IOException {
         File rtJar = new File(new File(javaHome, "lib"), "rt.jar");
         if (!rtJar.exists()) {
             rtJar = new File(new File(new File(javaHome, "jre"), "lib"), "rt.jar");
@@ -65,7 +65,7 @@ public final class BaseModule {
                     "Could not locate rt.jar under java home '" + javaHome.getAbsolutePath() + "'.");
         }
 
-        return new JarFileModuleSource(new JarFile(rtJar));
+        return new JarFileArchive(new JarFile(rtJar));
     }
 
     /**
@@ -75,7 +75,7 @@ public final class BaseModule {
      * @throws IOException
      *             on error to open the file
      */
-    public static ModuleSource java9() throws IOException {
+    public static Archive java9() throws IOException {
         return java9(new File(System.getProperty("java.home")));
     }
 
@@ -85,8 +85,8 @@ public final class BaseModule {
      * @throws IOException
      *             on error to open the file
      */
-    public static ModuleSource java9(File javaHome) throws IOException {
+    public static Archive java9(File javaHome) throws IOException {
         File jmods = new File(javaHome, "jmods");
-        return new JModModuleSource(new File(jmods, "java.base.jmod").toPath());
+        return new JModArchive(new File(jmods, "java.base.jmod").toPath());
     }
 }

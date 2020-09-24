@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -28,14 +28,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 
-public class JModModuleSourceTest {
+public class JModArchiveTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "java9.mod", "java10.mod", "java11.mod", "java12.mod", "java14.mod" })
     void loadTest(String jmodFile) throws Exception {
         Path jmod = new File(getClass().getClassLoader().getResource(jmodFile).getPath()).toPath();
         Universe universe = new Universe();
-        universe.registerModule(new JModModuleSource(jmod));
+        universe.registerArchive(new JModArchive(jmod));
 
         TypeElementBase obj = universe.getTypeByInternalName("jdk/internal/editor/external/ExternalEditor");
         assertEquals(TypeKind.DECLARED, obj.asType().getKind());

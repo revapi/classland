@@ -33,7 +33,7 @@ import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
-import org.revapi.classland.module.JarFileModuleSource;
+import org.revapi.classland.archive.JarFileArchive;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
 import org.revapi.testjars.junit5.JarSources;
@@ -52,7 +52,7 @@ class AnnotationDeclarationsTest {
     @BeforeEach
     void setupTypeUniverse() throws Exception {
         u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(annotations.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(annotations.jarFile())));
         VisibleAnno = (TypeElementImpl) u.getTypeByInternalName("pkg/Annotations$VisibleAnno");
         InvisibleAnno = (TypeElementImpl) u.getTypeByInternalName("pkg/Annotations$InvisibleAnno");
     }

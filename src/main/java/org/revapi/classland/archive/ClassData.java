@@ -14,28 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 
-public class FileClassData extends AbstractClassData {
-    private final Path file;
+/**
+ * A interface for accessing data of Java class file.
+ */
+public interface ClassData {
+    /**
+     * This gives the internal name of the class file as defined by the JVM spec. I.e. the package names are delimited
+     * by '/'.
+     *
+     * @return the internal name of the class file
+     */
+    String getName();
 
-    public FileClassData(Path path) {
-        super(path.toString());
-        this.file = path;
-    }
-
-    @Override
-    public InputStream read() throws IOException {
-        return new FileInputStream(file.toFile());
-    }
-
-    @Override
-    public String toString() {
-        return "FileClassData{" + "file=" + file + '}';
-    }
+    /**
+     * Returns the stream with the bytecode of the class.
+     * 
+     * @throws IOException
+     *             on error
+     */
+    InputStream read() throws IOException;
 }

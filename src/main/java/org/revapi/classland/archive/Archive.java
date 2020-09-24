@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.module;
+package org.revapi.classland.archive;
 
 /**
- * Module source is an abstraction of some kind of archive representing a Java module. The module consists of many items
- * with class data. This data represents all kinds of Java elements stored in a class file, like types, modules or
+ * This is an abstraction of some kind of archive representing java class data.
+ * This data represents all kinds of Java elements stored in a class file like types, modules or
  * package info classes.
  */
-public interface ModuleSource extends Iterable<ClassData>, AutoCloseable {
+public interface Archive extends Iterable<ClassData>, AutoCloseable {
 }

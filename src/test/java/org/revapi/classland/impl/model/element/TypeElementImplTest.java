@@ -44,9 +44,7 @@ import org.revapi.classland.impl.model.Universe;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.mirror.TypeVariableImpl;
-import org.revapi.classland.module.BaseModule;
-import org.revapi.classland.module.JarFileModuleSource;
-import org.revapi.classland.module.JarFileModuleSourceTest;
+import org.revapi.classland.archive.JarFileArchive;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
 import org.revapi.testjars.junit5.JarSources;
@@ -72,7 +70,7 @@ class TypeElementImplTest {
     @Test
     void qualifiedNames() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(names.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
         TypeElementBase top = u.getTypeByInternalName("pkg/names/Dollars");
         TypeElementBase member = u.getTypeByInternalName("pkg/names/Dollars$Member$1");
@@ -93,7 +91,7 @@ class TypeElementImplTest {
     @Test
     void simpleNames() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(names.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
         TypeElementBase top = u.getTypeByInternalName("pkg/names/Dollars");
         TypeElementBase member = u.getTypeByInternalName("pkg/names/Dollars$Member$1");
@@ -114,7 +112,7 @@ class TypeElementImplTest {
     @Test
     void elementKind() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(kinds.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(kinds.jarFile())));
 
         TypeElementBase Class = u.getTypeByInternalName("pkg/Kinds$Classes$Class");
         TypeElementBase Interface = u.getTypeByInternalName("pkg/Kinds$Classes$Interface");
@@ -135,7 +133,7 @@ class TypeElementImplTest {
     @Test
     void modifiers() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(modifiers.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(modifiers.jarFile())));
 
         TypeElementBase Modifiers = u.getTypeByInternalName("pkg/Modifiers");
         TypeElementBase Public = u.getTypeByInternalName("pkg/Modifiers$Classes$Public");
@@ -168,7 +166,7 @@ class TypeElementImplTest {
     @Test
     void innerClassDollarNames() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(names.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
         TypeElementBase top = u.getTypeByInternalName("pkg/names/Dollars");
 
@@ -185,7 +183,7 @@ class TypeElementImplTest {
     @Test
     void superClass() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(generics.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(generics.jarFile())));
 
         TypeElementBase base = u.getTypeByInternalName("pkg/Generics$Base");
         TypeElementBase genericSuperClass = u.getTypeByInternalName("pkg/Generics$ConcreteWithGenericSuperClass");
@@ -235,7 +233,7 @@ class TypeElementImplTest {
     @Test
     void interfaces() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(generics.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(generics.jarFile())));
 
         TypeElementBase genericWithGenericInterface = u
                 .getTypeByInternalName("pkg/Generics$GenericWithParamUsedInInterface");
@@ -258,7 +256,7 @@ class TypeElementImplTest {
     @Test
     void enclosingElement() throws Exception {
         Universe u = new Universe();
-        u.registerModule(new JarFileModuleSource(new JarFile(innerClasses.jarFile())));
+        u.registerArchive(new JarFileArchive(new JarFile(innerClasses.jarFile())));
 
         TypeElementImpl InnerClasses = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses");
         TypeElementImpl StaticMember = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses$StaticMember");
