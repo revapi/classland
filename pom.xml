@@ -22,22 +22,44 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.revapi</groupId>
-    <artifactId>classland</artifactId>
+    <groupId>org.revapi.classland</groupId>
+    <artifactId>classland-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+
+    <packaging>pom</packaging>
+    <name>Classland :: Parent Module</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <version.maven-assembly-plugin>2.5.5</version.maven-assembly-plugin>
+        <version.build-helper-maven-plugin>3.0.0</version.build-helper-maven-plugin>
+        <version.maven-enforce-plugin>3.0.0-M3</version.maven-enforce-plugin>
+        <version.maven-surefire-plugin>3.0.0-M5</version.maven-surefire-plugin>
+        <version.jmh-maven-plugin>0.2.0</version.jmh-maven-plugin>
+        <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
+        <version.maven-jar-plugin>3.2.0</version.maven-jar-plugin>
+        <version.maven-failsafe-plugin>${version.maven-surefire-plugin}</version.maven-failsafe-plugin>
 
-        <version.org.ow2.asm>8.0.1</version.org.ow2.asm>
+        <version.org.codehaus.plexus>3.0.3</version.org.codehaus.plexus>
+        <version.org.ow2.asm>9.0</version.org.ow2.asm>
         <version.org.openjdk.jmh>1.25</version.org.openjdk.jmh>
         <version.org.junit.jupiter>5.6.2</version.org.junit.jupiter>
         <version.net.revelc.code.formatter>2.12.1</version.net.revelc.code.formatter>
         <version.net.revelc.code>1.4.1</version.net.revelc.code>
+        <version.com.mycila>3.0</version.com.mycila>
+        <version.org.apache.logging.log4j>2.13.3</version.org.apache.logging.log4j>
+        <version.org.revapi.testjars>0.1.0</version.org.revapi.testjars>
     </properties>
+
+    <modules>
+        <module>classland-java8</module>
+        <module>classland-java9</module>
+        <module>classland-java15</module>
+        <module>classland-module</module>
+        <module>integration-tests</module>
+        <module>classland-distribution</module>
+    </modules>
 
     <dependencies>
         <dependency>
@@ -53,7 +75,7 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.13.3</version>
+            <version>${version.org.apache.logging.log4j}</version>
         </dependency>
 
         <dependency>
@@ -83,23 +105,102 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.13.3</version>
+            <version>${version.org.apache.logging.log4j}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.revapi.testjars</groupId>
             <artifactId>testjars-junit5</artifactId>
-            <version>0.1.0</version>
+            <version>${version.org.revapi.testjars}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${version.build-helper-maven-plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${version.maven-enforce-plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${version.maven-surefire-plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${version.maven-failsafe-plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>pw.krejci</groupId>
+                    <artifactId>jmh-maven-plugin</artifactId>
+                    <version>${version.jmh-maven-plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${version.maven-compiler-plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${version.maven-jar-plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>net.revelc.code.formatter</groupId>
+                    <artifactId>formatter-maven-plugin</artifactId>
+                    <version>${version.net.revelc.code.formatter}</version>
+                </plugin>
+                <plugin>
+                    <groupId>net.revelc.code</groupId>
+                    <artifactId>impsort-maven-plugin</artifactId>
+                    <version>${version.net.revelc.code}</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>${version.com.mycila}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>15</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>net.revelc.code.formatter</groupId>
                 <artifactId>formatter-maven-plugin</artifactId>
-                <version>${version.net.revelc.code.formatter}</version>
                 <executions>
                     <execution>
                         <phase>generate-sources</phase>
@@ -112,7 +213,6 @@
             <plugin>
                 <groupId>net.revelc.code</groupId>
                 <artifactId>impsort-maven-plugin</artifactId>
-                <version>${version.net.revelc.code}</version>
                 <configuration>
                     <groups>java.,javax.,*</groups>
                     <staticGroups>java,javax,*</staticGroups>
@@ -171,24 +271,9 @@ limitations under the License.
                     <dependency>
                         <groupId>com.mycila</groupId>
                         <artifactId>license-maven-plugin-git</artifactId>
-                        <version>3.0</version>
+                        <version>${version.com.mycila}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-            </plugin>
-            <plugin>
-                <groupId>pw.krejci</groupId>
-                <artifactId>jmh-maven-plugin</artifactId>
-                <version>0.2.0</version>
             </plugin>
         </plugins>
     </build>

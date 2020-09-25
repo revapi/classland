@@ -1,0 +1,9 @@
+= Classland Integration Tests
+
+This module shows errors when imported into IDEs because of the convoluted way we build the multi-release jar in
+`classland-distribution`. Best way to get rid of those errors is to reconfigure the IDE to depend on the jar produced by
+`classland-distribution` instead of on that module itself. That's because that module doesn't have any classes on its
+own, but dynamically builds itself from its dependencies.
+
+Oh, how I wish IDEs (and as of September 2020 I tried IntelliJ, Eclipse and Netbeans) supported single module with
+multiple source dirs for the different parts of the multi-release jar.
