@@ -46,13 +46,14 @@ import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class VariableElementImpl extends ElementImpl implements VariableElement {
-    private VariableElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource) {
-        super(universe, annotationSource);
+    private VariableElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
+            Memoized<@Nullable ModuleElementImpl> module) {
+        super(universe, annotationSource, AnnotationTargetPath.ROOT, module);
     }
 
     private VariableElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
-            AnnotationTargetPath path) {
-        super(universe, annotationSource, path);
+            AnnotationTargetPath path, Memoized<@Nullable ModuleElementImpl> module) {
+        super(universe, annotationSource, path, module);
     }
 
     @Override
@@ -67,7 +68,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         private final TypeElementImpl parent;
 
         public Field(Universe universe, TypeElementImpl parent, FieldNode field) {
-            super(universe, obtained(AnnotationSource.fromField(field)));
+            super(universe, obtained(AnnotationSource.fromField(field)), parent.lookupModule());
             this.field = field;
             this.modifiers = Modifiers.toFieldModifiers(field.access);
             this.name = NameImpl.of(field.name);
@@ -119,7 +120,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
 
         public Parameter(Universe universe, ExecutableElementImpl method, int index) {
             super(universe, obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
-                    new AnnotationTargetPath(newFormalParameterReference(index)));
+                    new AnnotationTargetPath(newFormalParameterReference(index)), method.getType().lookupModule());
             this.method = method;
             List<ParameterNode> paramsInfo = method.getNode().parameters;
             ParameterNode node = paramsInfo == null ? null : paramsInfo.get(index);
@@ -130,7 +131,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
                 TypeSignature paramType = ms.parameterTypes.get(index);
                 return TypeMirrorFactory.create(universe, paramType, method,
                         obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
-                        new AnnotationTargetPath(newFormalParameterReference(index)));
+                        new AnnotationTargetPath(newFormalParameterReference(index)), method.getType().lookupModule());
             });
         }
 

@@ -16,7 +16,6 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
 
@@ -24,52 +23,31 @@ import static org.objectweb.asm.Opcodes.ACC_OPEN;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
 import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ElementVisitor;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.ModuleElement;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.ModuleExportNode;
-import org.objectweb.asm.tree.ModuleNode;
 import org.objectweb.asm.tree.ModuleOpenNode;
 import org.objectweb.asm.tree.ModuleProvideNode;
 import org.objectweb.asm.tree.ModuleRequireNode;
 import org.revapi.classland.impl.Universe;
-import org.revapi.classland.impl.model.NameImpl;
-import org.revapi.classland.impl.model.anno.AnnotationSource;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
-import org.revapi.classland.impl.model.mirror.NoTypeImpl;
-import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 
-public final class ModuleElementImpl extends ElementImpl implements ModuleElement {
-    private final NameImpl name;
-    private final ModuleNode module;
-    private final Memoized<List<AnnotationMirrorImpl>> annos;
-    private final Memoized<NoTypeImpl> type;
-    private final Memoized<List<PackageElementImpl>> packages;
+public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleElement {
     private final Memoized<List<? extends Directive>> directives;
 
-    public ModuleElementImpl(Universe universe, ClassNode moduleType) {
-        super(universe, obtained(AnnotationSource.fromType(moduleType)));
-        this.module = moduleType.module;
-        this.name = NameImpl.of(module.name);
-        this.type = memoize(
-                () -> new NoTypeImpl(universe, memoize(() -> parseAnnotations(moduleType)), TypeKind.MODULE));
-        this.packages = memoize(() -> universe.computePackagesForModule(this).collect(toList()));
+    public ModuleElementImpl(Universe universe, @Nullable ClassNode moduleType) {
+        super(universe, moduleType, TypeKind.MODULE);
         this.directives = memoize(() -> {
             Stream<ExportsDirective> exports = module.exports == null ? Stream.empty()
                     : module.exports.stream().map(ExportsDirectiveImpl::new);
@@ -88,8 +66,17 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
 
             return concat(exports, concat(opens, concat(provides, concat(requires, uses)))).collect(toList());
         });
+    }
 
-        this.annos = memoize(() -> parseAnnotations(moduleType));
+    @Override
+    public Stream<ReachableModule> getReachableModules() {
+        return directives.get().stream().filter(d -> d.getKind() == DirectiveKind.REQUIRES)
+                .map(d -> (RequiresDirectiveImpl) d);
+    }
+
+    @Override
+    public ElementKind getKind() {
+        return ElementKind.MODULE;
     }
 
     @Override
@@ -107,59 +94,13 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
         return directives.get();
     }
 
-    @Override
-    public TypeMirrorImpl asType() {
-        return type.get();
-    }
-
-    @Override
-    public NameImpl getQualifiedName() {
-        return name;
-    }
-
-    @Override
-    public ElementKind getKind() {
-        return ElementKind.MODULE;
-    }
-
-    @Override
-    public Set<Modifier> getModifiers() {
-        return emptySet();
-    }
-
-    @Override
-    public Name getSimpleName() {
-        return getQualifiedName();
-    }
-
-    @Override
-    public Element getEnclosingElement() {
-        return null;
-    }
-
-    @Override
-    public List<PackageElementImpl> getEnclosedElements() {
-        return packages.get();
-    }
-
-    @Override
-    public <R, P> R accept(ElementVisitor<R, P> v, P p) {
-        return v.visitModule(this, p);
-    }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        return annos.get();
-    }
-
     private class ExportsDirectiveImpl implements ExportsDirective {
         private final Memoized<PackageElement> pkg;
         private final Memoized<List<? extends ModuleElement>> targets;
 
         public ExportsDirectiveImpl(ModuleExportNode n) {
-            pkg = memoize(() -> universe.getPackage(n.packaze));
-            targets = memoize(() -> universe.getModules().stream()
-                    .filter(m -> n.modules.contains(m.getQualifiedName().asString())).collect(toList()));
+            pkg = memoize(() -> getMutablePackages().get(n.packaze));
+            targets = memoize(() -> n.modules.stream().map(universe::getModule).collect(Collectors.toList()));
         }
 
         @Override
@@ -188,9 +129,8 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
         private final Memoized<List<? extends ModuleElement>> targets;
 
         private OpensDirectiveImpl(ModuleOpenNode n) {
-            pkg = memoize(() -> universe.getPackage(n.packaze));
-            targets = memoize(() -> universe.getModules().stream()
-                    .filter(m -> n.modules.contains(m.getQualifiedName().asString())).collect(toList()));
+            pkg = memoize(() -> getMutablePackages().get(n.packaze));
+            targets = memoize(() -> n.modules.stream().map(universe::getModule).collect(Collectors.toList()));
         }
 
         @Override
@@ -219,8 +159,9 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
         private final Memoized<List<? extends TypeElement>> impls;
 
         public ProvidesDirectiveImpl(ModuleProvideNode n) {
-            service = memoize(() -> universe.getTypeByInternalName(n.service));
-            impls = memoize(() -> n.providers.stream().map(universe::getTypeByInternalName).collect(toList()));
+            service = memoize(() -> universe.getTypeByInternalNameFromModule(n.service, ModuleElementImpl.this));
+            impls = memoize(() -> n.providers.stream()
+                    .map(m -> universe.getTypeByInternalNameFromModule(m, ModuleElementImpl.this)).collect(toList()));
         }
 
         @Override
@@ -244,14 +185,13 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
         }
     }
 
-    private class RequiresDirectiveImpl implements RequiresDirective {
+    private class RequiresDirectiveImpl implements RequiresDirective, ReachableModule {
         private final Memoized<ModuleElementImpl> dep;
         private final ModuleRequireNode n;
 
         public RequiresDirectiveImpl(ModuleRequireNode n) {
             this.n = n;
-            dep = memoize(() -> universe.getModules().stream().filter(m -> m.module.name.equals(n.module)).findFirst()
-                    .orElseThrow(NoSuchElementException::new));
+            dep = memoize(() -> universe.getModule(n.module));
         }
 
         @Override
@@ -265,7 +205,7 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
         }
 
         @Override
-        public ModuleElement getDependency() {
+        public ModuleElementImpl getDependency() {
             return dep.get();
         }
 
@@ -284,7 +224,7 @@ public final class ModuleElementImpl extends ElementImpl implements ModuleElemen
         private final Memoized<TypeElement> service;
 
         public UsesDirectiveImpl(String n) {
-            service = memoize(() -> universe.getTypeByInternalName(n));
+            service = memoize(() -> universe.getTypeByInternalNameFromModule(n, ModuleElementImpl.this));
         }
 
         @Override

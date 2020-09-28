@@ -23,20 +23,23 @@ import java.util.List;
 
 import javax.lang.model.AnnotatedConstruct;
 
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationFinder;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 
 public abstract class AnnotatedConstructImpl extends BaseModelImpl implements AnnotatedConstruct {
     protected final Memoized<List<AnnotationMirrorImpl>> annos;
 
     protected AnnotatedConstructImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
-            AnnotationTargetPath path) {
-        this(universe, annotationSource.map(s -> parseAnnotations(universe, s, path)));
+            AnnotationTargetPath path, Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+        this(universe, annotationSource.map(s -> parseAnnotations(universe, s, path, typeLookupSeed.get())));
     }
 
     protected AnnotatedConstructImpl(Universe universe, Memoized<List<AnnotationMirrorImpl>> annos) {
@@ -45,13 +48,16 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
     }
 
     private static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, AnnotationSource source,
-            AnnotationTargetPath path) {
-        return AnnotationFinder.find(path, source).stream().map(a -> new AnnotationMirrorImpl(a, universe))
+            AnnotationTargetPath path, @Nullable ModuleElementImpl typeLookupSeed) {
+        return AnnotationFinder.find(path, source).stream()
+                .map(a -> new AnnotationMirrorImpl(a, universe, universe
+                        .getTypeByInternalNameFromModule(Type.getType(a.desc).getInternalName(), typeLookupSeed)))
                 .collect(toList());
     }
 
-    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, ClassNode cls) {
-        return parseAnnotations(universe, AnnotationSource.fromType(cls), AnnotationTargetPath.ROOT);
+    private static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, ClassNode cls,
+            ModuleElementImpl typeLookupSeed) {
+        return parseAnnotations(universe, AnnotationSource.fromType(cls), AnnotationTargetPath.ROOT, typeLookupSeed);
     }
 
     @Override
@@ -69,7 +75,7 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
         throw new UnsupportedOperationException();
     }
 
-    protected final List<AnnotationMirrorImpl> parseAnnotations(ClassNode cls) {
-        return parseAnnotations(universe, cls);
+    protected final List<AnnotationMirrorImpl> parseAnnotations(ClassNode cls, ModuleElementImpl typeLookupSeed) {
+        return parseAnnotations(universe, cls, typeLookupSeed);
     }
 }

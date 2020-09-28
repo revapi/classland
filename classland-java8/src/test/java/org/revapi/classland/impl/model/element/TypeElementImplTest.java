@@ -69,13 +69,14 @@ class TypeElementImplTest {
 
     @Test
     void qualifiedNames() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
-        TypeElementBase top = u.getTypeByInternalName("pkg/names/Dollars");
-        TypeElementBase member = u.getTypeByInternalName("pkg/names/Dollars$Member$1");
-        TypeElementBase anon = u.getTypeByInternalName("pkg/names/Dollars$Member$2");
-        TypeElementBase local = u.getTypeByInternalName("pkg/names/Dollars$Member$2$1LocalInInitializer$InnerInLocal");
+        TypeElementBase top = u.getTypeByInternalNameFromModule("pkg/names/Dollars", null);
+        TypeElementBase member = u.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$1", null);
+        TypeElementBase anon = u.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2", null);
+        TypeElementBase local = u
+                .getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2$1LocalInInitializer$InnerInLocal", null);
 
         assertNotNull(top);
         assertNotNull(member);
@@ -90,13 +91,14 @@ class TypeElementImplTest {
 
     @Test
     void simpleNames() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
-        TypeElementBase top = u.getTypeByInternalName("pkg/names/Dollars");
-        TypeElementBase member = u.getTypeByInternalName("pkg/names/Dollars$Member$1");
-        TypeElementBase anon = u.getTypeByInternalName("pkg/names/Dollars$Member$2");
-        TypeElementBase local = u.getTypeByInternalName("pkg/names/Dollars$Member$2$1LocalInInitializer$InnerInLocal");
+        TypeElementBase top = u.getTypeByInternalNameFromModule("pkg/names/Dollars", null);
+        TypeElementBase member = u.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$1", null);
+        TypeElementBase anon = u.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2", null);
+        TypeElementBase local = u
+                .getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2$1LocalInInitializer$InnerInLocal", null);
 
         assertNotNull(top);
         assertNotNull(member);
@@ -111,13 +113,13 @@ class TypeElementImplTest {
 
     @Test
     void elementKind() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(kinds.jarFile())));
 
-        TypeElementBase Class = u.getTypeByInternalName("pkg/Kinds$Classes$Class");
-        TypeElementBase Interface = u.getTypeByInternalName("pkg/Kinds$Classes$Interface");
-        TypeElementBase Enum = u.getTypeByInternalName("pkg/Kinds$Classes$Enum");
-        TypeElementBase Annotation = u.getTypeByInternalName("pkg/Kinds$Classes$Annotation");
+        TypeElementBase Class = u.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Class", null);
+        TypeElementBase Interface = u.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Interface", null);
+        TypeElementBase Enum = u.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Enum", null);
+        TypeElementBase Annotation = u.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Annotation", null);
 
         assertNotNull(Class);
         assertNotNull(Interface);
@@ -132,17 +134,17 @@ class TypeElementImplTest {
 
     @Test
     void modifiers() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(modifiers.jarFile())));
 
-        TypeElementBase Modifiers = u.getTypeByInternalName("pkg/Modifiers");
-        TypeElementBase Public = u.getTypeByInternalName("pkg/Modifiers$Classes$Public");
-        TypeElementBase Protected = u.getTypeByInternalName("pkg/Modifiers$Classes$Protected");
-        TypeElementBase Private = u.getTypeByInternalName("pkg/Modifiers$Classes$Private");
-        TypeElementBase Static = u.getTypeByInternalName("pkg/Modifiers$Classes$Static");
-        TypeElementBase Final = u.getTypeByInternalName("pkg/Modifiers$Classes$Final");
-        TypeElementBase StrictFp = u.getTypeByInternalName("pkg/Modifiers$Classes$StrictFp");
-        TypeElementBase Abstract = u.getTypeByInternalName("pkg/Modifiers$Classes$Abstract");
+        TypeElementBase Modifiers = u.getTypeByInternalNameFromModule("pkg/Modifiers", null);
+        TypeElementBase Public = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Public", null);
+        TypeElementBase Protected = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Protected", null);
+        TypeElementBase Private = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Private", null);
+        TypeElementBase Static = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Static", null);
+        TypeElementBase Final = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Final", null);
+        TypeElementBase StrictFp = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$StrictFp", null);
+        TypeElementBase Abstract = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Abstract", null);
 
         assertNotNull(Modifiers);
         assertNotNull(Public);
@@ -165,10 +167,10 @@ class TypeElementImplTest {
 
     @Test
     void innerClassDollarNames() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
-        TypeElementBase top = u.getTypeByInternalName("pkg/names/Dollars");
+        TypeElementBase top = u.getTypeByInternalNameFromModule("pkg/names/Dollars", null);
 
         assertNotNull(top);
 
@@ -182,13 +184,14 @@ class TypeElementImplTest {
 
     @Test
     void superClass() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(generics.jarFile())));
 
-        TypeElementBase base = u.getTypeByInternalName("pkg/Generics$Base");
-        TypeElementBase genericSuperClass = u.getTypeByInternalName("pkg/Generics$ConcreteWithGenericSuperClass");
+        TypeElementBase base = u.getTypeByInternalNameFromModule("pkg/Generics$Base", null);
+        TypeElementBase genericSuperClass = u
+                .getTypeByInternalNameFromModule("pkg/Generics$ConcreteWithGenericSuperClass", null);
         TypeElementBase genericWithGenericSuperclass = u
-                .getTypeByInternalName("pkg/Generics$GenericWithParamUsedInSuperClass");
+                .getTypeByInternalNameFromModule("pkg/Generics$GenericWithParamUsedInSuperClass", null);
 
         assertNotNull(base);
         assertNotNull(genericSuperClass);
@@ -232,11 +235,11 @@ class TypeElementImplTest {
 
     @Test
     void interfaces() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(generics.jarFile())));
 
         TypeElementBase genericWithGenericInterface = u
-                .getTypeByInternalName("pkg/Generics$GenericWithParamUsedInInterface");
+                .getTypeByInternalNameFromModule("pkg/Generics$GenericWithParamUsedInInterface", null);
 
         List<TypeMirrorImpl> ifaces = genericWithGenericInterface.getInterfaces();
         assertEquals(2, ifaces.size());
@@ -255,16 +258,19 @@ class TypeElementImplTest {
 
     @Test
     void enclosingElement() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(innerClasses.jarFile())));
 
-        TypeElementImpl InnerClasses = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses");
-        TypeElementImpl StaticMember = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses$StaticMember");
-        TypeElementImpl StaticAnonymous = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses$StaticMember$1");
-        TypeElementImpl StaticLocal = (TypeElementImpl) u.getTypeByInternalName("pkg/InnerClasses$StaticMember$1Local");
+        TypeElementImpl InnerClasses = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/InnerClasses", null);
+        TypeElementImpl StaticMember = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/InnerClasses$StaticMember", null);
+        TypeElementImpl StaticAnonymous = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/InnerClasses$StaticMember$1", null);
+        TypeElementImpl StaticLocal = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/InnerClasses$StaticMember$1Local", null);
         ExecutableElementImpl method = StaticMember.getMethod("method", "()V");
 
-        assertSame(u.getPackage("pkg"), InnerClasses.getEnclosingElement());
+        assertEquals(u.getPackageInModule("pkg", u.getUnnamedModule()), InnerClasses.getEnclosingElement());
 
         assertSame(InnerClasses, StaticMember.getEnclosingElement());
 

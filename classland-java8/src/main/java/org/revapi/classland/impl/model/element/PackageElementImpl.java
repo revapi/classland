@@ -20,9 +20,13 @@ import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 
 import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -37,6 +41,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
@@ -44,17 +49,28 @@ import org.revapi.classland.impl.util.Nullable;
 
 public final class PackageElementImpl extends ElementImpl implements PackageElement {
     private final NameImpl name;
-    private final ModuleElementImpl module;
+    private final @Nullable ModuleElementImpl module;
     private final NoTypeImpl type;
-    private final Memoized<List<? extends TypeElement>> types;
+    private final Memoized<List<TypeElementImpl>> types;
+
+    private final Map<String, TypeElementImpl> mutableTypes = new ConcurrentHashMap<>();
 
     public PackageElementImpl(Universe universe, String name, Memoized<@Nullable ClassNode> node,
-            ModuleElementImpl module) {
-        super(universe, node.map(n -> n == null ? AnnotationSource.EMPTY : AnnotationSource.fromType(n)));
+            @Nullable ModuleElementImpl module) {
+        super(universe, node.map(n -> n == null ? AnnotationSource.EMPTY : AnnotationSource.fromType(n)),
+                AnnotationTargetPath.ROOT, obtained(module));
         this.name = NameImpl.of(name);
         this.module = module;
         this.type = new NoTypeImpl(universe, this.annos, TypeKind.PACKAGE);
-        this.types = memoize(() -> universe.computeTypesForPackage(this).collect(toList()));
+        this.types = memoize(() -> new ArrayList<>(mutableTypes.values()));
+    }
+
+    public @Nullable ModuleElementImpl getModule() {
+        return module;
+    }
+
+    public Map<String, TypeElementImpl> getMutableTypes() {
+        return mutableTypes;
     }
 
     @Override

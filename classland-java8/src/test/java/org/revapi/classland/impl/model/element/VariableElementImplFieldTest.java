@@ -49,10 +49,10 @@ public class VariableElementImplFieldTest {
 
     @Test
     void constantValue() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(fields.jarFile())));
 
-        TypeElementBase Fields = u.getTypeByInternalName("pkg/Fields");
+        TypeElementBase Fields = u.getTypeByInternalNameFromModule("pkg/Fields", null);
         assertNotNull(Fields);
 
         List<VariableElement> fields = ElementFilter.fieldsIn(Fields.getEnclosedElements());
@@ -71,10 +71,10 @@ public class VariableElementImplFieldTest {
 
     @Test
     void enumConstant() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(fields.jarFile())));
 
-        TypeElementBase Enum = u.getTypeByInternalName("pkg/Fields$Enum");
+        TypeElementBase Enum = u.getTypeByInternalNameFromModule("pkg/Fields$Enum", null);
         assertNotNull(Enum);
 
         List<VariableElement> fields = ElementFilter.fieldsIn(Enum.getEnclosedElements());

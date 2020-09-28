@@ -40,7 +40,7 @@ class ModuleElementImplTest {
     @BeforeAll
     void setup() throws Exception {
         JarFile jar = new JarFile(getClass().getClassLoader().getResource("asm-8.0.1.jar").getPath());
-        universe = new Universe();
+        universe = new Universe(true);
         universe.registerArchive(new JarFileArchive(jar));
         assertEquals(1, universe.getModules().size());
         module = universe.getModules().iterator().next();

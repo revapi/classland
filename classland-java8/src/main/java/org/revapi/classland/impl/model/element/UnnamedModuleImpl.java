@@ -16,14 +16,28 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import javax.lang.model.type.TypeKind;
+import java.util.stream.Stream;
 
-import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.impl.Universe;
-import org.revapi.classland.impl.util.Nullable;
 
-public class ModuleElementImpl extends BaseModuleElementImpl {
-    public ModuleElementImpl(Universe universe, @Nullable ClassNode moduleType) {
-        super(universe, moduleType, TypeKind.OTHER);
+public class UnnamedModuleImpl extends ModuleElementImpl {
+    public UnnamedModuleImpl(Universe universe) {
+        super(universe, null);
+    }
+
+    @Override
+    public Stream<ReachableModule> getReachableModules() {
+        return universe.getModules().stream().filter(m -> m != this).map(m -> new ReachableModule() {
+            @Override
+            public boolean isTransitive() {
+                // we're returning all modules, so no need to be transitive...
+                return false;
+            }
+
+            @Override
+            public ModuleElementImpl getDependency() {
+                return m;
+            }
+        });
     }
 }

@@ -24,12 +24,14 @@ import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 
 public abstract class TypeMirrorImpl extends AnnotatedConstructImpl implements TypeMirror {
-    protected TypeMirrorImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
-            AnnotationTargetPath path) {
-        super(universe, annotationSource, path);
+    protected TypeMirrorImpl(Universe universe, Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path,
+            Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+        super(universe, annotationSource, path, typeLookupSeed);
     }
 
     protected TypeMirrorImpl(Universe universe, Memoized<List<AnnotationMirrorImpl>> annos) {

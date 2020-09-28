@@ -24,16 +24,17 @@ import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 
 public abstract class ElementImpl extends AnnotatedConstructImpl implements Element {
 
-    protected ElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource) {
-        this(universe, annotationSource, AnnotationTargetPath.ROOT);
+    protected ElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path,
+            Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+        super(universe, annotationSource, path, typeLookupSeed);
     }
 
-    protected ElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path) {
-        super(universe, annotationSource, path);
-    }
+    // TODO all elements should support ElementsImpl#isDeprecated() - this should read both the attribute and the
+    // annotation
 
     @Override
     public abstract TypeMirrorImpl asType();

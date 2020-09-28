@@ -22,6 +22,7 @@ import javax.lang.model.element.TypeElement;
 
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
@@ -31,11 +32,19 @@ public abstract class TypeElementBase extends ElementImpl implements TypeElement
     protected final String internalName;
     protected final Memoized<PackageElementImpl> pkg;
 
-    protected TypeElementBase(Universe universe, String internalName, Memoized<PackageElementImpl> pkg,
+    protected TypeElementBase(Universe universe, String internalName, Memoized<@Nullable PackageElementImpl> pkg,
             Memoized<AnnotationSource> annos) {
-        super(universe, annos);
+        super(universe, annos, AnnotationTargetPath.ROOT, pkg.map(p -> p == null ? null : p.getModule()));
         this.internalName = internalName;
         this.pkg = pkg;
+    }
+
+    public Memoized<PackageElementImpl> getPackage() {
+        return pkg;
+    }
+
+    public Memoized<ModuleElementImpl> lookupModule() {
+        return pkg.map(p -> p == null ? null : p.getModule());
     }
 
     @Override

@@ -28,15 +28,16 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.BaseModelImpl;
 import org.revapi.classland.impl.model.element.ExecutableElementImpl;
+import org.revapi.classland.impl.model.element.TypeElementBase;
 
 public final class AnnotationMirrorImpl extends BaseModelImpl implements AnnotationMirror {
     private final AnnotationNode node;
     private final DeclaredTypeImpl annotationType;
 
-    public AnnotationMirrorImpl(AnnotationNode node, Universe universe) {
+    public AnnotationMirrorImpl(AnnotationNode node, Universe universe, TypeElementBase annotationType) {
         super(universe);
         this.node = node;
-        this.annotationType = universe.getTypeByInternalName(Type.getType(node.desc).getInternalName()).asType();
+        this.annotationType = annotationType.asType();
     }
 
     @Override

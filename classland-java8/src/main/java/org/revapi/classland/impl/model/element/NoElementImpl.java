@@ -34,13 +34,15 @@ import javax.lang.model.type.TypeKind;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 
 public class NoElementImpl extends ElementImpl {
     public NoElementImpl(Universe universe) {
-        super(universe, AnnotationSource.MEMOIZED_EMPTY);
+        super(universe, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT,
+                obtained(universe.getUnnamedModule()));
     }
 
     @Override

@@ -47,10 +47,10 @@ public class MissingTypeImpl extends TypeElementBase {
     private final NameImpl qualifiedName;
     private final NameImpl simpleName;
 
-    public MissingTypeImpl(Universe universe, String internalName) {
+    public MissingTypeImpl(Universe universe, String internalName, @Nullable ModuleElementImpl module) {
         super(universe, internalName, Memoized.memoize(() -> {
             String packageName = Packages.getPackageNameFromInternalName(internalName);
-            return universe.getPackage(packageName);
+            return universe.getPackageInModule(packageName, module);
         }), AnnotationSource.MEMOIZED_EMPTY);
         type = new ErrorTypeImpl(universe, this, null, emptyList(), this.annos);
 
@@ -127,5 +127,10 @@ public class MissingTypeImpl extends TypeElementBase {
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
         return emptyList();
+    }
+
+    @Override
+    public String toString() {
+        return "MissingTypeImpl{" + "qualifiedName=" + qualifiedName.asString() + '}';
     }
 }

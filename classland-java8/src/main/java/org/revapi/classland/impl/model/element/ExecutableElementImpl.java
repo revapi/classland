@@ -67,7 +67,8 @@ public final class ExecutableElementImpl extends ElementImpl
     private final Memoized<Set<Modifier>> modifiers;
 
     public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
-        super(universe, obtained(AnnotationSource.fromMethod(method)));
+        super(universe, obtained(AnnotationSource.fromMethod(method)), AnnotationTargetPath.ROOT,
+                parent.lookupModule());
         this.parent = parent;
         this.method = method;
         this.name = NameImpl.of(method.name);
@@ -88,8 +89,9 @@ public final class ExecutableElementImpl extends ElementImpl
 
         AnnotationSource annotationSource = AnnotationSource.fromMethod(method);
 
-        this.returnType = signature.map(s -> TypeMirrorFactory.create(universe, s.returnType, this,
-                obtained(annotationSource), new AnnotationTargetPath(newTypeReference(METHOD_RETURN))));
+        this.returnType = signature
+                .map(s -> TypeMirrorFactory.create(universe, s.returnType, this, obtained(annotationSource),
+                        new AnnotationTargetPath(newTypeReference(METHOD_RETURN)), parent.lookupModule()));
 
         this.parameters = parameterTypes.length == 0 ? obtained(emptyList()) : memoize(() -> {
             List<VariableElementImpl> ret = new ArrayList<>(parameterTypes.length);
@@ -127,6 +129,10 @@ public final class ExecutableElementImpl extends ElementImpl
         return signature;
     }
 
+    public TypeElementImpl getType() {
+        return parent;
+    }
+
     @Override
     public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
         // TODO implement
@@ -141,8 +147,7 @@ public final class ExecutableElementImpl extends ElementImpl
 
     @Override
     public TypeMirrorImpl getReturnType() {
-        // TODO implement
-        return null;
+        return returnType.get();
     }
 
     @Override

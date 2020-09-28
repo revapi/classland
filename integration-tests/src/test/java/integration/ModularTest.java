@@ -29,7 +29,6 @@ class ModularTest {
         try (Classland classland = new Classland()) {
             JarFile jar = new JarFile(getClass().getClassLoader().getResource("asm-8.0.1.jar").getPath());
             classland.registerArchive(() -> new JarFileArchive(jar));
-
         }
     }
 }

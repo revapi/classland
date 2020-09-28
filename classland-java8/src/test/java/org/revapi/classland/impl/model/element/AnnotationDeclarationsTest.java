@@ -51,15 +51,16 @@ class AnnotationDeclarationsTest {
 
     @BeforeEach
     void setupTypeUniverse() throws Exception {
-        u = new Universe();
+        u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(annotations.jarFile())));
-        VisibleAnno = (TypeElementImpl) u.getTypeByInternalName("pkg/Annotations$VisibleAnno");
-        InvisibleAnno = (TypeElementImpl) u.getTypeByInternalName("pkg/Annotations$InvisibleAnno");
+        VisibleAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$VisibleAnno", null);
+        InvisibleAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$InvisibleAnno", null);
     }
 
     @Test
     void onType() throws Exception {
-        TypeElementImpl AnnotatedClass = (TypeElementImpl) u.getTypeByInternalName("pkg/Annotations$AnnotatedClass");
+        TypeElementImpl AnnotatedClass = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedClass", null);
 
         List<AnnotationMirrorImpl> annos = AnnotatedClass.getAnnotationMirrors();
         assertEquals(2, annos.size());
@@ -69,7 +70,7 @@ class AnnotationDeclarationsTest {
     @Test
     void onTypeParameter() throws Exception {
         TypeElementImpl AnnotatedTypeParameter = (TypeElementImpl) u
-                .getTypeByInternalName("pkg/Annotations$AnnotatedTypeParameter");
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedTypeParameter", null);
 
         List<TypeParameterElementImpl> typeParams = AnnotatedTypeParameter.getTypeParameters();
         assertEquals(2, typeParams.size());
@@ -91,7 +92,7 @@ class AnnotationDeclarationsTest {
     @Test
     void onMethodParameter() throws Exception {
         TypeElementImpl AnnotatedMethodParameter = (TypeElementImpl) u
-                .getTypeByInternalName("pkg/Annotations$AnnotatedMethodParameter");
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethodParameter", null);
         ExecutableElementImpl method = AnnotatedMethodParameter.getMethod("method", "(ID)V");
 
         assertNotNull(method);
@@ -112,7 +113,7 @@ class AnnotationDeclarationsTest {
     @Test
     void onMethodParameterTypeVariable() throws Exception {
         TypeElementImpl AnnotatedMethodParameterTypeVariable = (TypeElementImpl) u
-                .getTypeByInternalName("pkg/Annotations$AnnotatedMethodParameterTypeVariable");
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethodParameterTypeVariable", null);
         ExecutableElementImpl method = AnnotatedMethodParameterTypeVariable.getMethod("method", "(Ljava/util/Set;)V");
 
         assertNotNull(method);

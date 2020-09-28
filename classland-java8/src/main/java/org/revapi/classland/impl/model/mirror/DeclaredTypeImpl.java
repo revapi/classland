@@ -42,7 +42,7 @@ public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
     public DeclaredTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
             List<TypeMirrorImpl> typeArguments, Memoized<AnnotationSource> annotationSource,
             AnnotationTargetPath path) {
-        super(universe, annotationSource, path);
+        super(universe, annotationSource, path, source.lookupModule());
         this.source = source;
         this.enclosingType = enclosingType == null ? new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE)
                 : enclosingType;

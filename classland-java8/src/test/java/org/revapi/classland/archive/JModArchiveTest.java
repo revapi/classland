@@ -34,12 +34,13 @@ public class JModArchiveTest {
     @ValueSource(strings = { "java9.mod", "java10.mod", "java11.mod", "java12.mod", "java14.mod" })
     void loadTest(String jmodFile) throws Exception {
         Path jmod = new File(getClass().getClassLoader().getResource(jmodFile).getPath()).toPath();
-        Universe universe = new Universe();
+        Universe universe = new Universe(false);
         universe.registerArchive(new JModArchive(jmod));
 
-        TypeElementBase obj = universe.getTypeByInternalName("jdk/internal/editor/external/ExternalEditor");
+        TypeElementBase obj = universe.getTypeByInternalNameFromModule("jdk/internal/editor/external/ExternalEditor",
+                null);
         assertEquals(TypeKind.DECLARED, obj.asType().getKind());
-        obj = universe.getTypeByInternalName("not/there/like");
+        obj = universe.getTypeByInternalNameFromModule("not/there/like", null);
         assertEquals(TypeKind.ERROR, obj.asType().getKind());
     }
 }

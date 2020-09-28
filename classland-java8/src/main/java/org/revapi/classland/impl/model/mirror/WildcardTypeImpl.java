@@ -25,6 +25,7 @@ import javax.lang.model.type.WildcardType;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
 
@@ -34,8 +35,8 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
 
     public WildcardTypeImpl(Universe universe, @Nullable TypeMirrorImpl extendsBound,
             @Nullable TypeMirrorImpl superBound, Memoized<AnnotationSource> annotationSource,
-            AnnotationTargetPath targetPath) {
-        super(universe, annotationSource, targetPath);
+            AnnotationTargetPath targetPath, Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+        super(universe, annotationSource, targetPath, typeLookupSeed);
         this.extendsBound = extendsBound;
         this.superBound = superBound;
     }

@@ -22,10 +22,25 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 import org.revapi.classland.archive.Archive;
+import org.revapi.classland.impl.ElementsImpl;
+import org.revapi.classland.impl.TypesImpl;
 import org.revapi.classland.impl.Universe;
 
 public final class Classland implements AutoCloseable {
-    private final Universe universe = new Universe();
+    private final Universe universe;
+
+    public Classland() {
+        this(currentJvmSupportsModules());
+    }
+
+    public Classland(boolean analyzeModules) {
+        this.universe = new Universe(analyzeModules);
+    }
+
+    private static boolean currentJvmSupportsModules() {
+        String javaVersion = System.getProperty("java.specification.version");
+        return !javaVersion.startsWith("1.");
+    }
 
     /**
      * Registers the archive with Classland. The archive is then managed by Classland and closed upon closing this
@@ -41,11 +56,11 @@ public final class Classland implements AutoCloseable {
     }
 
     public Elements getElements() {
-        return universe.getElements();
+        return new ElementsImpl(universe);
     }
 
     public Types getTypes() {
-        return universe.getTypes();
+        return new TypesImpl(universe);
     }
 
     @Override

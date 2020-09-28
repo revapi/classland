@@ -25,23 +25,25 @@ import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 import static org.revapi.classland.impl.util.Packages.getPackageNameFromInternalName;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.archive.Archive;
 import org.revapi.classland.archive.ClassData;
-import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.PackageElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.element.UnnamedModuleImpl;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
@@ -50,62 +52,113 @@ public final class Universe implements AutoCloseable {
     public static final TypeSignature.Reference JAVA_LANG_OBJECT_SIG = new TypeSignature.Reference(0,
             "/java/lang/Object", emptyList(), null);
 
+    private final UnnamedModuleImpl unnamedModule = new UnnamedModuleImpl(this);
+    private final boolean analyzeModules;
     private final Set<Archive> archives = newSetFromMap(new ConcurrentHashMap<>());
-    private final Map<String, PackageElementImpl> packages = new ConcurrentHashMap<>();
-    private final Set<ModuleElementImpl> modules = newSetFromMap(new ConcurrentHashMap<>());
-    private final Map<String, TypeElementImpl> typesByInternalName = new ConcurrentHashMap<>();
+    private final Map<String, ModuleElementImpl> modules = new ConcurrentHashMap<>();
+    private final Map<String, Map<ModuleElementImpl, TypeElementImpl>> typesByNameAndModule = new ConcurrentHashMap<>();
 
-    public ElementsImpl getElements() {
-        return new ElementsImpl(this);
+    public Universe(boolean analyzeModules) {
+        this.analyzeModules = analyzeModules;
     }
 
-    public TypesImpl getTypes() {
-        return new TypesImpl(this);
+    public @Nullable ModuleElementImpl getModule(String name) {
+        return modules.get(name);
     }
 
-    public Set<ModuleElementImpl> getModules() {
-        return modules;
+    public UnnamedModuleImpl getUnnamedModule() {
+        return unnamedModule;
     }
 
-    public Set<String> getPackages() {
-        return packages.keySet();
+    public Collection<ModuleElementImpl> getModules() {
+        return modules.values();
     }
 
-    public PackageElementImpl getPackage(String name) {
-        return packages.get(name);
+    public Collection<PackageElementImpl> getPackagesForModule(ModuleElementImpl module) {
+        return module.getMutablePackages().values();
     }
 
-    public Stream<PackageElementImpl> computePackagesForModule(ModuleElementImpl module) {
-        return packages.values().stream().filter(pkg -> module.equals(pkg.getEnclosingElement()));
+    public @Nullable PackageElementImpl getPackageInModule(String packageName, @Nullable ModuleElementImpl module) {
+        return module == null ? null : module.getMutablePackages().get(packageName);
     }
 
-    public Stream<TypeElementImpl> computeTypesForPackage(PackageElementImpl pkg) {
-        return typesByInternalName.values().stream().filter(t -> t.isInPackage(pkg));
+    public TypeElementBase getTypeByInternalNameFromPackage(String internalName, PackageElementImpl startingPackage) {
+        return getTypeByInternalNameFromModule(internalName, startingPackage.getModule());
     }
 
-    public TypeElementBase getTypeByInternalName(String internalName) {
-        TypeElementImpl ret = typesByInternalName.get(internalName);
-        return ret == null ? new MissingTypeImpl(this, internalName) : ret;
+    public TypeElementBase getTypeByInternalNameFromModule(String internalName,
+            @Nullable ModuleElementImpl startingModule) {
+        Map<ModuleElementImpl, TypeElementImpl> types = typesByNameAndModule.get(internalName);
+        if (types == null) {
+            return new MissingTypeImpl(this, internalName, startingModule);
+        }
+
+        ModuleElementImpl actualModule = startingModule == null ? unnamedModule : startingModule;
+
+        TypeElementImpl t = types.get(actualModule);
+        if (t != null) {
+            return t;
+        }
+
+        Iterator<ModuleElementImpl> reachableModules = new Iterator<ModuleElementImpl>() {
+            final List<ModuleElementImpl.ReachableModule> nexts = new ArrayList<>();
+            {
+                actualModule.getReachableModules().forEach(nexts::add);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return !nexts.isEmpty();
+            }
+
+            @Override
+            public ModuleElementImpl next() {
+                if (nexts.isEmpty()) {
+                    throw new NoSuchElementException();
+                }
+                ModuleElementImpl.ReachableModule m = nexts.remove(0);
+                if (m.isTransitive()) {
+                    m.getDependency().getReachableModules().forEach(nexts::add);
+                }
+                return m.getDependency();
+            }
+        };
+
+        while (reachableModules.hasNext()) {
+            ModuleElementImpl m = reachableModules.next();
+            t = types.get(m);
+            if (t != null) {
+                return t;
+            }
+        }
+
+        return new MissingTypeImpl(this, internalName, startingModule);
     }
 
     public void registerArchive(Archive source) {
         archives.add(source);
         ArchiveContents contents = new ArchiveContents(source);
         ModuleElementImpl module = contents.getModule().map(cd -> {
+            if (!analyzeModules) {
+                return unnamedModule;
+            }
             ClassNode cls = eagerParse(cd);
             ModuleElementImpl m = new ModuleElementImpl(this, cls);
-            modules.add(m);
+            modules.put(m.getQualifiedName().toString(), m);
             return m;
-        }).orElse(null);
+        }).orElse(unnamedModule);
 
         contents.getPackages().forEach((name, data) -> {
-            packages.put(name, new PackageElementImpl(this, name, lazyParse(data), module));
+            module.getMutablePackages().put(name,
+                    new PackageElementImpl(this, name, lazyParse(data), analyzeModules ? module : null));
         });
 
         contents.getTypes().forEach(cd -> {
             String pkgName = getPackageNameFromInternalName(cd.getName());
-            typesByInternalName.put(cd.getName(),
-                    new TypeElementImpl(this, cd.getName(), lazyParse(cd), getPackage(pkgName)));
+            PackageElementImpl pkg = module.getMutablePackages().get(pkgName);
+            TypeElementImpl type = new TypeElementImpl(this, cd.getName(), lazyParse(cd), pkg);
+            pkg.getMutableTypes().put(cd.getName(), type);
+            typesByNameAndModule.computeIfAbsent(cd.getName(), __ -> new ConcurrentHashMap<>()).put(module, type);
         });
     }
 
@@ -114,11 +167,6 @@ public final class Universe implements AutoCloseable {
         for (Archive s : archives) {
             s.close();
         }
-    }
-
-    private List<AnnotationMirrorImpl> parseAnnotations(ClassData cd) {
-        ClassNode cls = failWithRuntimeException(() -> parseClass(new ClassReader(cd.read())));
-        return AnnotatedConstructImpl.parseAnnotations(this, cls);
     }
 
     private Memoized<@Nullable ClassNode> lazyParse(@Nullable ClassData data) {

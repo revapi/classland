@@ -19,6 +19,7 @@ package org.revapi.classland.impl.model.mirror;
 import static java.util.stream.Collectors.toList;
 
 import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.MissingTypeImpl;
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
@@ -39,6 +41,7 @@ import org.revapi.classland.impl.model.signature.Bound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 
 public final class TypeMirrorFactory {
     private TypeMirrorFactory() {
@@ -48,7 +51,7 @@ public final class TypeMirrorFactory {
     private static final TypeSignature.Visitor<TypeMirrorImpl, ResolutionContext> SIGNATURE_VISITOR = new TypeSignature.Visitor<TypeMirrorImpl, ResolutionContext>() {
         @Override
         public TypeMirrorImpl visitPrimitiveType(TypeSignature.PrimitiveType type, ResolutionContext ctx) {
-            return new PrimitiveTypeImpl(ctx.universe, type.type, ctx.annotationSource, ctx.path);
+            return new PrimitiveTypeImpl(ctx.universe, type.type, ctx.annotationSource, ctx.path, ctx.typeLookupSeed);
         }
 
         @Override
@@ -60,7 +63,8 @@ public final class TypeMirrorFactory {
 
         @Override
         public TypeMirrorImpl visitType(TypeSignature.Reference typeReference, ResolutionContext ctx) {
-            TypeElementBase t = ctx.universe.getTypeByInternalName(typeReference.internalTypeName);
+            TypeElementBase t = ctx.universe.getTypeByInternalNameFromModule(typeReference.internalTypeName,
+                    ctx.typeLookupSeed.get());
 
             List<TypeMirrorImpl> args = new ArrayList<>(typeReference.typeArguments.size());
             int i = 0;
@@ -70,7 +74,8 @@ public final class TypeMirrorFactory {
                 ctx.path = newPath;
                 switch (b.boundType) {
                 case UNBOUNDED:
-                    args.add(new WildcardTypeImpl(ctx.universe, null, null, ctx.annotationSource, ctx.path));
+                    args.add(new WildcardTypeImpl(ctx.universe, null, null, ctx.annotationSource, ctx.path,
+                            ctx.typeLookupSeed));
                     break;
                 case EXACT:
                     args.add(b.type.accept(this, ctx));
@@ -78,12 +83,12 @@ public final class TypeMirrorFactory {
                 case SUPER:
                     newPath.wildcardBound();
                     args.add(new WildcardTypeImpl(ctx.universe, null, b.type.accept(this, ctx), ctx.annotationSource,
-                            ctx.path));
+                            ctx.path, ctx.typeLookupSeed));
                     break;
                 case EXTENDS:
                     newPath.wildcardBound();
                     args.add(new WildcardTypeImpl(ctx.universe, b.type.accept(this, ctx), null, ctx.annotationSource,
-                            ctx.path));
+                            ctx.path, ctx.typeLookupSeed));
                     break;
                 default:
                     throw new IllegalStateException("Unhandled bound " + b);
@@ -118,13 +123,14 @@ public final class TypeMirrorFactory {
 
     public static DeclaredTypeImpl createJavaLangObject(Universe universe) {
         return (DeclaredTypeImpl) create(universe, Universe.JAVA_LANG_OBJECT_SIG, TypeVariableResolutionContext.EMPTY,
-                AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT);
+                AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtained(null));
     }
 
     public static TypeMirrorImpl create(Universe universe, TypeSignature type,
             TypeVariableResolutionContext resolutionContext, Memoized<AnnotationSource> annotationSource,
-            AnnotationTargetPath startPath) {
-        return create(type, new ResolutionContext(universe, resolutionContext, annotationSource, startPath));
+            AnnotationTargetPath startPath, Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+        return create(type,
+                new ResolutionContext(universe, resolutionContext, annotationSource, startPath, typeLookupSeed));
     }
 
     private static TypeMirrorImpl create(TypeSignature type, ResolutionContext ctx) {
@@ -139,14 +145,17 @@ public final class TypeMirrorFactory {
         final Universe universe;
         final TypeVariableResolutionContext variables;
         final Memoized<AnnotationSource> annotationSource;
+        final Memoized<@Nullable ModuleElementImpl> typeLookupSeed;
         AnnotationTargetPath path;
 
         ResolutionContext(Universe universe, TypeVariableResolutionContext variables,
-                Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path) {
+                Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path,
+                Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
             this.universe = universe;
             this.variables = variables;
             this.annotationSource = annotationSource;
             this.path = path;
+            this.typeLookupSeed = typeLookupSeed;
         }
     }
 }

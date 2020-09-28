@@ -43,11 +43,15 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     // used to construct a wildcard capture
     public TypeVariableImpl(Universe universe, @Nullable TypeMirrorImpl upperBound, @Nullable TypeMirrorImpl lowerBound,
             Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path) {
-        super(universe, annotationSource, path);
+        // TODO the unnamed module is wrong here, but this ctor is not used yet as of now, so I've put it here so that
+        // stuff compiles. Revisit once this ctor is actually used.
+        super(universe, annotationSource, path, memoize(universe::getUnnamedModule));
         this.owner = new NoElementImpl(universe);
         this.upperBound = upperBound == null ? new NullTypeImpl(universe) : upperBound;
-        this.lowerBound = lowerBound == null ? TypeMirrorFactory.create(universe, Universe.JAVA_LANG_OBJECT_SIG,
-                TypeVariableResolutionContext.EMPTY, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT)
+        // TODO the unnamed module is most probably wrong as a lookup seed here, too
+        this.lowerBound = lowerBound == null
+                ? TypeMirrorFactory.create(universe, Universe.JAVA_LANG_OBJECT_SIG, TypeVariableResolutionContext.EMPTY,
+                        AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, memoize(universe::getUnnamedModule))
                 : lowerBound;
     }
 

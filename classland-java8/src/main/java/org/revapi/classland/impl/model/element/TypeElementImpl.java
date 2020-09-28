@@ -179,10 +179,10 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
                 return pkg;
             case MEMBER:
             case ANONYMOUS:
-                return universe.getTypeByInternalName(r.outerClass);
+                return universe.getTypeByInternalNameFromPackage(r.outerClass, pkg);
             case LOCAL:
-                return universe.getTypeByInternalName(r.classNode.outerClass).getMethod(r.classNode.outerMethod,
-                        r.classNode.outerMethodDesc);
+                return universe.getTypeByInternalNameFromPackage(r.classNode.outerClass, pkg)
+                        .getMethod(r.classNode.outerMethod, r.classNode.outerMethodDesc);
             default:
                 throw new IllegalStateException("Unhandled nesting kind, " + r.nestingKind
                         + ", while determining the enclosing element of class " + internalName);
@@ -191,7 +191,8 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
         });
 
         signature = scan.map(s -> {
-            TypeElementBase outerClass = s.outerClass == null ? null : universe.getTypeByInternalName(s.outerClass);
+            TypeElementBase outerClass = s.outerClass == null ? null
+                    : universe.getTypeByInternalNameFromPackage(s.outerClass, pkg);
 
             ClassNode n = s.classNode;
 
@@ -208,7 +209,7 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
         type = memoize(() -> TypeMirrorFactory.create(universe, this));
 
         superClass = signature.map(ts -> TypeMirrorFactory.create(universe, ts.superClass, this, asAnnotationSource(),
-                new AnnotationTargetPath(TypeReference.newSuperTypeReference(-1))));
+                new AnnotationTargetPath(TypeReference.newSuperTypeReference(-1)), obtained(pkg.getModule())));
 
         interfaces = signature.map(ts -> {
             List<TypeMirrorImpl> ret = new ArrayList<>(ts.interfaces.size());
@@ -216,7 +217,7 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
             int i = 0;
             for (TypeSignature iface : ts.interfaces) {
                 ret.add(TypeMirrorFactory.create(universe, iface, this, asAnnotationSource(),
-                        new AnnotationTargetPath(TypeReference.newSuperTypeReference(i++))));
+                        new AnnotationTargetPath(TypeReference.newSuperTypeReference(i++)), obtained(pkg.getModule())));
             }
 
             return ret;
@@ -241,7 +242,8 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
                     .filter(f -> !Modifiers.isSynthetic(f.access))
                     .map(f -> new VariableElementImpl.Field(universe, this, f));
 
-            Stream<TypeElementBase> innerClasses = r.innerClasses.stream().map(universe::getTypeByInternalName);
+            Stream<TypeElementBase> innerClasses = r.innerClasses.stream()
+                    .map(c -> universe.getTypeByInternalNameFromPackage(c, pkg));
 
             return concat(concat(fields, methods.get().values().stream()), innerClasses).collect(toList());
         });

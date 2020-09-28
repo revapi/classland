@@ -45,10 +45,10 @@ public class ExecutableElementImplTest {
 
     @Test
     void defaultMethods() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(methods.jarFile())));
 
-        TypeElementBase DefaultMethods = u.getTypeByInternalName("pkg/Methods$DefaultMethods");
+        TypeElementBase DefaultMethods = u.getTypeByInternalNameFromModule("pkg/Methods$DefaultMethods", null);
 
         Assertions.assertNotNull(DefaultMethods);
 
@@ -61,10 +61,10 @@ public class ExecutableElementImplTest {
 
     @Test
     void elementKinds() throws Exception {
-        Universe u = new Universe();
+        Universe u = new Universe(false);
         u.registerArchive(new JarFileArchive(new JarFile(methods.jarFile())));
 
-        TypeElementBase ElementKinds = u.getTypeByInternalName("pkg/Methods$ElementKinds");
+        TypeElementBase ElementKinds = u.getTypeByInternalNameFromModule("pkg/Methods$ElementKinds", null);
 
         Assertions.assertNotNull(ElementKinds);
 

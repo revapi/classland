@@ -55,7 +55,8 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
     protected TypeParameterElementImpl(Universe universe, String name, TypeElementImpl owner, TypeParameterBound bound,
             int index) {
         super(universe, owner.asAnnotationSource(),
-                new AnnotationTargetPath(newTypeParameterReference(CLASS_TYPE_PARAMETER, index)));
+                new AnnotationTargetPath(newTypeParameterReference(CLASS_TYPE_PARAMETER, index)), owner.lookupModule());
+
         this.name = NameImpl.of(name);
         this.owner = owner;
         this.rawBound = bound;
@@ -64,11 +65,12 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
             switch (bound.boundType) {
             case UNBOUNDED:
                 return singletonList(TypeMirrorFactory.create(universe, Universe.JAVA_LANG_OBJECT_SIG, owner,
-                        AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT));
+                        AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, owner.lookupModule()));
             case EXACT:
                 return singletonList(
                         TypeMirrorFactory.create(universe, bound.classBound, owner, owner.asAnnotationSource(),
-                                new AnnotationTargetPath(newTypeParameterReference(CLASS_TYPE_PARAMETER, index))));
+                                new AnnotationTargetPath(newTypeParameterReference(CLASS_TYPE_PARAMETER, index)),
+                                owner.lookupModule()));
             case EXTENDS:
                 List<TypeMirrorImpl> ret = new ArrayList<>(bound.interfaceBounds.size() + 1);
                 if (bound.classBound == null) {
@@ -76,13 +78,15 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
                 } else {
                     ret.add(TypeMirrorFactory.create(universe, bound.classBound, owner, owner.asAnnotationSource(),
                             new AnnotationTargetPath(
-                                    TypeReference.newTypeParameterBoundReference(CLASS_TYPE_PARAMETER, index, 0))));
+                                    TypeReference.newTypeParameterBoundReference(CLASS_TYPE_PARAMETER, index, 0)),
+                            owner.lookupModule()));
                 }
                 int i = 1;
                 for (TypeSignature b : bound.interfaceBounds) {
                     ret.add(TypeMirrorFactory.create(universe, b, owner, owner.asAnnotationSource(),
                             new AnnotationTargetPath(
-                                    TypeReference.newTypeParameterBoundReference(CLASS_TYPE_PARAMETER, index, i++))));
+                                    TypeReference.newTypeParameterBoundReference(CLASS_TYPE_PARAMETER, index, i++)),
+                            owner.lookupModule()));
                 }
                 return ret;
             case SUPER:
