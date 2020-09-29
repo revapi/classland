@@ -19,6 +19,8 @@ package org.revapi.classland.impl.util;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 
+import static org.revapi.classland.impl.util.Asm.hasFlag;
+
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -149,9 +151,5 @@ public final class Modifiers {
         }
 
         return ElementKind.FIELD;
-    }
-
-    private static boolean hasFlag(int flags, int flag) {
-        return (flags & flag) == flag;
     }
 }

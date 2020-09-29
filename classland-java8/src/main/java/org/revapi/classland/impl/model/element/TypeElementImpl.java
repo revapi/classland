@@ -61,6 +61,7 @@ import org.revapi.classland.impl.util.Nullable;
 
 public final class TypeElementImpl extends TypeElementBase implements TypeVariableResolutionContext {
     private final String internalName;
+    private final Memoized<ClassNode> node;
     private final Memoized<NameImpl> qualifiedName;
     private final Memoized<NameImpl> simpleName;
     private final Memoized<ScanningResult> scan;
@@ -80,6 +81,7 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     public TypeElementImpl(Universe universe, String internalName, Memoized<ClassNode> node, PackageElementImpl pkg) {
         super(universe, internalName, obtained(pkg), node.map(AnnotationSource::fromType));
         this.internalName = internalName;
+        this.node = node;
 
         this.scan = node.map(cls -> {
             ScanningResult ret = new ScanningResult();
@@ -247,6 +249,14 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
 
             return concat(concat(fields, methods.get().values().stream()), innerClasses).collect(toList());
         });
+    }
+
+    public String getInternalName() {
+        return internalName;
+    }
+
+    public Memoized<ClassNode> getNode() {
+        return node;
     }
 
     public boolean isInPackage(PackageElementImpl pkg) {

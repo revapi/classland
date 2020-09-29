@@ -48,6 +48,8 @@ class AnnotationDeclarationsTest {
     Universe u;
     TypeElementImpl VisibleAnno;
     TypeElementImpl InvisibleAnno;
+    TypeElementImpl VisibleTypeAnno;
+    TypeElementImpl InvisibleTypeAnno;
 
     @BeforeEach
     void setupTypeUniverse() throws Exception {
@@ -55,6 +57,9 @@ class AnnotationDeclarationsTest {
         u.registerArchive(new JarFileArchive(new JarFile(annotations.jarFile())));
         VisibleAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$VisibleAnno", null);
         InvisibleAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$InvisibleAnno", null);
+        VisibleTypeAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$VisibleTypeAnno", null);
+        InvisibleTypeAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$InvisibleTypeAnno",
+                null);
     }
 
     @Test
@@ -65,6 +70,7 @@ class AnnotationDeclarationsTest {
         List<AnnotationMirrorImpl> annos = AnnotatedClass.getAnnotationMirrors();
         assertEquals(2, annos.size());
         assertSame(VisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(InvisibleTypeAnno, annos.get(1).getAnnotationType().asElement());
     }
 
     @Test
@@ -76,11 +82,11 @@ class AnnotationDeclarationsTest {
         assertEquals(2, typeParams.size());
         List<AnnotationMirrorImpl> annos = typeParams.get(0).getAnnotationMirrors();
         assertEquals(2, annos.size());
-        assertSame(VisibleAnno, annos.get(0).getAnnotationType().asElement());
-        assertSame(InvisibleAnno, annos.get(1).getAnnotationType().asElement());
+        assertSame(VisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(InvisibleTypeAnno, annos.get(1).getAnnotationType().asElement());
         annos = typeParams.get(1).getAnnotationMirrors();
         assertEquals(1, annos.size());
-        assertSame(InvisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(InvisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
     }
 
     @Test
@@ -93,21 +99,50 @@ class AnnotationDeclarationsTest {
     void onMethodParameter() throws Exception {
         TypeElementImpl AnnotatedMethodParameter = (TypeElementImpl) u
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethodParameter", null);
-        ExecutableElementImpl method = AnnotatedMethodParameter.getMethod("method", "(ID)V");
+        ExecutableElementImpl method = AnnotatedMethodParameter.getMethod("method",
+                "(IDLjava/lang/String;Ljava/lang/Object;)V");
 
         assertNotNull(method);
 
-        assertEquals(2, method.getParameters().size());
+        assertEquals(4, method.getParameters().size());
         VariableElementImpl p1 = method.getParameters().get(0);
         VariableElementImpl p2 = method.getParameters().get(1);
+        VariableElementImpl p3 = method.getParameters().get(2);
+        VariableElementImpl p4 = method.getParameters().get(3);
 
         List<AnnotationMirrorImpl> annos = p1.getAnnotationMirrors();
-        assertEquals(1, annos.size());
+        assertEquals(2, annos.size());
         assertSame(VisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(VisibleTypeAnno, annos.get(1).getAnnotationType().asElement());
 
         annos = p2.getAnnotationMirrors();
         assertEquals(1, annos.size());
-        assertSame(InvisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(InvisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
+
+        annos = p3.getAnnotationMirrors();
+        assertEquals(0, annos.size());
+
+        annos = p4.getAnnotationMirrors();
+        assertEquals(1, annos.size());
+        assertSame(VisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
+    }
+
+    @Test
+    void onInnerClassConstructorParameter() throws Exception {
+        TypeElementImpl AnnotatedMethodParameter = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethodParameter", null);
+        ExecutableElementImpl ctor = AnnotatedMethodParameter.getMethod("<init>",
+                "(Lpkg/Annotations;Ljava/lang/Object;)V");
+
+        assertNotNull(ctor);
+
+        assertEquals(1, ctor.getParameters().size());
+        VariableElementImpl p1 = ctor.getParameters().get(0);
+
+        List<AnnotationMirrorImpl> annos = p1.getAnnotationMirrors();
+        assertEquals(2, annos.size());
+        assertSame(VisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(VisibleTypeAnno, annos.get(1).getAnnotationType().asElement());
     }
 
     @Test
@@ -133,7 +168,7 @@ class AnnotationDeclarationsTest {
 
         annos = paramTypeVar.getAnnotationMirrors();
         assertEquals(1, annos.size());
-        assertSame(InvisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(InvisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
     }
 
     @Test

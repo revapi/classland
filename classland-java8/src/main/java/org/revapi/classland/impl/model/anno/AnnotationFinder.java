@@ -41,10 +41,13 @@ public class AnnotationFinder {
         } else {
             TypeReference ref = path.ref;
             TypePath p = path.stepsAsTypePath();
-            return Stream
-                    .concat(annotationSource.getVisibleTypeAnnotations().stream(),
-                            annotationSource.getInvisibleTypeAnnotations().stream())
-                    .filter(a -> matches(a, ref, p)).collect(toList());
+            Stream<TypeAnnotationNode> typeAnnos = Stream.concat(annotationSource.getVisibleTypeAnnotations().stream(),
+                    annotationSource.getInvisibleTypeAnnotations().stream()).filter(a -> matches(a, ref, p));
+
+            Stream<AnnotationNode> annos = Stream.concat(annotationSource.getVisibleAnnotations().stream(),
+                    annotationSource.getInvisibleAnnotations().stream());
+
+            return Stream.concat(annos, typeAnnos).collect(toList());
         }
     }
 

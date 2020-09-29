@@ -19,13 +19,17 @@ package org.revapi.classland.impl.model.anno;
 import static java.util.Collections.emptyList;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeAnnotationNode;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 
 public abstract class AnnotationSource {
     public static final AnnotationSource EMPTY = new AnnotationSource() {
@@ -56,26 +60,30 @@ public abstract class AnnotationSource {
 
     }
 
+    private static <T> List<T> nonNullOrEmpty(@Nullable List<T> list) {
+        return list == null ? emptyList() : list;
+    }
+
     public static AnnotationSource fromType(ClassNode node) {
         return new AnnotationSource() {
             @Override
             public List<AnnotationNode> getVisibleAnnotations() {
-                return node.visibleAnnotations == null ? emptyList() : node.visibleAnnotations;
+                return nonNullOrEmpty(node.visibleAnnotations);
             }
 
             @Override
             public List<AnnotationNode> getInvisibleAnnotations() {
-                return node.invisibleAnnotations == null ? emptyList() : node.invisibleAnnotations;
+                return nonNullOrEmpty(node.invisibleAnnotations);
             }
 
             @Override
             public List<TypeAnnotationNode> getVisibleTypeAnnotations() {
-                return node.visibleTypeAnnotations == null ? emptyList() : node.visibleTypeAnnotations;
+                return nonNullOrEmpty(node.visibleTypeAnnotations);
             }
 
             @Override
             public List<TypeAnnotationNode> getInvisibleTypeAnnotations() {
-                return node.invisibleTypeAnnotations == null ? emptyList() : node.invisibleTypeAnnotations;
+                return nonNullOrEmpty(node.invisibleTypeAnnotations);
             }
         };
     }
@@ -84,22 +92,22 @@ public abstract class AnnotationSource {
         return new AnnotationSource() {
             @Override
             public List<AnnotationNode> getVisibleAnnotations() {
-                return node.visibleAnnotations == null ? emptyList() : node.visibleAnnotations;
+                return nonNullOrEmpty(node.visibleAnnotations);
             }
 
             @Override
             public List<AnnotationNode> getInvisibleAnnotations() {
-                return node.invisibleAnnotations == null ? emptyList() : node.invisibleAnnotations;
+                return nonNullOrEmpty(node.invisibleAnnotations);
             }
 
             @Override
             public List<TypeAnnotationNode> getVisibleTypeAnnotations() {
-                return node.visibleTypeAnnotations == null ? emptyList() : node.visibleTypeAnnotations;
+                return nonNullOrEmpty(node.visibleTypeAnnotations);
             }
 
             @Override
             public List<TypeAnnotationNode> getInvisibleTypeAnnotations() {
-                return node.invisibleTypeAnnotations == null ? emptyList() : node.invisibleTypeAnnotations;
+                return nonNullOrEmpty(node.invisibleTypeAnnotations);
             }
         };
     }
@@ -108,72 +116,75 @@ public abstract class AnnotationSource {
         return new AnnotationSource() {
             @Override
             public List<AnnotationNode> getVisibleAnnotations() {
-                return node.visibleAnnotations == null ? emptyList() : node.visibleAnnotations;
+                return nonNullOrEmpty(node.visibleAnnotations);
             }
 
             @Override
             public List<AnnotationNode> getInvisibleAnnotations() {
-                return node.invisibleAnnotations == null ? emptyList() : node.invisibleAnnotations;
+                return nonNullOrEmpty(node.invisibleAnnotations);
             }
 
             @Override
             public List<TypeAnnotationNode> getVisibleTypeAnnotations() {
-                return node.visibleTypeAnnotations == null ? emptyList() : node.visibleTypeAnnotations;
+                return nonNullOrEmpty(node.visibleTypeAnnotations);
             }
 
             @Override
             public List<TypeAnnotationNode> getInvisibleTypeAnnotations() {
-                return node.invisibleTypeAnnotations == null ? emptyList() : node.invisibleTypeAnnotations;
+                return nonNullOrEmpty(node.invisibleTypeAnnotations);
             }
         };
     }
 
-    // TODO this is not right - the method parameter type annotations are declared differently than
-    // the normal annotations..
-    // this is the old code I had in VariableElementImpl.Parameter
-    // private static List<AnnotationNode> annos(ExecutableElementImpl method, int index) {
-    // MethodNode n = method.getNode();
-    //
-    // int paramCount = n.parameters.size();
-    //
-    // ArrayList<AnnotationNode> ret = new ArrayList<>();
-    // ret.addAll(annos(n.visibleAnnotableParameterCount, paramCount, index, n.visibleParameterAnnotations));
-    // ret.addAll(annos(n.invisibleAnnotableParameterCount, paramCount, index, n.invisibleParameterAnnotations));
-    // return ret;
-    // }
-    //
-    // private static List<AnnotationNode> annos(int shiftCount, int paramCount, int index,
-    // List<AnnotationNode>[] allAnnos) {
-    // if (allAnnos == null) {
-    // return emptyList();
-    // }
-    //
-    // int indexShift = shiftCount == 0 ? 0 : paramCount - shiftCount;
-    //
-    // List<AnnotationNode> ret = allAnnos[index - indexShift];
-    // return ret == null ? emptyList() : ret;
-    // }
-
     public static AnnotationSource fromMethodParameter(MethodNode node, int paramIndex) {
+        int paramCount = Type.getMethodType(node.desc).getArgumentTypes().length;
         return new AnnotationSource() {
             @Override
             public List<AnnotationNode> getVisibleAnnotations() {
-                return node.visibleAnnotations == null ? emptyList() : node.visibleAnnotations;
+                if (node.visibleParameterAnnotations == null) {
+                    return emptyList();
+                } else {
+                    return nonNullOrEmpty(
+                            node.visibleParameterAnnotations[shiftedIndex(node.visibleAnnotableParameterCount)]);
+                }
             }
 
             @Override
             public List<AnnotationNode> getInvisibleAnnotations() {
-                return node.invisibleAnnotations == null ? emptyList() : node.invisibleAnnotations;
+                if (node.invisibleParameterAnnotations == null) {
+                    return emptyList();
+                } else {
+                    return nonNullOrEmpty(
+                            node.invisibleParameterAnnotations[shiftedIndex(node.invisibleAnnotableParameterCount)]);
+                }
             }
 
             @Override
             public List<TypeAnnotationNode> getVisibleTypeAnnotations() {
-                return node.visibleTypeAnnotations == null ? emptyList() : node.visibleTypeAnnotations;
+                return filterOutFormalParameterAnnotations(nonNullOrEmpty(node.visibleTypeAnnotations));
             }
 
             @Override
             public List<TypeAnnotationNode> getInvisibleTypeAnnotations() {
-                return node.invisibleTypeAnnotations == null ? emptyList() : node.invisibleTypeAnnotations;
+                return filterOutFormalParameterAnnotations(nonNullOrEmpty(node.invisibleTypeAnnotations));
+            }
+
+            private int shiftedIndex(int shift) {
+                int indexShift = shift == 0 ? 0 : (paramCount - shift);
+                return paramIndex - indexShift;
+            }
+
+            /**
+             * We need to filter out the type annotations of the "method formal parameter" sort with no typepath because
+             * those also appear in the list of "normal" annotations.
+             */
+            private List<TypeAnnotationNode> filterOutFormalParameterAnnotations(List<TypeAnnotationNode> list) {
+                return list.stream()
+                        // the sort of the type reference is computed by >>> 24 bitshift. There is no static method
+                        // for that in ASM that I know of, so we need to play magic here...
+                        .filter(n -> (TypeReference.METHOD_FORMAL_PARAMETER & (n.typeRef >>> 24)) == 0
+                                || n.typePath != null)
+                        .collect(Collectors.toList());
             }
         };
     }

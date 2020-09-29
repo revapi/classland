@@ -137,6 +137,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
 
         @Override
         public @Nullable Object getConstantValue() {
+            // TODO implement
             return null;
         }
 

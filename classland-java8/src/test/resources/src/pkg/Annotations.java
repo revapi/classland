@@ -16,7 +16,6 @@
  */
 package pkg;
 
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -38,25 +37,38 @@ public class Annotations {
     @Target({ANNOTATION_TYPE, CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, MODULE, PACKAGE, PARAMETER, TYPE,
             TYPE_PARAMETER, TYPE_USE})
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface VisibleAnno {
+    public @interface VisibleTypeAnno {
     }
 
     @Target({ANNOTATION_TYPE, CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, MODULE, PACKAGE, PARAMETER, TYPE,
             TYPE_PARAMETER, TYPE_USE})
     @Retention(RetentionPolicy.CLASS)
+    public @interface InvisibleTypeAnno {
+    }
+
+    @Target({ANNOTATION_TYPE, CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, MODULE, PACKAGE, PARAMETER, TYPE,
+            TYPE_PARAMETER})
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface VisibleAnno {
+    }
+
+    @Target({ANNOTATION_TYPE, CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, MODULE, PACKAGE, PARAMETER, TYPE,
+            TYPE_PARAMETER})
+    @Retention(RetentionPolicy.CLASS)
     public @interface InvisibleAnno {
     }
 
-    @VisibleAnno @InvisibleAnno
+    @VisibleAnno @InvisibleTypeAnno
     public class AnnotatedClass {}
 
-    public class AnnotatedTypeParameter<@VisibleAnno @InvisibleAnno T, @InvisibleAnno U> {}
+    public class AnnotatedTypeParameter<@VisibleTypeAnno @InvisibleTypeAnno T, @InvisibleTypeAnno U> {}
 
     public class AnnotatedMethodParameter {
-        void method(@VisibleAnno int p, @InvisibleAnno double q) {}
+        public AnnotatedMethodParameter(@VisibleAnno @VisibleTypeAnno Object explicitParam) {}
+        void method(@VisibleAnno @VisibleTypeAnno int p, @InvisibleTypeAnno double q, String r, @VisibleTypeAnno Object s) {}
     }
 
     public class AnnotatedMethodParameterTypeVariable {
-        void method(java.util.Set<@InvisibleAnno String> p) {}
+        void method(java.util.Set<@InvisibleTypeAnno String> p) {}
     }
 }

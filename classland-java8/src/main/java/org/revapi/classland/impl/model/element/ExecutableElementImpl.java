@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toList;
 
 import static org.objectweb.asm.TypeReference.METHOD_RETURN;
 import static org.objectweb.asm.TypeReference.newTypeReference;
+import static org.revapi.classland.impl.util.Asm.hasFlag;
 import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
@@ -38,10 +39,12 @@ import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
+import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeParameterElement;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
@@ -94,11 +97,24 @@ public final class ExecutableElementImpl extends ElementImpl
                         new AnnotationTargetPath(newTypeReference(METHOD_RETURN)), parent.lookupModule()));
 
         this.parameters = parameterTypes.length == 0 ? obtained(emptyList()) : memoize(() -> {
-            List<VariableElementImpl> ret = new ArrayList<>(parameterTypes.length);
-            for (int i = 0; i < parameterTypes.length; ++i) {
-                ret.add(new VariableElementImpl.Parameter(universe, this, i));
+            int paramShift;
+            if ("<init>".equals(method.name)) {
+                // we need to look out for the synthetic parameter of the instance inner class constructors that
+                // is being passed the "this" out their outer class.
+                // we try to avoid determining the nesting kind of the parent, because that requires the parent
+                // parsing.
+                boolean isStatic = hasFlag(parent.getNode().get().access, Opcodes.ACC_STATIC)
+                        || parent.getInternalName().indexOf('$') == -1
+                        || parent.getNestingKind() == NestingKind.TOP_LEVEL;
+                paramShift = isStatic ? 0 : 1;
+            } else {
+                paramShift = 0;
             }
 
+            List<VariableElementImpl> ret = new ArrayList<>(parameterTypes.length - paramShift);
+            for (int i = paramShift; i < parameterTypes.length; ++i) {
+                ret.add(new VariableElementImpl.Parameter(universe, this, i));
+            }
             return ret;
         });
 

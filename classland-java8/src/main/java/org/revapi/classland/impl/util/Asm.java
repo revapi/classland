@@ -20,4 +20,9 @@ import org.objectweb.asm.Opcodes;
 
 public class Asm {
     public static final int VERSION = Opcodes.ASM8;
+
+    public static boolean hasFlag(int flags, int flag) {
+        return (flags & flag) == flag;
+    }
+
 }
