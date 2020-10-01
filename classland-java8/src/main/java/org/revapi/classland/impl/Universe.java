@@ -50,7 +50,7 @@ import org.revapi.classland.impl.util.Nullable;
 
 public final class Universe implements AutoCloseable {
     public static final TypeSignature.Reference JAVA_LANG_OBJECT_SIG = new TypeSignature.Reference(0,
-            "/java/lang/Object", emptyList(), null);
+            "java/lang/Object", emptyList(), null);
 
     private final UnnamedModuleImpl unnamedModule = new UnnamedModuleImpl(this);
     private final boolean analyzeModules;
