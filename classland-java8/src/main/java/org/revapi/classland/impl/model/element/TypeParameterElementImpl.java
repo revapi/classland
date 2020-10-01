@@ -41,6 +41,7 @@ import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.mirror.TypeVariableImpl;
 import org.revapi.classland.impl.model.signature.TypeParameterBound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.util.Memoized;
@@ -112,7 +113,7 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
 
     @Override
     public TypeMirrorImpl asType() {
-        return TypeMirrorFactory.create(this);
+        return new TypeVariableImpl(this);
     }
 
     @Override

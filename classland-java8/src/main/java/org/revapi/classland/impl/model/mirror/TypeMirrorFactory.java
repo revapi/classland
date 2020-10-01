@@ -36,7 +36,6 @@ import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
-import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
 import org.revapi.classland.impl.model.signature.Bound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
@@ -117,8 +116,14 @@ public final class TypeMirrorFactory {
 
     public static DeclaredTypeImpl create(Universe universe, TypeElementImpl element) {
         return new DeclaredTypeImpl(universe, element, MIRROR_OF_TYPE.visit(element.getEnclosingElement()),
-                element.getTypeParameters().stream().map(TypeMirrorFactory::create).collect(toList()),
+                element.getTypeParameters().stream().map(TypeVariableImpl::new).collect(toList()),
                 memoize(element::getAnnotationMirrors));
+    }
+
+    public static DeclaredTypeImpl create(Universe universe, TypeElementImpl element,
+            List<TypeMirrorImpl> typeArguments, List<AnnotationMirrorImpl> annos) {
+        return new DeclaredTypeImpl(universe, element, MIRROR_OF_TYPE.visit(element.getEnclosingElement()),
+                typeArguments, obtained(annos));
     }
 
     public static DeclaredTypeImpl createJavaLangObject(Universe universe) {
@@ -135,10 +140,6 @@ public final class TypeMirrorFactory {
 
     private static TypeMirrorImpl create(TypeSignature type, ResolutionContext ctx) {
         return type.accept(SIGNATURE_VISITOR, ctx);
-    }
-
-    public static TypeVariableImpl create(TypeParameterElementImpl element) {
-        return new TypeVariableImpl(element);
     }
 
     private static final class ResolutionContext {

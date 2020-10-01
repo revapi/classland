@@ -25,6 +25,7 @@ import java.util.List;
 
 import javax.lang.model.type.TypeKind;
 
+import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.revapi.classland.impl.model.element.TypeElementBase;
@@ -55,6 +56,10 @@ public final class SignatureParser {
         SignatureReader rdr = new SignatureReader(signature);
         rdr.acceptType(visitor);
         return visitor.get();
+    }
+
+    public static TypeSignature parseInternalName(String internalName) {
+        return parseTypeRef(Type.getObjectType(internalName).getDescriptor());
     }
 
     private static abstract class Decl extends SignatureVisitor {

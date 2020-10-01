@@ -71,4 +71,16 @@ public class Annotations {
     public class AnnotatedMethodParameterTypeVariable {
         void method(java.util.Set<@InvisibleTypeAnno String> p) {}
     }
+
+    public class AnnotatedMethod {
+        @VisibleAnno @VisibleTypeAnno
+        void method() {}
+    }
+
+    public class AnnotatedReceiverType {
+        AnnotatedReceiverType() {}
+        AnnotatedReceiverType(@InvisibleTypeAnno Annotations Annotations.this, @InvisibleTypeAnno double param) {}
+        void method(@VisibleTypeAnno AnnotatedReceiverType this, @VisibleTypeAnno int param) {}
+        void method(double param) {}
+    }
 }

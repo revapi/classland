@@ -90,9 +90,18 @@ class AnnotationDeclarationsTest {
     }
 
     @Test
-    @Disabled("until implemented")
     void onMethod() throws Exception {
-        // TODO implement
+        TypeElementImpl AnnotatedMethod = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethod", null);
+
+        ExecutableElementImpl method = AnnotatedMethod.getMethod("method", "()V");
+
+        assertNotNull(method);
+
+        List<AnnotationMirrorImpl> annos = method.getAnnotationMirrors();
+        assertEquals(2, annos.size());
+        assertSame(VisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(VisibleTypeAnno, annos.get(1).getAnnotationType().asElement());
     }
 
     @Test
@@ -205,5 +214,49 @@ class AnnotationDeclarationsTest {
     @Disabled
     void onMethodDefaultValue() throws Exception {
         // TODO implement
+    }
+
+    @Test
+    void onMethodReceiverType() throws Exception {
+        TypeElementImpl Annotations = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations", null);
+        assertNotNull(Annotations);
+
+        TypeElementImpl AnnotatedReceiverType = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedReceiverType", null);
+        assertNotNull(AnnotatedReceiverType);
+
+        ExecutableElementImpl implicitReceiverCtor = AnnotatedReceiverType.getMethod("<init>", "(Lpkg/Annotations;)V");
+        assertNotNull(implicitReceiverCtor);
+
+        ExecutableElementImpl explicitReceiverCtor = AnnotatedReceiverType.getMethod("<init>", "(Lpkg/Annotations;D)V");
+        assertNotNull(explicitReceiverCtor);
+
+        ExecutableElementImpl explicitReceiverMethod = AnnotatedReceiverType.getMethod("method", "(I)V");
+        assertNotNull(explicitReceiverMethod);
+
+        ExecutableElementImpl implicitReceiverMethod = AnnotatedReceiverType.getMethod("method", "(D)V");
+        assertNotNull(implicitReceiverMethod);
+
+        TypeMirrorImpl receiverType = implicitReceiverCtor.getReceiverType();
+        assertNotNull(receiverType);
+        assertSame(Annotations, ((DeclaredTypeImpl) receiverType).asElement());
+
+        receiverType = explicitReceiverCtor.getReceiverType();
+        assertNotNull(receiverType);
+        assertSame(Annotations, ((DeclaredTypeImpl) receiverType).asElement());
+        List<AnnotationMirrorImpl> annos = receiverType.getAnnotationMirrors();
+        assertEquals(1, annos.size());
+        assertSame(InvisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
+
+        receiverType = implicitReceiverMethod.getReceiverType();
+        assertNotNull(receiverType);
+        assertSame(AnnotatedReceiverType, ((DeclaredTypeImpl) receiverType).asElement());
+
+        receiverType = explicitReceiverMethod.getReceiverType();
+        assertNotNull(receiverType);
+        assertSame(AnnotatedReceiverType, ((DeclaredTypeImpl) receiverType).asElement());
+        annos = receiverType.getAnnotationMirrors();
+        assertEquals(1, annos.size());
+        assertSame(VisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
     }
 }

@@ -259,6 +259,10 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
         return node;
     }
 
+    public Memoized<DeclaredTypeImpl> getType() {
+        return type;
+    }
+
     public boolean isInPackage(PackageElementImpl pkg) {
         return getNestingKind() == NestingKind.TOP_LEVEL && this.pkg.get().equals(pkg);
     }

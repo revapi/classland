@@ -17,6 +17,7 @@
 package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 
 import static org.objectweb.asm.TypeReference.METHOD_RETURN;
@@ -28,6 +29,7 @@ import static org.revapi.classland.impl.util.Memoized.obtained;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -40,16 +42,20 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.util.SimpleElementVisitor8;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.MethodNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.GenericMethodParameters;
@@ -68,6 +74,9 @@ public final class ExecutableElementImpl extends ElementImpl
     private final Memoized<List<VariableElementImpl>> parameters;
     private final Memoized<ElementKind> elementKind;
     private final Memoized<Set<Modifier>> modifiers;
+    private final Memoized<Map<String, TypeParameterElementImpl>> typeParameterMap;
+    private final Memoized<List<TypeParameterElementImpl>> typeParameters;
+    private final Memoized<? extends TypeMirrorImpl> receiverType;
 
     public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
         super(universe, obtained(AnnotationSource.fromMethod(method)), AnnotationTargetPath.ROOT,
@@ -83,7 +92,7 @@ public final class ExecutableElementImpl extends ElementImpl
                 return new GenericMethodParameters(new LinkedHashMap<>(0, 0.01f),
                         SignatureParser.parseTypeRef(methodType.getReturnType().getInternalName()),
                         Stream.of(methodType.getArgumentTypes())
-                                .map(t -> SignatureParser.parseTypeRef(t.getInternalName())).collect(toList()),
+                                .map(t -> SignatureParser.parseTypeRef(t.getDescriptor())).collect(toList()),
                         method.exceptions.stream().map(SignatureParser::parseTypeRef).collect(toList()), parent);
             } else {
                 return SignatureParser.parseMethod(method.signature, parent);
@@ -96,17 +105,66 @@ public final class ExecutableElementImpl extends ElementImpl
                 .map(s -> TypeMirrorFactory.create(universe, s.returnType, this, obtained(annotationSource),
                         new AnnotationTargetPath(newTypeReference(METHOD_RETURN)), parent.lookupModule()));
 
-        this.parameters = parameterTypes.length == 0 ? obtained(emptyList()) : memoize(() -> {
+        this.receiverType = parent.getNode().map(cls -> {
+            boolean isStaticMethod = hasFlag(method.access, Opcodes.ACC_STATIC);
+
+            if (isStaticMethod) {
+                return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+            }
+
+            boolean isStaticClass = hasFlag(cls.access, Opcodes.ACC_STATIC)
+                    || parent.getInternalName().indexOf('$') == -1 || parent.getNestingKind() == NestingKind.TOP_LEVEL;
+
+            if ("<init>".equals(method.name)) {
+                if (isStaticClass) {
+                    return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+                } else {
+                    return parent.getEnclosingElement().accept(new SimpleElementVisitor8<TypeMirrorImpl, Void>() {
+                        @Override
+                        protected TypeMirrorImpl defaultAction(Element e, Void aVoid) {
+                            return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+                        }
+
+                        @Override
+                        public TypeMirrorImpl visitType(TypeElement e, Void aVoid) {
+                            if (parameterTypes[0].getInternalName().equals(((TypeElementImpl) e).getInternalName())) {
+                                return TypeMirrorFactory.create(universe, signature.get().parameterTypes.get(0),
+                                        ExecutableElementImpl.this, obtained(annotationSource),
+                                        new AnnotationTargetPath(TypeReference.newFormalParameterReference(0)),
+                                        parent.lookupModule());
+                            } else {
+                                return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+                            }
+                        }
+                    }, null);
+                }
+            } else {
+                boolean hasAnnotatedSyntheticParam = (method.visibleAnnotableParameterCount > 0
+                        && method.visibleTypeAnnotations != null
+                        && method.visibleAnnotableParameterCount < method.visibleTypeAnnotations.size())
+                        || (method.visibleAnnotableParameterCount > 0 && method.invisibleTypeAnnotations != null
+                                && method.visibleAnnotableParameterCount < method.invisibleTypeAnnotations.size());
+
+                if (hasAnnotatedSyntheticParam) {
+                    return TypeMirrorFactory.create(universe,
+                            SignatureParser.parseInternalName(parent.getInternalName()), this,
+                            obtained(annotationSource),
+                            new AnnotationTargetPath(TypeReference.newFormalParameterReference(0)),
+                            parent.lookupModule());
+                } else {
+                    return TypeMirrorFactory.create(universe, parent, emptyList(), emptyList());
+                }
+            }
+        });
+
+        this.parameters = parameterTypes.length == 0 ? obtained(emptyList()) : receiverType.map(receiver -> {
             int paramShift;
             if ("<init>".equals(method.name)) {
                 // we need to look out for the synthetic parameter of the instance inner class constructors that
                 // is being passed the "this" out their outer class.
                 // we try to avoid determining the nesting kind of the parent, because that requires the parent
                 // parsing.
-                boolean isStatic = hasFlag(parent.getNode().get().access, Opcodes.ACC_STATIC)
-                        || parent.getInternalName().indexOf('$') == -1
-                        || parent.getNestingKind() == NestingKind.TOP_LEVEL;
-                paramShift = isStatic ? 0 : 1;
+                paramShift = receiver.getKind() == TypeKind.NONE ? 0 : 1;
             } else {
                 paramShift = 0;
             }
@@ -135,6 +193,13 @@ public final class ExecutableElementImpl extends ElementImpl
         });
 
         this.modifiers = memoize(() -> Modifiers.toMethodModifiers(method.access));
+
+        this.typeParameterMap = memoize(() -> {
+            // TODO implement
+            return emptyMap();
+        });
+
+        this.typeParameters = typeParameterMap.map(m -> new ArrayList<>(m.values()));
     }
 
     MethodNode getNode() {
@@ -151,14 +216,13 @@ public final class ExecutableElementImpl extends ElementImpl
 
     @Override
     public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
-        // TODO implement
-        return Optional.empty();
+        TypeParameterElementImpl typeParam = typeParameterMap.get().get(name);
+        return typeParam == null ? parent.resolveTypeVariable(name) : Optional.of(typeParam);
     }
 
     @Override
     public List<? extends TypeParameterElement> getTypeParameters() {
-        // TODO implement
-        return null;
+        return typeParameters.get();
     }
 
     @Override
@@ -173,8 +237,7 @@ public final class ExecutableElementImpl extends ElementImpl
 
     @Override
     public TypeMirrorImpl getReceiverType() {
-        // TODO implement
-        return null;
+        return receiverType.get();
     }
 
     @Override
