@@ -62,6 +62,7 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.GenericMethodParameters;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeParameterBound;
+import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
@@ -79,6 +80,7 @@ public final class ExecutableElementImpl extends ElementImpl
     private final Memoized<Map<String, TypeParameterElementImpl>> typeParameterMap;
     private final Memoized<List<TypeParameterElementImpl>> typeParameters;
     private final Memoized<? extends TypeMirrorImpl> receiverType;
+    private final Memoized<List<TypeMirrorImpl>> thrownTypes;
 
     public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
         super(universe, obtained(AnnotationSource.fromMethod(method)), AnnotationTargetPath.ROOT,
@@ -95,7 +97,7 @@ public final class ExecutableElementImpl extends ElementImpl
                         SignatureParser.parseTypeRef(methodType.getReturnType().getInternalName()),
                         Stream.of(methodType.getArgumentTypes())
                                 .map(t -> SignatureParser.parseTypeRef(t.getDescriptor())).collect(toList()),
-                        method.exceptions.stream().map(SignatureParser::parseTypeRef).collect(toList()), parent);
+                        method.exceptions.stream().map(SignatureParser::parseInternalName).collect(toList()), parent);
             } else {
                 return SignatureParser.parseMethod(method.signature, parent);
             }
@@ -206,6 +208,18 @@ public final class ExecutableElementImpl extends ElementImpl
         });
 
         this.typeParameters = typeParameterMap.map(m -> new ArrayList<>(m.values()));
+
+        this.thrownTypes = signature.map(sig -> {
+            int i = 0;
+            List<TypeMirrorImpl> ret = new ArrayList<>(sig.exceptionTypes.size());
+
+            for(TypeSignature ex : sig.exceptionTypes) {
+                ret.add(TypeMirrorFactory.create(universe, ex, this, obtained(annotationSource),
+                        new AnnotationTargetPath(TypeReference.newExceptionReference(i++)), parent.lookupModule()));
+            }
+
+            return ret;
+        });
     }
 
     MethodNode getNode() {
@@ -274,8 +288,7 @@ public final class ExecutableElementImpl extends ElementImpl
 
     @Override
     public List<TypeMirrorImpl> getThrownTypes() {
-        // TODO implement
-        return null;
+        return thrownTypes.get();
     }
 
     @Override

@@ -198,6 +198,85 @@ public class ExecutableElementImplTest {
                 ((TypeElementBase) ((DeclaredTypeImpl) secondBound).asElement()).internalName);
     }
 
+    @Test
+    void emptyThrowsList() {
+        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        assertNotNull(Exceptions);
+
+        ExecutableElementImpl noThrows = findSingleMethodByName(Exceptions, "noThrows");
+        assertNotNull(noThrows);
+
+        assertTrue(noThrows.getThrownTypes().isEmpty());
+    }
+
+    @Test
+    void throwsChecked() {
+        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        assertNotNull(Exceptions);
+
+        ExecutableElementImpl throwsChecked = findSingleMethodByName(Exceptions, "throwsChecked");
+        assertNotNull(throwsChecked);
+
+        assertEquals(1, throwsChecked.getThrownTypes().size());
+        TypeMirrorImpl ex = throwsChecked.getThrownTypes().get(0);
+        assertTrue(ex instanceof DeclaredTypeImpl);
+
+        assertEquals("java/lang/Exception", ((TypeElementBase) ((DeclaredTypeImpl) ex).asElement()).internalName);
+    }
+
+    @Test
+    void throwsUnchecked() {
+        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        assertNotNull(Exceptions);
+
+        ExecutableElementImpl throwsUnchecked = findSingleMethodByName(Exceptions, "throwsUnchecked");
+        assertNotNull(throwsUnchecked);
+
+        assertEquals(1, throwsUnchecked.getThrownTypes().size());
+        TypeMirrorImpl ex = throwsUnchecked.getThrownTypes().get(0);
+        assertTrue(ex instanceof DeclaredTypeImpl);
+
+        assertEquals("java/lang/RuntimeException", ((TypeElementBase) ((DeclaredTypeImpl) ex).asElement()).internalName);
+    }
+
+    @Test
+    void throwsTypeParam() {
+        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        assertNotNull(Exceptions);
+
+        ExecutableElementImpl throwsTypeParam = findSingleMethodByName(Exceptions, "throwsTypeParam");
+        assertNotNull(throwsTypeParam);
+
+        assertEquals(1, throwsTypeParam.getThrownTypes().size());
+        TypeMirrorImpl ex = throwsTypeParam.getThrownTypes().get(0);
+        assertTrue(ex instanceof TypeVariableImpl);
+
+        assertEquals("java/lang/Throwable", ((TypeElementBase) ((DeclaredTypeImpl) ((TypeVariableImpl) ex).getUpperBound()).asElement()).internalName);
+    }
+
+    @Test
+    void throwsMany() {
+        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        assertNotNull(Exceptions);
+
+        ExecutableElementImpl throwsMany = findSingleMethodByName(Exceptions, "throwsMany");
+        assertNotNull(throwsMany);
+
+        assertEquals(3, throwsMany.getThrownTypes().size());
+
+        TypeMirrorImpl ex = throwsMany.getThrownTypes().get(0);
+        assertTrue(ex instanceof DeclaredTypeImpl);
+        assertEquals("java/lang/Exception", ((TypeElementBase) ((DeclaredTypeImpl) ex).asElement()).internalName);
+
+        ex = throwsMany.getThrownTypes().get(1);
+        assertTrue(ex instanceof TypeVariableImpl);
+        assertEquals("java/lang/RuntimeException", ((TypeElementBase) ((DeclaredTypeImpl) ((TypeVariableImpl) ex).getUpperBound()).asElement()).internalName);
+
+        ex = throwsMany.getThrownTypes().get(2);
+        assertTrue(ex instanceof DeclaredTypeImpl);
+        assertEquals("java/lang/Throwable", ((TypeElementBase) ((DeclaredTypeImpl) ex).asElement()).internalName);
+    }
+
     ExecutableElementImpl findSingleMethodByName(ElementImpl parent, String methodName) {
         List<? extends ExecutableElement> ms = ElementFilter.methodsIn(parent.getEnclosedElements()).stream()
                 .filter(m -> methodName.contentEquals(m.getSimpleName())).collect(Collectors.toList());

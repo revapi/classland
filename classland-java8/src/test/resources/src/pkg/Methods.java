@@ -59,4 +59,12 @@ public class Methods {
             void methodGenericFromEnclosingType(T a, U b) {}
         }
     }
+
+    static interface Exceptions {
+        void noThrows();
+        void throwsChecked() throws Exception;
+        void throwsUnchecked() throws RuntimeException;
+        <T extends Throwable> void throwsTypeParam() throws T;
+        <T extends RuntimeException> void throwsMany() throws Exception, T, Throwable;
+    }
 }
