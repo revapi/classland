@@ -56,6 +56,7 @@ import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.mirror.ExecutableTypeImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
@@ -81,6 +82,7 @@ public final class ExecutableElementImpl extends ElementImpl
     private final Memoized<List<TypeParameterElementImpl>> typeParameters;
     private final Memoized<? extends TypeMirrorImpl> receiverType;
     private final Memoized<List<TypeMirrorImpl>> thrownTypes;
+    private final Memoized<TypeMirrorImpl> type;
 
     public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
         super(universe, obtained(AnnotationSource.fromMethod(method)), AnnotationTargetPath.ROOT,
@@ -220,6 +222,8 @@ public final class ExecutableElementImpl extends ElementImpl
 
             return ret;
         });
+
+        this.type = memoize(() -> new ExecutableTypeImpl(this));
     }
 
     MethodNode getNode() {
@@ -299,8 +303,7 @@ public final class ExecutableElementImpl extends ElementImpl
 
     @Override
     public TypeMirrorImpl asType() {
-        // TODO implement
-        return null;
+        return type.get();
     }
 
     @Override
