@@ -210,10 +210,10 @@ class TypeElementImplTest {
         assertTrue(arg instanceof TypeVariableImpl);
 
         TypeVariableImpl v = ((TypeVariableImpl) arg);
-        TypeMirrorImpl lowerBound = v.getLowerBound();
-        assertTrue(lowerBound instanceof DeclaredType);
+        TypeMirrorImpl upperBound = v.getUpperBound();
+        assertTrue(upperBound instanceof DeclaredType);
 
-        DeclaredType dt = (DeclaredType) lowerBound;
+        DeclaredType dt = (DeclaredType) upperBound;
         assertTrue("java.lang.Number".contentEquals(((TypeElement) dt.asElement()).getQualifiedName()));
         assertEquals(TypeKind.ERROR, dt.getKind()); // we're not loading types from the base module...
 
@@ -253,7 +253,7 @@ class TypeElementImplTest {
         TypeVariableImpl tv = (TypeVariableImpl) baseIface.getTypeArguments().get(0);
         assertEquals("T", tv.asElement().getSimpleName().toString());
         assertEquals("java.lang.String",
-                ((TypeElement) ((DeclaredTypeImpl) tv.getLowerBound()).asElement()).getQualifiedName().toString());
+                ((TypeElement) ((DeclaredTypeImpl) tv.getUpperBound()).asElement()).getQualifiedName().toString());
     }
 
     @Test

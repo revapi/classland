@@ -74,21 +74,28 @@ public final class SignatureParser {
 
         @Override
         public void visitFormalTypeParameter(String name) {
-            ensureTypeParams();
-            if (currentTypeParameter != null) {
-                TypeSignature clsBnd = classBound == null ? null : classBound.get();
-                List<TypeSignature> ifaces = interfaceBounds == null ? emptyList()
-                        : interfaceBounds.stream().map(TypeSig::get).collect(toList());
-
-                TypeParameterBound bound = new TypeParameterBound(
-                        classBound == null ? Bound.Type.UNBOUNDED : Bound.Type.EXTENDS, clsBnd, ifaces);
-
-                typeParams.put(currentTypeParameter, bound);
-            }
+            finishTypeParam();
 
             currentTypeParameter = name;
-            classBound = new TypeSig();
+            classBound = null;
             interfaceBounds = null;
+        }
+
+        void finishTypeParam() {
+            ensureTypeParams();
+            if (currentTypeParameter == null) {
+                return;
+            }
+            TypeSignature clsBnd = classBound == null ? null : classBound.get();
+            List<TypeSignature> ifaces = interfaceBounds == null ? emptyList()
+                    : interfaceBounds.stream().map(TypeSig::get).collect(toList());
+
+            TypeParameterBound bound = new TypeParameterBound(
+                    classBound == null ? Bound.Type.UNBOUNDED : Bound.Type.EXTENDS, clsBnd, ifaces);
+
+            typeParams.put(currentTypeParameter, bound);
+
+            currentTypeParameter = null;
         }
 
         @Override
@@ -124,6 +131,8 @@ public final class SignatureParser {
         List<TypeSig> exceptions;
 
         GenericMethodParameters get(TypeElementImpl declaringClass) {
+            finishTypeParam();
+
             List<TypeSignature> params = parameters == null ? emptyList()
                     : parameters.stream().map(TypeSig::get).collect(toList());
             TypeSignature ret = returnType == null ? null : returnType.get();
@@ -136,6 +145,7 @@ public final class SignatureParser {
 
         @Override
         public SignatureVisitor visitParameterType() {
+            finishTypeParam();
             ensureParameters();
             TypeSig ret = new TypeSig();
             parameters.add(ret);
@@ -144,6 +154,7 @@ public final class SignatureParser {
 
         @Override
         public SignatureVisitor visitReturnType() {
+            finishTypeParam();
             returnType = new TypeSig();
             return returnType;
         }
@@ -171,6 +182,7 @@ public final class SignatureParser {
 
     private static final class ClassDecl extends Decl {
         public GenericTypeParameters get(@Nullable TypeElementBase outerClass) {
+            finishTypeParam();
             TypeSignature superType = classBound == null ? null : classBound.get();
             List<TypeSignature> interfaces = interfaceBounds == null ? emptyList()
                     : interfaceBounds.stream().map(TypeSig::get).collect(toList());
@@ -180,7 +192,8 @@ public final class SignatureParser {
 
         @Override
         public SignatureVisitor visitSuperclass() {
-            visitFormalTypeParameter(null);
+            finishTypeParam();
+            classBound = new TypeSig();
             return classBound;
         }
 

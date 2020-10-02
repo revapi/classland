@@ -280,6 +280,11 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     }
 
     @Override
+    public ElementImpl asElement() {
+        return this;
+    }
+
+    @Override
     public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
         TypeParameterElementImpl p = typeParametersMap.get().get(name);
         if (p == null && scan.get().outerClass != null) {

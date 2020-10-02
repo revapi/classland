@@ -44,17 +44,18 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.mirror.TypeVariableImpl;
 import org.revapi.classland.impl.model.signature.TypeParameterBound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
+import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 
 public final class TypeParameterElementImpl extends ElementImpl implements TypeParameterElement {
     private final NameImpl name;
-    private final TypeElementImpl owner;
+    private final TypeVariableResolutionContext owner;
     private final Memoized<List<TypeMirrorImpl>> bounds;
     private final TypeParameterBound rawBound;
     private final int index;
 
-    protected TypeParameterElementImpl(Universe universe, String name, TypeElementImpl owner, TypeParameterBound bound,
-            int index) {
+    protected TypeParameterElementImpl(Universe universe, String name, TypeVariableResolutionContext owner,
+            TypeParameterBound bound, int index) {
         super(universe, owner.asAnnotationSource(),
                 new AnnotationTargetPath(newTypeParameterReference(CLASS_TYPE_PARAMETER, index)), owner.lookupModule());
 
@@ -107,10 +108,6 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
         return index;
     }
 
-    public TypeElementImpl getOwner() {
-        return owner;
-    }
-
     @Override
     public TypeMirrorImpl asType() {
         return new TypeVariableImpl(this);
@@ -133,7 +130,7 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
 
     @Override
     public ElementImpl getGenericElement() {
-        return owner;
+        return owner.asElement();
     }
 
     @Override

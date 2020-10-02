@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,19 +39,46 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.archive.Archive;
 import org.revapi.classland.archive.ClassData;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
+import org.revapi.classland.impl.model.element.NoElementImpl;
 import org.revapi.classland.impl.model.element.PackageElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
+import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
 import org.revapi.classland.impl.model.element.UnnamedModuleImpl;
 import org.revapi.classland.impl.model.signature.TypeSignature;
+import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
 
 public final class Universe implements AutoCloseable {
     public static final TypeSignature.Reference JAVA_LANG_OBJECT_SIG = new TypeSignature.Reference(0,
             "java/lang/Object", emptyList(), null);
+
+    public final TypeVariableResolutionContext noTypeVariables = new TypeVariableResolutionContext() {
+        @Override
+        public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Memoized<AnnotationSource> asAnnotationSource() {
+            return AnnotationSource.MEMOIZED_EMPTY;
+        }
+
+        @Override
+        public Memoized<ModuleElementImpl> lookupModule() {
+            return obtained(unnamedModule);
+        }
+
+        @Override
+        public ElementImpl asElement() {
+            return new NoElementImpl(Universe.this);
+        }
+    };
 
     private final UnnamedModuleImpl unnamedModule = new UnnamedModuleImpl(this);
     private final boolean analyzeModules;

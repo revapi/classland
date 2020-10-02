@@ -19,6 +19,7 @@ package org.revapi.classland.impl.model.element;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 import static org.objectweb.asm.TypeReference.METHOD_RETURN;
 import static org.objectweb.asm.TypeReference.newTypeReference;
@@ -60,6 +61,7 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.GenericMethodParameters;
 import org.revapi.classland.impl.model.signature.SignatureParser;
+import org.revapi.classland.impl.model.signature.TypeParameterBound;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
@@ -139,13 +141,13 @@ public final class ExecutableElementImpl extends ElementImpl
                     }, null);
                 }
             } else {
-                boolean hasAnnotatedSyntheticParam = (method.visibleAnnotableParameterCount > 0
+                boolean hasAnnotatedReceiverParam = (method.visibleAnnotableParameterCount > 0
                         && method.visibleTypeAnnotations != null
                         && method.visibleAnnotableParameterCount < method.visibleTypeAnnotations.size())
                         || (method.visibleAnnotableParameterCount > 0 && method.invisibleTypeAnnotations != null
                                 && method.visibleAnnotableParameterCount < method.invisibleTypeAnnotations.size());
 
-                if (hasAnnotatedSyntheticParam) {
+                if (hasAnnotatedReceiverParam) {
                     return TypeMirrorFactory.create(universe,
                             SignatureParser.parseInternalName(parent.getInternalName()), this,
                             obtained(annotationSource),
@@ -194,9 +196,13 @@ public final class ExecutableElementImpl extends ElementImpl
 
         this.modifiers = memoize(() -> Modifiers.toMethodModifiers(method.access));
 
-        this.typeParameterMap = memoize(() -> {
-            // TODO implement
-            return emptyMap();
+        this.typeParameterMap = signature.map(mp -> {
+            int i = 0;
+            LinkedHashMap<String, TypeParameterElementImpl> typeParams = new LinkedHashMap<>();
+            for (Map.Entry<String, TypeParameterBound> e : mp.typeParameters.entrySet()) {
+                typeParams.put(e.getKey(), new TypeParameterElementImpl(universe, e.getKey(), this, e.getValue(), i++));
+            }
+            return typeParams;
         });
 
         this.typeParameters = typeParameterMap.map(m -> new ArrayList<>(m.values()));
@@ -221,7 +227,22 @@ public final class ExecutableElementImpl extends ElementImpl
     }
 
     @Override
-    public List<? extends TypeParameterElement> getTypeParameters() {
+    public Memoized<AnnotationSource> asAnnotationSource() {
+        return obtained(AnnotationSource.fromMethod(method));
+    }
+
+    @Override
+    public Memoized<ModuleElementImpl> lookupModule() {
+        return parent.lookupModule();
+    }
+
+    @Override
+    public ElementImpl asElement() {
+        return this;
+    }
+
+    @Override
+    public List<TypeParameterElementImpl> getTypeParameters() {
         return typeParameters.get();
     }
 

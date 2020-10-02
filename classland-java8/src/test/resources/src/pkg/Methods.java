@@ -48,4 +48,15 @@ public class Methods {
 
         void method() {}
     }
+
+    static class Generics<T> {
+        void nonGeneric() {}
+        void genericByTypeTypeParam(T a) {}
+        <U extends String> void genericByMethodTypeParam(U a) {}
+        <U extends T> void methodTypeParamUsesTypeTypeParam(T a, U b) {}
+
+        class Inner<U extends String & Cloneable> {
+            void methodGenericFromEnclosingType(T a, U b) {}
+        }
+    }
 }

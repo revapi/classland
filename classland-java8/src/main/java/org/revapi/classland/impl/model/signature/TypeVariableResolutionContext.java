@@ -18,15 +18,20 @@ package org.revapi.classland.impl.model.signature;
 
 import java.util.Optional;
 
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.element.ElementImpl;
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
+import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
 
 public interface TypeVariableResolutionContext {
-    TypeVariableResolutionContext EMPTY = new TypeVariableResolutionContext() {
-        @Override
-        public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
-            return Optional.empty();
-        }
-    };
 
     Optional<TypeParameterElementImpl> resolveTypeVariable(String name);
+
+    Memoized<AnnotationSource> asAnnotationSource();
+
+    Memoized<@Nullable ModuleElementImpl> lookupModule();
+
+    ElementImpl asElement();
 }

@@ -127,7 +127,7 @@ public final class TypeMirrorFactory {
     }
 
     public static DeclaredTypeImpl createJavaLangObject(Universe universe) {
-        return (DeclaredTypeImpl) create(universe, Universe.JAVA_LANG_OBJECT_SIG, TypeVariableResolutionContext.EMPTY,
+        return (DeclaredTypeImpl) create(universe, Universe.JAVA_LANG_OBJECT_SIG, universe.noTypeVariables,
                 AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtained(null));
     }
 
@@ -136,6 +136,12 @@ public final class TypeMirrorFactory {
             AnnotationTargetPath startPath, Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
         return create(type,
                 new ResolutionContext(universe, resolutionContext, annotationSource, startPath, typeLookupSeed));
+    }
+
+    public static TypeMirrorImpl create(Universe universe, TypeSignature type,
+            TypeVariableResolutionContext resolutionContext, AnnotationTargetPath startPath) {
+        return create(type, new ResolutionContext(universe, resolutionContext, resolutionContext.asAnnotationSource(),
+                startPath, resolutionContext.lookupModule()));
     }
 
     private static TypeMirrorImpl create(TypeSignature type, ResolutionContext ctx) {

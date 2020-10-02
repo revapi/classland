@@ -31,7 +31,6 @@ import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.NoElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
-import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
 
@@ -47,24 +46,21 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
         // stuff compiles. Revisit once this ctor is actually used.
         super(universe, annotationSource, path, memoize(universe::getUnnamedModule));
         this.owner = new NoElementImpl(universe);
-        this.upperBound = upperBound == null ? new NullTypeImpl(universe) : upperBound;
+        this.lowerBound = lowerBound == null ? new NullTypeImpl(universe) : lowerBound;
         // TODO the unnamed module is most probably wrong as a lookup seed here, too
-        this.lowerBound = lowerBound == null
-                ? TypeMirrorFactory.create(universe, Universe.JAVA_LANG_OBJECT_SIG, TypeVariableResolutionContext.EMPTY,
-                        AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, memoize(universe::getUnnamedModule))
-                : lowerBound;
+        this.upperBound = upperBound == null ? TypeMirrorFactory.createJavaLangObject(universe) : upperBound;
     }
 
     // used to construct a typevar based on the type parameter
     public TypeVariableImpl(TypeParameterElementImpl owner) {
         super(owner.getUniverse(), memoize(owner::getAnnotationMirrors));
         this.owner = owner;
-        this.upperBound = new NullTypeImpl(universe);
+        this.lowerBound = new NullTypeImpl(universe);
         List<TypeMirrorImpl> bounds = owner.getBounds();
         if (bounds.size() == 1) {
-            this.lowerBound = bounds.get(0);
+            this.upperBound = bounds.get(0);
         } else {
-            this.lowerBound = new IntersectionTypeImpl(owner.getUniverse(), bounds);
+            this.upperBound = new IntersectionTypeImpl(owner.getUniverse(), bounds);
         }
     }
 
