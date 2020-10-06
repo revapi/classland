@@ -17,7 +17,6 @@
 package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -25,8 +24,8 @@ import static org.objectweb.asm.TypeReference.METHOD_RETURN;
 import static org.objectweb.asm.TypeReference.newTypeReference;
 import static org.revapi.classland.impl.model.mirror.AnnotationValueImpl.fromAsmValue;
 import static org.revapi.classland.impl.util.Asm.hasFlag;
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -36,29 +35,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ElementVisitor;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.util.SimpleElementVisitor8;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
-import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.AnnotationValueImpl;
 import org.revapi.classland.impl.model.mirror.ExecutableTypeImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
@@ -68,8 +60,7 @@ import org.revapi.classland.impl.model.signature.GenericMethodParameters;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeParameterBound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
-import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
@@ -77,17 +68,17 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
     private final TypeElementImpl parent;
     private final MethodNode method;
     private final NameImpl name;
-    private final Memoized<GenericMethodParameters> signature;
-    private final Memoized<TypeMirrorImpl> returnType;
-    private final Memoized<List<VariableElementImpl>> parameters;
-    private final Memoized<ElementKind> elementKind;
-    private final Memoized<Set<Modifier>> modifiers;
-    private final Memoized<Map<String, TypeParameterElementImpl>> typeParameterMap;
-    private final Memoized<List<TypeParameterElementImpl>> typeParameters;
-    private final Memoized<? extends TypeMirrorImpl> receiverType;
-    private final Memoized<List<TypeMirrorImpl>> thrownTypes;
-    private final Memoized<TypeMirrorImpl> type;
-    private final @Nullable Memoized<AnnotationValueImpl> defaultValue;
+    private final MemoizedValue<GenericMethodParameters> signature;
+    private final MemoizedValue<TypeMirrorImpl> returnType;
+    private final MemoizedValue<List<VariableElementImpl>> parameters;
+    private final MemoizedValue<ElementKind> elementKind;
+    private final MemoizedValue<Set<Modifier>> modifiers;
+    private final MemoizedValue<Map<String, TypeParameterElementImpl>> typeParameterMap;
+    private final MemoizedValue<List<TypeParameterElementImpl>> typeParameters;
+    private final MemoizedValue<? extends TypeMirrorImpl> receiverType;
+    private final MemoizedValue<List<TypeMirrorImpl>> thrownTypes;
+    private final MemoizedValue<TypeMirrorImpl> type;
+    private final @Nullable MemoizedValue<AnnotationValueImpl> defaultValue;
 
     public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
         super(universe, obtained(AnnotationSource.fromMethod(method)), AnnotationTargetPath.ROOT,
@@ -239,7 +230,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
         return method;
     }
 
-    Memoized<GenericMethodParameters> getSignature() {
+    MemoizedValue<GenericMethodParameters> getSignature() {
         return signature;
     }
 
@@ -254,12 +245,12 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
     }
 
     @Override
-    public Memoized<AnnotationSource> asAnnotationSource() {
+    public MemoizedValue<AnnotationSource> asAnnotationSource() {
         return obtained(AnnotationSource.fromMethod(method));
     }
 
     @Override
-    public Memoized<ModuleElementImpl> lookupModule() {
+    public MemoizedValue<ModuleElementImpl> lookupModule() {
         return parent.lookupModule();
     }
 

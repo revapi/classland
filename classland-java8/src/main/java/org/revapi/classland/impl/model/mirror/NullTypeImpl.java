@@ -18,7 +18,7 @@ package org.revapi.classland.impl.model.mirror;
 
 import static java.util.Collections.emptyList;
 
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import javax.lang.model.type.NullType;
 import javax.lang.model.type.TypeKind;

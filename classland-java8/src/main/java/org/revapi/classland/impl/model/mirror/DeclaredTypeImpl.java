@@ -18,7 +18,7 @@ package org.revapi.classland.impl.model.mirror;
 
 import static java.util.Collections.emptyList;
 
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
@@ -40,7 +40,7 @@ public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
     private final List<TypeMirrorImpl> typeArguments;
 
     public DeclaredTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
-            List<TypeMirrorImpl> typeArguments, Memoized<AnnotationSource> annotationSource,
+            List<TypeMirrorImpl> typeArguments, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path) {
         super(universe, annotationSource, path, source.lookupModule());
         this.source = source;
@@ -50,7 +50,7 @@ public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
     }
 
     public DeclaredTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
-            List<TypeMirrorImpl> typeArguments, Memoized<List<AnnotationMirrorImpl>> annos) {
+            List<TypeMirrorImpl> typeArguments, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
         super(universe, annos);
         this.source = source;
         this.enclosingType = enclosingType == null ? new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE)

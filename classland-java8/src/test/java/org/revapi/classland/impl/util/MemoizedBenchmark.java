@@ -25,8 +25,8 @@ public class MemoizedBenchmark {
 
     @State(Scope.Thread)
     public static class MemoizedPayloadHolder {
-        Memoized<Double> work = Memoized.memoize(MemoizedBenchmark::work);
-        Memoized<Double> noWork = Memoized.memoize(MemoizedBenchmark::noWork);
+        MemoizedValue<Double> work = MemoizedValue.memoize(MemoizedBenchmark::work);
+        MemoizedValue<Double> noWork = MemoizedValue.memoize(MemoizedBenchmark::noWork);
     }
 
     @Benchmark

@@ -16,9 +16,8 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
-import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.lang.model.type.TypeKind;
@@ -31,7 +30,7 @@ import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.NoElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
@@ -41,7 +40,7 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
 
     // used to construct a wildcard capture
     public TypeVariableImpl(Universe universe, @Nullable TypeMirrorImpl upperBound, @Nullable TypeMirrorImpl lowerBound,
-            Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path) {
+            MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path) {
         // TODO the unnamed module is wrong here, but this ctor is not used yet as of now, so I've put it here so that
         // stuff compiles. Revisit once this ctor is actually used.
         super(universe, annotationSource, path, memoize(universe::getUnnamedModule));

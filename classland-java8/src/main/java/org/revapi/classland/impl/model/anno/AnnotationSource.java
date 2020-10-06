@@ -28,7 +28,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeAnnotationNode;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class AnnotationSource {
@@ -54,7 +54,7 @@ public abstract class AnnotationSource {
         }
     };
 
-    public static final Memoized<AnnotationSource> MEMOIZED_EMPTY = Memoized.obtained(EMPTY);
+    public static final MemoizedValue<AnnotationSource> MEMOIZED_EMPTY = MemoizedValue.obtained(EMPTY);
 
     private AnnotationSource() {
 

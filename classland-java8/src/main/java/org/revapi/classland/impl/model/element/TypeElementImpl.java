@@ -22,8 +22,8 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
 
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +39,6 @@ import java.util.stream.Stream;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
 
 import org.objectweb.asm.TypeReference;
@@ -56,32 +55,31 @@ import org.revapi.classland.impl.model.signature.GenericTypeParameters;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeParameterBound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
-import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
 public final class TypeElementImpl extends TypeElementBase {
     private final String internalName;
-    private final Memoized<ClassNode> node;
-    private final Memoized<NameImpl> qualifiedName;
-    private final Memoized<NameImpl> simpleName;
-    private final Memoized<ScanningResult> scan;
-    private final Memoized<ElementImpl> enclosingElement;
-    private final Memoized<NestingKind> nestingKind;
-    private final Memoized<TypeMirrorImpl> superClass;
-    private final Memoized<List<TypeMirrorImpl>> interfaces;
-    private final Memoized<ElementKind> elementKind;
-    private final Memoized<Set<Modifier>> modifiers;
-    private final Memoized<List<ElementImpl>> enclosedElements;
-    private final Memoized<Map<String, TypeParameterElementImpl>> typeParametersMap;
-    private final Memoized<DeclaredTypeImpl> type;
-    private final Memoized<List<TypeParameterElementImpl>> typeParameters;
-    private final Memoized<Map<String, ExecutableElementImpl>> methods;
-    private final Memoized<Map<String, VariableElementImpl.Field>> fields;
-    private final Memoized<GenericTypeParameters> signature;
+    private final MemoizedValue<ClassNode> node;
+    private final MemoizedValue<NameImpl> qualifiedName;
+    private final MemoizedValue<NameImpl> simpleName;
+    private final MemoizedValue<ScanningResult> scan;
+    private final MemoizedValue<ElementImpl> enclosingElement;
+    private final MemoizedValue<NestingKind> nestingKind;
+    private final MemoizedValue<TypeMirrorImpl> superClass;
+    private final MemoizedValue<List<TypeMirrorImpl>> interfaces;
+    private final MemoizedValue<ElementKind> elementKind;
+    private final MemoizedValue<Set<Modifier>> modifiers;
+    private final MemoizedValue<List<ElementImpl>> enclosedElements;
+    private final MemoizedValue<Map<String, TypeParameterElementImpl>> typeParametersMap;
+    private final MemoizedValue<DeclaredTypeImpl> type;
+    private final MemoizedValue<List<TypeParameterElementImpl>> typeParameters;
+    private final MemoizedValue<Map<String, ExecutableElementImpl>> methods;
+    private final MemoizedValue<Map<String, VariableElementImpl.Field>> fields;
+    private final MemoizedValue<GenericTypeParameters> signature;
 
-    public TypeElementImpl(Universe universe, String internalName, Memoized<ClassNode> node, PackageElementImpl pkg) {
+    public TypeElementImpl(Universe universe, String internalName, MemoizedValue<ClassNode> node, PackageElementImpl pkg) {
         super(universe, internalName, obtained(pkg), node.map(AnnotationSource::fromType));
         this.internalName = internalName;
         this.node = node;
@@ -257,11 +255,11 @@ public final class TypeElementImpl extends TypeElementBase {
         });
     }
 
-    public Memoized<ClassNode> getNode() {
+    public MemoizedValue<ClassNode> getNode() {
         return node;
     }
 
-    public Memoized<DeclaredTypeImpl> getType() {
+    public MemoizedValue<DeclaredTypeImpl> getType() {
         return type;
     }
 
@@ -287,11 +285,11 @@ public final class TypeElementImpl extends TypeElementBase {
         return fields.get().get(name);
     }
 
-    public Memoized<AnnotationSource> asAnnotationSource() {
+    public MemoizedValue<AnnotationSource> asAnnotationSource() {
         return scan.map(s -> AnnotationSource.fromType(s.classNode));
     }
 
-    public Memoized<GenericTypeParameters> getSignature() {
+    public MemoizedValue<GenericTypeParameters> getSignature() {
         return signature;
     }
 

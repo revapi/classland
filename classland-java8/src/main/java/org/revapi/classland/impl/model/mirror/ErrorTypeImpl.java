@@ -26,18 +26,18 @@ import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.TypeElementBase;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public class ErrorTypeImpl extends DeclaredTypeImpl implements ErrorType {
     public ErrorTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
-            List<TypeMirrorImpl> typeArguments, Memoized<AnnotationSource> annotationSource,
+            List<TypeMirrorImpl> typeArguments, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path) {
         super(universe, source, enclosingType, typeArguments, annotationSource, path);
     }
 
     public ErrorTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
-            List<TypeMirrorImpl> typeArguments, Memoized<List<AnnotationMirrorImpl>> annos) {
+            List<TypeMirrorImpl> typeArguments, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
         super(universe, source, enclosingType, typeArguments, annos);
     }
 

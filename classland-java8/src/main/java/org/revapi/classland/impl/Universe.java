@@ -21,8 +21,8 @@ import static java.util.Collections.newSetFromMap;
 
 import static org.revapi.classland.impl.util.ByteCode.parseClass;
 import static org.revapi.classland.impl.util.Exceptions.failWithRuntimeException;
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 import static org.revapi.classland.impl.util.Packages.getPackageNameFromInternalName;
 
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
 import org.revapi.classland.impl.model.element.UnnamedModuleImpl;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public final class Universe implements AutoCloseable {
@@ -65,12 +65,12 @@ public final class Universe implements AutoCloseable {
         }
 
         @Override
-        public Memoized<AnnotationSource> asAnnotationSource() {
+        public MemoizedValue<AnnotationSource> asAnnotationSource() {
             return AnnotationSource.MEMOIZED_EMPTY;
         }
 
         @Override
-        public Memoized<ModuleElementImpl> lookupModule() {
+        public MemoizedValue<ModuleElementImpl> lookupModule() {
             return obtained(unnamedModule);
         }
 
@@ -197,7 +197,7 @@ public final class Universe implements AutoCloseable {
         }
     }
 
-    private Memoized<@Nullable ClassNode> lazyParse(@Nullable ClassData data) {
+    private MemoizedValue<@Nullable ClassNode> lazyParse(@Nullable ClassData data) {
         return data == null ? obtained(null) : memoize(() -> eagerParse(data));
     }
 

@@ -18,7 +18,7 @@ package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
 
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +39,7 @@ import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.ErrorTypeImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 import org.revapi.classland.impl.util.Packages;
 
@@ -49,7 +49,7 @@ public class MissingTypeImpl extends TypeElementBase {
     private final NameImpl simpleName;
 
     public MissingTypeImpl(Universe universe, String internalName, @Nullable ModuleElementImpl module) {
-        super(universe, internalName, Memoized.memoize(() -> {
+        super(universe, internalName, MemoizedValue.memoize(() -> {
             String packageName = Packages.getPackageNameFromInternalName(internalName);
             return universe.getPackageInModule(packageName, module);
         }), AnnotationSource.MEMOIZED_EMPTY);
@@ -151,7 +151,7 @@ public class MissingTypeImpl extends TypeElementBase {
     }
 
     @Override
-    public Memoized<AnnotationSource> asAnnotationSource() {
+    public MemoizedValue<AnnotationSource> asAnnotationSource() {
         return AnnotationSource.MEMOIZED_EMPTY;
     }
 

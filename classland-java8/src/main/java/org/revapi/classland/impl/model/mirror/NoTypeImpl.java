@@ -23,12 +23,12 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
 import org.revapi.classland.impl.Universe;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 
 public class NoTypeImpl extends TypeMirrorImpl implements NoType {
     private final TypeKind kind;
 
-    public NoTypeImpl(Universe universe, Memoized<List<AnnotationMirrorImpl>> annos, TypeKind kind) {
+    public NoTypeImpl(Universe universe, MemoizedValue<List<AnnotationMirrorImpl>> annos, TypeKind kind) {
         super(universe, annos);
         this.kind = kind;
     }

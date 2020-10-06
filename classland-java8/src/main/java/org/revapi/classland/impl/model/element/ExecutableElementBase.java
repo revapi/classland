@@ -6,19 +6,15 @@ import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.AnnotationValueImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
 import java.util.List;
 
 public abstract class ExecutableElementBase extends ElementImpl implements ExecutableElement, TypeVariableResolutionContext {
-    protected ExecutableElementBase(Universe universe, Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path, Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+    protected ExecutableElementBase(Universe universe, MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
         super(universe, annotationSource, path, typeLookupSeed);
     }
 

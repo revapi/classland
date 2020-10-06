@@ -21,35 +21,35 @@ import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 
-public class Memoized<T> implements Supplier<T> {
-    private static final boolean DEBUG = LogManager.getLogger(Memoized.class).isDebugEnabled();
+public class MemoizedValue<T> implements Supplier<T> {
+    private static final boolean DEBUG = LogManager.getLogger(MemoizedValue.class).isDebugEnabled();
 
     private @Nullable Supplier<T> action;
     protected volatile boolean obtained;
     protected T value;
 
-    private Memoized(@Nullable Supplier<T> action) {
+    private MemoizedValue(@Nullable Supplier<T> action) {
         this.action = action;
     }
 
-    private static <T> Memoized<T> instantiate(@Nullable Supplier<T> action) {
+    private static <T> MemoizedValue<T> instantiate(@Nullable Supplier<T> action) {
         if (DEBUG) {
             return new Debug<>(action);
         } else {
-            return new Memoized<>(action);
+            return new MemoizedValue<>(action);
         }
     }
 
-    public static <T> Memoized<T> memoize(Supplier<T> action) {
-        if (action instanceof Memoized) {
-            return (Memoized<T>) action;
+    public static <T> MemoizedValue<T> memoize(Supplier<T> action) {
+        if (action instanceof MemoizedValue) {
+            return (MemoizedValue<T>) action;
         } else {
             return instantiate(action);
         }
     }
 
-    public static <T> Memoized<T> obtained(T value) {
-        Memoized<T> ret = instantiate(null);
+    public static <T> MemoizedValue<T> obtained(T value) {
+        MemoizedValue<T> ret = instantiate(null);
         ret.obtained = true;
         ret.value = value;
         return ret;
@@ -77,7 +77,7 @@ public class Memoized<T> implements Supplier<T> {
         }
     }
 
-    public <U> Memoized<U> map(Function<T, U> action) {
+    public <U> MemoizedValue<U> map(Function<T, U> action) {
         return instantiate(() -> {
             T val = get();
             return action.apply(val);
@@ -89,7 +89,7 @@ public class Memoized<T> implements Supplier<T> {
         return "Memoized{" + (obtained ? ("value=" + value) : "<pending>") + "}";
     }
 
-    private static final class Debug<T> extends Memoized<T> {
+    private static final class Debug<T> extends MemoizedValue<T> {
         private final Throwable instantiationLocation;
 
         private Debug(@Nullable Supplier<T> action) {

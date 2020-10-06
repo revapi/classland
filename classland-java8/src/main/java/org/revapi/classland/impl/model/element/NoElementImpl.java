@@ -18,17 +18,15 @@ package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
 
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.type.TypeKind;
 
 import org.revapi.classland.impl.Universe;

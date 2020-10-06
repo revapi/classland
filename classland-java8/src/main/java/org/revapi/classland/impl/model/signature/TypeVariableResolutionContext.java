@@ -22,16 +22,16 @@ import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public interface TypeVariableResolutionContext {
 
     Optional<TypeParameterElementImpl> resolveTypeVariable(String name);
 
-    Memoized<AnnotationSource> asAnnotationSource();
+    MemoizedValue<AnnotationSource> asAnnotationSource();
 
-    Memoized<@Nullable ModuleElementImpl> lookupModule();
+    MemoizedValue<@Nullable ModuleElementImpl> lookupModule();
 
     ElementImpl asElement();
 }

@@ -17,10 +17,9 @@
 package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptySet;
-import static java.util.stream.Collectors.toList;
 
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,13 +27,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -44,18 +40,18 @@ import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public final class PackageElementImpl extends ElementImpl implements PackageElement {
     private final NameImpl name;
     private final @Nullable ModuleElementImpl module;
     private final NoTypeImpl type;
-    private final Memoized<List<TypeElementImpl>> types;
+    private final MemoizedValue<List<TypeElementImpl>> types;
 
     private final Map<String, TypeElementImpl> mutableTypes = new ConcurrentHashMap<>();
 
-    public PackageElementImpl(Universe universe, String name, Memoized<@Nullable ClassNode> node,
+    public PackageElementImpl(Universe universe, String name, MemoizedValue<@Nullable ClassNode> node,
             @Nullable ModuleElementImpl module) {
         super(universe, node.map(n -> n == null ? AnnotationSource.EMPTY : AnnotationSource.fromType(n)),
                 AnnotationTargetPath.ROOT, obtained(module));

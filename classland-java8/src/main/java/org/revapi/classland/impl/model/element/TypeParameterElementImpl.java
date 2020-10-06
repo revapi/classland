@@ -22,7 +22,7 @@ import static java.util.Collections.singletonList;
 
 import static org.objectweb.asm.TypeReference.CLASS_TYPE_PARAMETER;
 import static org.objectweb.asm.TypeReference.newTypeParameterReference;
-import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,6 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeParameterElement;
 
 import org.objectweb.asm.TypeReference;
@@ -45,12 +44,12 @@ import org.revapi.classland.impl.model.mirror.TypeVariableImpl;
 import org.revapi.classland.impl.model.signature.TypeParameterBound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 
 public final class TypeParameterElementImpl extends ElementImpl implements TypeParameterElement {
     private final NameImpl name;
     private final TypeVariableResolutionContext owner;
-    private final Memoized<List<TypeMirrorImpl>> bounds;
+    private final MemoizedValue<List<TypeMirrorImpl>> bounds;
     private final TypeParameterBound rawBound;
     private final int index;
 

@@ -22,7 +22,7 @@ import static java.util.stream.Stream.concat;
 import static org.objectweb.asm.Opcodes.ACC_OPEN;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
-import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,11 +40,11 @@ import org.objectweb.asm.tree.ModuleOpenNode;
 import org.objectweb.asm.tree.ModuleProvideNode;
 import org.objectweb.asm.tree.ModuleRequireNode;
 import org.revapi.classland.impl.Universe;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleElement {
-    private final Memoized<List<? extends Directive>> directives;
+    private final MemoizedValue<List<? extends Directive>> directives;
 
     public ModuleElementImpl(Universe universe, @Nullable ClassNode moduleType) {
         super(universe, moduleType, TypeKind.MODULE);
@@ -95,8 +95,8 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
     }
 
     private class ExportsDirectiveImpl implements ExportsDirective {
-        private final Memoized<PackageElement> pkg;
-        private final Memoized<List<? extends ModuleElement>> targets;
+        private final MemoizedValue<PackageElement> pkg;
+        private final MemoizedValue<List<? extends ModuleElement>> targets;
 
         public ExportsDirectiveImpl(ModuleExportNode n) {
             pkg = memoize(() -> getMutablePackages().get(n.packaze));
@@ -125,8 +125,8 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
     }
 
     private class OpensDirectiveImpl implements OpensDirective {
-        private final Memoized<PackageElementImpl> pkg;
-        private final Memoized<List<? extends ModuleElement>> targets;
+        private final MemoizedValue<PackageElementImpl> pkg;
+        private final MemoizedValue<List<? extends ModuleElement>> targets;
 
         private OpensDirectiveImpl(ModuleOpenNode n) {
             pkg = memoize(() -> getMutablePackages().get(n.packaze));
@@ -155,8 +155,8 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
     }
 
     private class ProvidesDirectiveImpl implements ProvidesDirective {
-        private final Memoized<TypeElement> service;
-        private final Memoized<List<? extends TypeElement>> impls;
+        private final MemoizedValue<TypeElement> service;
+        private final MemoizedValue<List<? extends TypeElement>> impls;
 
         public ProvidesDirectiveImpl(ModuleProvideNode n) {
             service = memoize(() -> universe.getTypeByInternalNameFromModule(n.service, ModuleElementImpl.this));
@@ -186,7 +186,7 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
     }
 
     private class RequiresDirectiveImpl implements RequiresDirective, ReachableModule {
-        private final Memoized<ModuleElementImpl> dep;
+        private final MemoizedValue<ModuleElementImpl> dep;
         private final ModuleRequireNode n;
 
         public RequiresDirectiveImpl(ModuleRequireNode n) {
@@ -221,7 +221,7 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
     }
 
     private class UsesDirectiveImpl implements UsesDirective {
-        private final Memoized<TypeElement> service;
+        private final MemoizedValue<TypeElement> service;
 
         public UsesDirectiveImpl(String n) {
             service = memoize(() -> universe.getTypeByInternalNameFromModule(n, ModuleElementImpl.this));

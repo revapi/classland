@@ -16,6 +16,8 @@
  */
 package org.revapi.classland.impl;
 
+import org.revapi.classland.impl.util.MemoizedFunction;
+
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -27,14 +29,13 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleElementVisitor8;
 import java.io.Writer;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 abstract class BaseElementsImpl implements Elements {
     private final Universe universe;
-    private final Map<String, PackageElement> crossModulePackageSearchResults = new HashMap<>();
-    private final Map<String, TypeElement> crossModuleTypeSearchResults = new HashMap<>();
+    private final MemoizedFunction<CharSequence, PackageElement> crossModulePackagesByName;
+    private final MemoizedFunction<CharSequence, TypeElement> crossModuleTypesByName;
     private final ElementVisitor<PackageElement, Void> packageByElement = new SimpleElementVisitor8<PackageElement, Void>() {
 
         @Override
@@ -55,25 +56,27 @@ abstract class BaseElementsImpl implements Elements {
 
     protected BaseElementsImpl(Universe universe) {
         this.universe = universe;
+
+        this.crossModulePackagesByName = MemoizedFunction.memoize(name -> universe.getModules().stream()
+                .flatMap(m -> m.getMutablePackages().values().stream())
+                .filter(p -> p.getSimpleName().contentEquals(name)).findFirst().orElse(null));
+
+        this.crossModuleTypesByName = MemoizedFunction.memoize(name -> universe.getModules().stream()
+                .flatMap(m -> m.getMutablePackages().values().stream())
+                .flatMap(p -> p.getMutableTypes().values().stream())
+                .filter(t -> t.getQualifiedName().contentEquals(name))
+                .findFirst()
+                .orElse(null));
     }
 
     @Override
     public PackageElement getPackageElement(CharSequence name) {
-        String key = name.toString();
-        return crossModulePackageSearchResults.computeIfAbsent(key,
-                __ -> universe.getModules().stream().flatMap(m -> m.getMutablePackages().values().stream())
-                        .filter(p -> p.getSimpleName().contentEquals(name)).findFirst().orElse(null));
+        return crossModulePackagesByName.apply(name);
     }
 
     @Override
     public TypeElement getTypeElement(CharSequence name) {
-        String key = name.toString();
-        return crossModuleTypeSearchResults.computeIfAbsent(key,
-                __ -> universe.getModules().stream().flatMap(m -> m.getMutablePackages().values().stream())
-                        .flatMap(p -> p.getMutableTypes().values().stream())
-                        .filter(t -> key.contentEquals(t.getQualifiedName()))
-                        .findFirst()
-                        .orElse(null));
+        return crossModuleTypesByName.apply(name);
     }
 
     @Override

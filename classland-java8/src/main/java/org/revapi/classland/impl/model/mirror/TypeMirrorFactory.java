@@ -18,8 +18,8 @@ package org.revapi.classland.impl.model.mirror;
 
 import static java.util.stream.Collectors.toList;
 
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.classland.impl.model.signature.Bound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public final class TypeMirrorFactory {
@@ -132,8 +132,8 @@ public final class TypeMirrorFactory {
     }
 
     public static TypeMirrorImpl create(Universe universe, TypeSignature type,
-            TypeVariableResolutionContext resolutionContext, Memoized<AnnotationSource> annotationSource,
-            AnnotationTargetPath startPath, Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+            TypeVariableResolutionContext resolutionContext, MemoizedValue<AnnotationSource> annotationSource,
+            AnnotationTargetPath startPath, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
         return create(type,
                 new ResolutionContext(universe, resolutionContext, annotationSource, startPath, typeLookupSeed));
     }
@@ -151,13 +151,13 @@ public final class TypeMirrorFactory {
     private static final class ResolutionContext {
         final Universe universe;
         final TypeVariableResolutionContext variables;
-        final Memoized<AnnotationSource> annotationSource;
-        final Memoized<@Nullable ModuleElementImpl> typeLookupSeed;
+        final MemoizedValue<AnnotationSource> annotationSource;
+        final MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed;
         AnnotationTargetPath path;
 
         ResolutionContext(Universe universe, TypeVariableResolutionContext variables,
-                Memoized<AnnotationSource> annotationSource, AnnotationTargetPath path,
-                Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+                MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path,
+                MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
             this.universe = universe;
             this.variables = variables;
             this.annotationSource = annotationSource;

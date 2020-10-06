@@ -9,7 +9,7 @@ import org.revapi.classland.impl.model.mirror.ExecutableTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.SignatureParser;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 import javax.lang.model.element.ElementKind;
@@ -117,12 +117,12 @@ public class MissingExecutableElementImpl extends ExecutableElementBase {
     }
 
     @Override
-    public Memoized<AnnotationSource> asAnnotationSource() {
+    public MemoizedValue<AnnotationSource> asAnnotationSource() {
         return AnnotationSource.MEMOIZED_EMPTY;
     }
 
     @Override
-    public Memoized<@Nullable ModuleElementImpl> lookupModule() {
+    public MemoizedValue<@Nullable ModuleElementImpl> lookupModule() {
         return parent.lookupModule();
     }
 

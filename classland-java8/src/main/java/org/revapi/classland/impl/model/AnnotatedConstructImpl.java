@@ -31,18 +31,18 @@ import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class AnnotatedConstructImpl extends BaseModelImpl implements AnnotatedConstruct {
-    protected final Memoized<List<AnnotationMirrorImpl>> annos;
+    protected final MemoizedValue<List<AnnotationMirrorImpl>> annos;
 
-    protected AnnotatedConstructImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
-            AnnotationTargetPath path, Memoized<@Nullable ModuleElementImpl> typeLookupSeed) {
+    protected AnnotatedConstructImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
         this(universe, annotationSource.map(s -> parseAnnotations(universe, s, path, typeLookupSeed.get())));
     }
 
-    protected AnnotatedConstructImpl(Universe universe, Memoized<List<AnnotationMirrorImpl>> annos) {
+    protected AnnotatedConstructImpl(Universe universe, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
         super(universe);
         this.annos = annos;
     }

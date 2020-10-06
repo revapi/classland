@@ -18,8 +18,8 @@ package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptySet;
 
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +28,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.type.TypeKind;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -44,15 +42,15 @@ import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 abstract class BaseModuleElementImpl extends ElementImpl {
     protected final @Nullable ModuleNode module;
     protected final NameImpl name;
-    protected final Memoized<List<AnnotationMirrorImpl>> annos;
-    protected final Memoized<NoTypeImpl> type;
-    protected final Memoized<List<PackageElementImpl>> packages;
+    protected final MemoizedValue<List<AnnotationMirrorImpl>> annos;
+    protected final MemoizedValue<NoTypeImpl> type;
+    protected final MemoizedValue<List<PackageElementImpl>> packages;
 
     private final Map<String, PackageElementImpl> mutablePackages = new ConcurrentHashMap<>();
 

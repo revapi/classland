@@ -37,7 +37,7 @@ import org.revapi.classland.impl.model.element.VariableElementImpl;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.PrettyPrinting;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 import static java.util.stream.Collectors.joining;
@@ -52,7 +52,7 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
         this.value = value;
     }
 
-    public static AnnotationValueImpl fromAsmValue(Universe universe, Object value, TypeVariableResolutionContext resolutionContext, Memoized<@Nullable ModuleElementImpl> typeLookupSource) {
+    public static AnnotationValueImpl fromAsmValue(Universe universe, Object value, TypeVariableResolutionContext resolutionContext, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSource) {
         if (value instanceof Type) {
             // class value
             value = TypeMirrorFactory.create(universe, SignatureParser.parseInternalName(((Type) value).getInternalName()),

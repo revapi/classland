@@ -18,7 +18,6 @@ package org.revapi.classland.impl.model.element;
 
 import java.util.List;
 
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 
 import org.revapi.classland.impl.Universe;
@@ -28,15 +27,15 @@ import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class TypeElementBase extends ElementImpl implements TypeElement, TypeVariableResolutionContext {
     protected final String internalName;
-    protected final Memoized<PackageElementImpl> pkg;
+    protected final MemoizedValue<PackageElementImpl> pkg;
 
-    protected TypeElementBase(Universe universe, String internalName, Memoized<@Nullable PackageElementImpl> pkg,
-            Memoized<AnnotationSource> annos) {
+    protected TypeElementBase(Universe universe, String internalName, MemoizedValue<@Nullable PackageElementImpl> pkg,
+            MemoizedValue<AnnotationSource> annos) {
         super(universe, annos, AnnotationTargetPath.ROOT, pkg.map(p -> p == null ? null : p.getModule()));
         this.internalName = internalName;
         this.pkg = pkg;
@@ -46,11 +45,11 @@ public abstract class TypeElementBase extends ElementImpl implements TypeElement
         return internalName;
     }
 
-    public Memoized<PackageElementImpl> getPackage() {
+    public MemoizedValue<PackageElementImpl> getPackage() {
         return pkg;
     }
 
-    public Memoized<ModuleElementImpl> lookupModule() {
+    public MemoizedValue<ModuleElementImpl> lookupModule() {
         return pkg.map(p -> p == null ? null : p.getModule());
     }
 

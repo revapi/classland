@@ -2,7 +2,6 @@ package org.revapi.classland.impl.model.mirror;
 
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.ExecutableElementBase;
-import org.revapi.classland.impl.model.element.ExecutableElementImpl;
 
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
@@ -10,7 +9,7 @@ import javax.lang.model.type.TypeVisitor;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
-import static org.revapi.classland.impl.util.Memoized.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 
 public class ExecutableTypeImpl extends TypeMirrorImpl implements ExecutableType {
     private final List<TypeVariableImpl> typeVars;

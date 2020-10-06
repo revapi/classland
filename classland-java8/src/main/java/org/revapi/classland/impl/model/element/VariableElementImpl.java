@@ -20,18 +20,15 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 import static org.objectweb.asm.TypeReference.newFormalParameterReference;
-import static org.revapi.classland.impl.util.Memoized.memoize;
-import static org.revapi.classland.impl.util.Memoized.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
-import java.security.Signature;
 import java.util.List;
 import java.util.Set;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.VariableElement;
 
 import org.objectweb.asm.tree.FieldNode;
@@ -44,18 +41,18 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeSignature;
-import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class VariableElementImpl extends ElementImpl implements VariableElement {
-    private VariableElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
-            Memoized<@Nullable ModuleElementImpl> module) {
+    private VariableElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+            MemoizedValue<@Nullable ModuleElementImpl> module) {
         super(universe, annotationSource, AnnotationTargetPath.ROOT, module);
     }
 
-    private VariableElementImpl(Universe universe, Memoized<AnnotationSource> annotationSource,
-            AnnotationTargetPath path, Memoized<@Nullable ModuleElementImpl> module) {
+    private VariableElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> module) {
         super(universe, annotationSource, path, module);
     }
 
@@ -119,7 +116,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         private final Set<Modifier> modifiers;
         private final NameImpl name;
         private final TypeElementImpl parent;
-        private final Memoized<TypeMirrorImpl> type;
+        private final MemoizedValue<TypeMirrorImpl> type;
 
         public Field(Universe universe, TypeElementImpl parent, FieldNode field) {
             super(universe, obtained(AnnotationSource.fromField(field)), parent.lookupModule());
@@ -173,7 +170,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         private final ExecutableElementImpl method;
         private final NameImpl name;
         private final Set<Modifier> modifiers;
-        private final Memoized<TypeMirrorImpl> type;
+        private final MemoizedValue<TypeMirrorImpl> type;
 
         public Parameter(Universe universe, ExecutableElementImpl method, int index) {
             super(universe, obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
