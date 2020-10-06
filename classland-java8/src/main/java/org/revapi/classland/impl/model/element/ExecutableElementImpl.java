@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.toMap;
 
 import static org.objectweb.asm.TypeReference.METHOD_RETURN;
 import static org.objectweb.asm.TypeReference.newTypeReference;
+import static org.revapi.classland.impl.model.mirror.AnnotationValueImpl.fromAsmValue;
 import static org.revapi.classland.impl.util.Asm.hasFlag;
 import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
@@ -51,11 +52,14 @@ import javax.lang.model.util.SimpleElementVisitor8;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.mirror.AnnotationValueImpl;
 import org.revapi.classland.impl.model.mirror.ExecutableTypeImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
@@ -67,9 +71,9 @@ import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
+import org.revapi.classland.impl.util.Nullable;
 
-public final class ExecutableElementImpl extends ElementImpl
-        implements ExecutableElement, TypeVariableResolutionContext {
+public final class ExecutableElementImpl extends ExecutableElementBase {
     private final TypeElementImpl parent;
     private final MethodNode method;
     private final NameImpl name;
@@ -83,6 +87,7 @@ public final class ExecutableElementImpl extends ElementImpl
     private final Memoized<? extends TypeMirrorImpl> receiverType;
     private final Memoized<List<TypeMirrorImpl>> thrownTypes;
     private final Memoized<TypeMirrorImpl> type;
+    private final @Nullable Memoized<AnnotationValueImpl> defaultValue;
 
     public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
         super(universe, obtained(AnnotationSource.fromMethod(method)), AnnotationTargetPath.ROOT,
@@ -224,6 +229,10 @@ public final class ExecutableElementImpl extends ElementImpl
         });
 
         this.type = memoize(() -> new ExecutableTypeImpl(this));
+
+        this.defaultValue = method.annotationDefault == null
+                ? null
+                : memoize(() -> fromAsmValue(universe, method.annotationDefault, this, parent.lookupModule()));
     }
 
     MethodNode getNode() {
@@ -296,9 +305,8 @@ public final class ExecutableElementImpl extends ElementImpl
     }
 
     @Override
-    public AnnotationValue getDefaultValue() {
-        // TODO implement
-        return null;
+    public AnnotationValueImpl getDefaultValue() {
+        return defaultValue == null ? null : defaultValue.get();
     }
 
     @Override
@@ -317,22 +325,17 @@ public final class ExecutableElementImpl extends ElementImpl
     }
 
     @Override
-    public Name getSimpleName() {
+    public NameImpl getSimpleName() {
         return name;
     }
 
     @Override
-    public Element getEnclosingElement() {
+    public ElementImpl getEnclosingElement() {
         return parent;
     }
 
     @Override
-    public List<? extends Element> getEnclosedElements() {
+    public List<VariableElementImpl> getEnclosedElements() {
         return parameters.get();
-    }
-
-    @Override
-    public <R, P> R accept(ElementVisitor<R, P> v, P p) {
-        return v.visitExecutable(this, p);
     }
 }

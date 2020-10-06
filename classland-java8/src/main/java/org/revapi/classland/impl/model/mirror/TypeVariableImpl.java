@@ -88,10 +88,4 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitTypeVariable(this, p);
     }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        // TODO implement
-        return Collections.emptyList();
-    }
 }

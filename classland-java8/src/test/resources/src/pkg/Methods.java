@@ -16,6 +16,8 @@
  */
 package pkg;
 
+import java.lang.annotation.Native;
+
 public class Methods {
 
     interface DefaultMethods {
@@ -66,5 +68,17 @@ public class Methods {
         void throwsUnchecked() throws RuntimeException;
         <T extends Throwable> void throwsTypeParam() throws T;
         <T extends RuntimeException> void throwsMany() throws Exception, T, Throwable;
+    }
+
+    static @interface DefaultValues {
+        int defaultPrimitive() default 42;
+        String defaultString() default "forty-two";
+        Class<?> defaultClass() default Void.class;
+        EnumDefaults defaultEnum() default EnumDefaults.DEFAULT;
+        Native[] defaultArray() default { @Native, @Native };
+        Native defaultAnno() default @Native;
+        enum EnumDefaults {
+            DEFAULT
+        }
     }
 }

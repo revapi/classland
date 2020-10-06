@@ -124,7 +124,7 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
     }
 
     @Override
-    public Name getSimpleName() {
+    public NameImpl getSimpleName() {
         return name;
     }
 

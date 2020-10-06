@@ -61,17 +61,17 @@ public class NoElementImpl extends ElementImpl {
     }
 
     @Override
-    public Name getSimpleName() {
+    public NameImpl getSimpleName() {
         return NameImpl.EMPTY;
     }
 
     @Override
-    public Element getEnclosingElement() {
+    public ElementImpl getEnclosingElement() {
         return null;
     }
 
     @Override
-    public List<? extends Element> getEnclosedElements() {
+    public List<? extends ElementImpl> getEnclosedElements() {
         return emptyList();
     }
 

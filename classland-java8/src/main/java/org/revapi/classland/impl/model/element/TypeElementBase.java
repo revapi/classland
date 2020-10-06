@@ -18,17 +18,20 @@ package org.revapi.classland.impl.model.element;
 
 import java.util.List;
 
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 
 import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
 
-public abstract class TypeElementBase extends ElementImpl implements TypeElement {
+public abstract class TypeElementBase extends ElementImpl implements TypeElement, TypeVariableResolutionContext {
     protected final String internalName;
     protected final Memoized<PackageElementImpl> pkg;
 
@@ -37,6 +40,10 @@ public abstract class TypeElementBase extends ElementImpl implements TypeElement
         super(universe, annos, AnnotationTargetPath.ROOT, pkg.map(p -> p == null ? null : p.getModule()));
         this.internalName = internalName;
         this.pkg = pkg;
+    }
+
+    public String getInternalName() {
+        return internalName;
     }
 
     public Memoized<PackageElementImpl> getPackage() {
@@ -48,6 +55,9 @@ public abstract class TypeElementBase extends ElementImpl implements TypeElement
     }
 
     @Override
+    public abstract NameImpl getQualifiedName();
+
+    @Override
     public abstract DeclaredTypeImpl asType();
 
     @Override
@@ -57,4 +67,8 @@ public abstract class TypeElementBase extends ElementImpl implements TypeElement
     public abstract List<TypeMirrorImpl> getInterfaces();
 
     public abstract @Nullable ExecutableElementImpl getMethod(String methodName, String methodDescriptor);
+
+    public abstract List<ExecutableElementImpl> getMethod(String methodName);
+
+    public abstract VariableElementImpl.@Nullable Field getField(String name);
 }

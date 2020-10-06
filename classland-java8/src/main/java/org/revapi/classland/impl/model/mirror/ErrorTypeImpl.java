@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeVisitor;
 
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
@@ -43,5 +44,10 @@ public class ErrorTypeImpl extends DeclaredTypeImpl implements ErrorType {
     @Override
     public TypeKind getKind() {
         return TypeKind.ERROR;
+    }
+
+    @Override
+    public <R, P> R accept(TypeVisitor<R, P> v, P p) {
+        return v.visitError(this, p);
     }
 }

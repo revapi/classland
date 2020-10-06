@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -38,6 +40,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.archive.JarFileArchive;
 import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.mirror.AnnotationValueImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.IntersectionTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
@@ -275,6 +279,110 @@ public class ExecutableElementImplTest {
         ex = throwsMany.getThrownTypes().get(2);
         assertTrue(ex instanceof DeclaredTypeImpl);
         assertEquals("java/lang/Throwable", ((TypeElementBase) ((DeclaredTypeImpl) ex).asElement()).internalName);
+    }
+
+    @Test
+    void primitiveDefaultValue() {
+        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        assertNotNull(DefaultValues);
+
+        ExecutableElementImpl defaultPrimitive = findSingleMethodByName(DefaultValues, "defaultPrimitive");
+        assertNotNull(defaultPrimitive);
+
+        AnnotationValueImpl defaultValue = defaultPrimitive.getDefaultValue();
+        assertNotNull(defaultValue);
+        Object value = defaultValue.getValue();
+        assertTrue(value instanceof Integer);
+        assertEquals(42, value);
+        assertEquals("42", defaultValue.toString());
+    }
+
+    @Test
+    void stringDefaultValue() {
+        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        assertNotNull(DefaultValues);
+
+        ExecutableElementImpl defaultString = findSingleMethodByName(DefaultValues, "defaultString");
+        assertNotNull(defaultString);
+
+        AnnotationValueImpl defaultValue = defaultString.getDefaultValue();
+        assertNotNull(defaultValue);
+        Object value = defaultValue.getValue();
+        assertTrue(value instanceof String);
+        assertEquals("forty-two", value);
+        assertEquals("\"forty-two\"", defaultValue.toString());
+    }
+
+    @Test
+    void typeDefaultValue() {
+        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        assertNotNull(DefaultValues);
+
+        ExecutableElementImpl defaultClass = findSingleMethodByName(DefaultValues, "defaultClass");
+        assertNotNull(defaultClass);
+
+        AnnotationValueImpl defaultValue = defaultClass.getDefaultValue();
+        assertNotNull(defaultValue);
+        Object value = defaultValue.getValue();
+        assertTrue(value instanceof DeclaredTypeImpl);
+        assertEquals("java.lang.Void", ((TypeElementBase) ((DeclaredTypeImpl) value).asElement()).getQualifiedName().asString());
+        assertEquals("java.lang.Void.class", defaultValue.toString());
+    }
+
+    @Test
+    void enumDefaultValue() {
+        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        assertNotNull(DefaultValues);
+
+        ExecutableElementImpl defaultEnum = findSingleMethodByName(DefaultValues, "defaultEnum");
+        assertNotNull(defaultEnum);
+
+        AnnotationValueImpl defaultValue = defaultEnum.getDefaultValue();
+        assertNotNull(defaultValue);
+        Object value = defaultValue.getValue();
+        assertTrue(value instanceof VariableElementImpl);
+        VariableElementImpl f = (VariableElementImpl) value;
+        assertEquals("DEFAULT", f.getSimpleName().toString());
+        assertEquals("pkg.Methods.DefaultValues.EnumDefaults", ((TypeElementBase) f.getEnclosingElement()).getQualifiedName().asString());
+        assertEquals("pkg.Methods.DefaultValues.EnumDefaults.DEFAULT", defaultValue.toString());
+    }
+
+    @Test
+    void arrayDefaultValue() {
+        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        assertNotNull(DefaultValues);
+
+        ExecutableElementImpl defaultArray = findSingleMethodByName(DefaultValues, "defaultArray");
+        assertNotNull(defaultArray);
+
+        AnnotationValueImpl defaultValue = defaultArray.getDefaultValue();
+        assertNotNull(defaultValue);
+        Object value = defaultValue.getValue();
+
+        assertTrue(value instanceof List);
+        @SuppressWarnings("unchecked") List<AnnotationValueImpl> vs = (List<AnnotationValueImpl>) value;
+        assertEquals(2, vs.size());
+        assertEquals("{@java.lang.Native, @java.lang.Native}", defaultValue.toString());
+
+        AnnotationValueImpl first = vs.get(0);
+        AnnotationValueImpl second = vs.get(1);
+
+
+    }
+
+    @Test
+    void annotationDefaultValue() {
+        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        assertNotNull(DefaultValues);
+
+        ExecutableElementImpl defaultAnno = findSingleMethodByName(DefaultValues, "defaultAnno");
+        assertNotNull(defaultAnno);
+
+        AnnotationValueImpl defaultValue = defaultAnno.getDefaultValue();
+        assertNotNull(defaultValue);
+        Object value = defaultValue.getValue();
+        assertTrue(value instanceof AnnotationMirrorImpl);
+        assertTrue(((AnnotationMirrorImpl) value).getElementValues().isEmpty());
     }
 
     ExecutableElementImpl findSingleMethodByName(ElementImpl parent, String methodName) {

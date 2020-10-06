@@ -214,8 +214,15 @@ class AnnotationDeclarationsTest {
     @Disabled
     void onMethodDefaultValue() throws Exception {
         // TODO implement
+        // is this even possible?
     }
 
+    @Test
+    @Disabled
+    void onInnerClassType() throws Exception {
+        // TODO implement
+        // Base.@Annotated Inner field;
+    }
     @Test
     void onMethodReceiverType() throws Exception {
         TypeElementImpl Annotations = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations", null);

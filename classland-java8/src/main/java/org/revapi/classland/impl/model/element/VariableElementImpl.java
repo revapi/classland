@@ -20,8 +20,10 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 import static org.objectweb.asm.TypeReference.newFormalParameterReference;
+import static org.revapi.classland.impl.util.Memoized.memoize;
 import static org.revapi.classland.impl.util.Memoized.obtained;
 
+import java.security.Signature;
 import java.util.List;
 import java.util.Set;
 
@@ -40,6 +42,7 @@ import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
@@ -61,11 +64,62 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         return v.visitVariable(this, p);
     }
 
+    public static final class Missing extends VariableElementImpl {
+        private final TypeElementBase parent;
+        private final NameImpl name;
+        private final ElementKind kind;
+        private final TypeMirrorImpl type;
+
+        public Missing(Universe universe, TypeElementBase parent, String name, String descriptor, ElementKind kind) {
+            super(universe, AnnotationSource.MEMOIZED_EMPTY, parent.lookupModule());
+            this.parent = parent;
+            this.name = NameImpl.of(name);
+            this.kind = kind;
+            this.type = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(descriptor), parent, AnnotationTargetPath.ROOT);
+        }
+
+        @Override
+        public Object getConstantValue() {
+            return null;
+        }
+
+        @Override
+        public TypeMirrorImpl asType() {
+            return type;
+        }
+
+        @Override
+        public ElementKind getKind() {
+            return kind;
+        }
+
+        @Override
+        public Set<Modifier> getModifiers() {
+            return emptySet();
+        }
+
+        @Override
+        public NameImpl getSimpleName() {
+            return name;
+        }
+
+        @Override
+        public ElementImpl getEnclosingElement() {
+            return parent;
+        }
+
+        @Override
+        public List<ElementImpl> getEnclosedElements() {
+            return emptyList();
+        }
+    }
+
     public static final class Field extends VariableElementImpl {
         private final FieldNode field;
         private final Set<Modifier> modifiers;
         private final NameImpl name;
         private final TypeElementImpl parent;
+        private final Memoized<TypeMirrorImpl> type;
 
         public Field(Universe universe, TypeElementImpl parent, FieldNode field) {
             super(universe, obtained(AnnotationSource.fromField(field)), parent.lookupModule());
@@ -73,6 +127,10 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
             this.modifiers = Modifiers.toFieldModifiers(field.access);
             this.name = NameImpl.of(field.name);
             this.parent = parent;
+            this.type = memoize(() -> {
+                String sig = field.signature == null ? field.desc : field.signature;
+                return TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(sig), parent, AnnotationTargetPath.ROOT);
+            });
         }
 
         @Override
@@ -82,8 +140,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
 
         @Override
         public TypeMirrorImpl asType() {
-            // TODO implement
-            return null;
+            return type.get();
         }
 
         @Override
@@ -97,17 +154,17 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         }
 
         @Override
-        public Name getSimpleName() {
+        public NameImpl getSimpleName() {
             return name;
         }
 
         @Override
-        public Element getEnclosingElement() {
+        public ElementImpl getEnclosingElement() {
             return parent;
         }
 
         @Override
-        public List<? extends Element> getEnclosedElements() {
+        public List<? extends ElementImpl> getEnclosedElements() {
             return emptyList();
         }
     }
@@ -137,7 +194,6 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
 
         @Override
         public @Nullable Object getConstantValue() {
-            // TODO implement
             return null;
         }
 
@@ -157,17 +213,17 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         }
 
         @Override
-        public Name getSimpleName() {
+        public NameImpl getSimpleName() {
             return name;
         }
 
         @Override
-        public Element getEnclosingElement() {
+        public ElementImpl getEnclosingElement() {
             return method;
         }
 
         @Override
-        public List<? extends Element> getEnclosedElements() {
+        public List<? extends ElementImpl> getEnclosedElements() {
             return emptyList();
         }
     }

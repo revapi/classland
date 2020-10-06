@@ -17,6 +17,7 @@
 package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.lang.model.element.ElementKind;
@@ -59,7 +61,7 @@ import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
-public final class TypeElementImpl extends TypeElementBase implements TypeVariableResolutionContext {
+public final class TypeElementImpl extends TypeElementBase {
     private final String internalName;
     private final Memoized<ClassNode> node;
     private final Memoized<NameImpl> qualifiedName;
@@ -76,6 +78,7 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     private final Memoized<DeclaredTypeImpl> type;
     private final Memoized<List<TypeParameterElementImpl>> typeParameters;
     private final Memoized<Map<String, ExecutableElementImpl>> methods;
+    private final Memoized<Map<String, VariableElementImpl.Field>> fields;
     private final Memoized<GenericTypeParameters> signature;
 
     public TypeElementImpl(Universe universe, String internalName, Memoized<ClassNode> node, PackageElementImpl pkg) {
@@ -239,20 +242,19 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
         methods = node.map(n -> n.methods.stream().filter(m -> !Modifiers.isSynthetic(m.access))
                 .collect(toMap(m -> m.name + "#" + m.desc, m -> new ExecutableElementImpl(universe, this, m))));
 
-        enclosedElements = scan.map(r -> {
-            Stream<VariableElementImpl.Field> fields = r.classNode.fields.stream()
-                    .filter(f -> !Modifiers.isSynthetic(f.access))
-                    .map(f -> new VariableElementImpl.Field(universe, this, f));
+        fields = node.map(n -> n.fields.stream()
+                .filter(f -> !Modifiers.isSynthetic(f.access))
+                .map(f -> new VariableElementImpl.Field(universe, this, f))
+                .collect(Collectors.toMap(v -> v.getSimpleName().asString(), identity())));
 
+        enclosedElements = scan.map(r -> {
             Stream<TypeElementBase> innerClasses = r.innerClasses.stream()
                     .map(c -> universe.getTypeByInternalNameFromPackage(c, pkg));
 
-            return concat(concat(fields, methods.get().values().stream()), innerClasses).collect(toList());
+            return concat(
+                    concat(fields.get().values().stream(), methods.get().values().stream()), innerClasses)
+                    .collect(toList());
         });
-    }
-
-    public String getInternalName() {
-        return internalName;
     }
 
     public Memoized<ClassNode> getNode() {
@@ -269,6 +271,20 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
 
     public @Nullable ExecutableElementImpl getMethod(String methodName, String methodDescriptor) {
         return methods.get().get(methodName + "#" + methodDescriptor);
+    }
+
+    @Override
+    public List<ExecutableElementImpl> getMethod(String methodName) {
+        String methodKey = methodName + "#";
+        return methods.get().entrySet().stream()
+                .filter(e -> e.getKey().startsWith(methodKey))
+                .map(Map.Entry::getValue)
+                .collect(toList());
+    }
+
+    @Override
+    public VariableElementImpl.@Nullable Field getField(String name) {
+        return fields.get().get(name);
     }
 
     public Memoized<AnnotationSource> asAnnotationSource() {
@@ -301,7 +317,7 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     }
 
     @Override
-    public Name getQualifiedName() {
+    public NameImpl getQualifiedName() {
         return qualifiedName.get();
     }
 
@@ -336,7 +352,7 @@ public final class TypeElementImpl extends TypeElementBase implements TypeVariab
     }
 
     @Override
-    public Name getSimpleName() {
+    public NameImpl getSimpleName() {
         return simpleName.get();
     }
 

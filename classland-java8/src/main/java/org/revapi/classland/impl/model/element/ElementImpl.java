@@ -17,14 +17,18 @@
 package org.revapi.classland.impl.model.element;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Name;
 
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
+import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Memoized;
 import org.revapi.classland.impl.util.Nullable;
+
+import java.util.List;
 
 public abstract class ElementImpl extends AnnotatedConstructImpl implements Element {
 
@@ -38,4 +42,13 @@ public abstract class ElementImpl extends AnnotatedConstructImpl implements Elem
 
     @Override
     public abstract TypeMirrorImpl asType();
+
+    @Override
+    public abstract NameImpl getSimpleName();
+
+    @Override
+    public abstract ElementImpl getEnclosingElement();
+
+    @Override
+    public abstract List<? extends ElementImpl> getEnclosedElements();
 }

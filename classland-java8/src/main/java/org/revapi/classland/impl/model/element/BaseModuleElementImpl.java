@@ -104,12 +104,12 @@ abstract class BaseModuleElementImpl extends ElementImpl {
     }
 
     @Override
-    public Name getSimpleName() {
+    public NameImpl getSimpleName() {
         return getQualifiedName();
     }
 
     @Override
-    public Element getEnclosingElement() {
+    public ElementImpl getEnclosingElement() {
         return null;
     }
 

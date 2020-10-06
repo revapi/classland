@@ -22,6 +22,7 @@ import static org.revapi.classland.impl.util.Memoized.obtained;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
@@ -66,6 +67,16 @@ public class MissingTypeImpl extends TypeElementBase {
 
     @Override
     public @Nullable ExecutableElementImpl getMethod(String methodName, String methodDescriptor) {
+        return null;
+    }
+
+    @Override
+    public List<ExecutableElementImpl> getMethod(String methodName) {
+        return emptyList();
+    }
+
+    @Override
+    public VariableElementImpl.@Nullable Field getField(String name) {
         return null;
     }
 
@@ -132,5 +143,20 @@ public class MissingTypeImpl extends TypeElementBase {
     @Override
     public String toString() {
         return "MissingTypeImpl{" + "qualifiedName=" + qualifiedName.asString() + '}';
+    }
+
+    @Override
+    public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Memoized<AnnotationSource> asAnnotationSource() {
+        return AnnotationSource.MEMOIZED_EMPTY;
+    }
+
+    @Override
+    public ElementImpl asElement() {
+        return this;
     }
 }

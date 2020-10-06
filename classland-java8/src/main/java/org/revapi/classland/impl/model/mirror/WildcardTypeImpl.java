@@ -60,10 +60,4 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitWildcard(this, p);
     }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        // TODO implement
-        return null;
-    }
 }

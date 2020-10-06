@@ -1,6 +1,7 @@
 package org.revapi.classland.impl.model.mirror;
 
 import org.revapi.classland.impl.model.element.ElementImpl;
+import org.revapi.classland.impl.model.element.ExecutableElementBase;
 import org.revapi.classland.impl.model.element.ExecutableElementImpl;
 
 import javax.lang.model.type.ExecutableType;
@@ -18,7 +19,7 @@ public class ExecutableTypeImpl extends TypeMirrorImpl implements ExecutableType
     private final TypeMirrorImpl receiverType;
     private final List<TypeMirrorImpl> throwsTypes;
 
-    public ExecutableTypeImpl(ExecutableElementImpl source) {
+    public ExecutableTypeImpl(ExecutableElementBase source) {
         super(source.getUniverse(), memoize(source::getAnnotationMirrors));
         typeVars = source.getTypeParameters().stream().map(TypeVariableImpl::new).collect(toList());
         returnType = source.getReturnType();

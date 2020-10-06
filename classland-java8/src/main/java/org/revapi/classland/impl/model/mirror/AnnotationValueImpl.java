@@ -17,43 +17,85 @@
 package org.revapi.classland.impl.model.mirror;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.BaseModelImpl;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
+import org.revapi.classland.impl.model.element.TypeElementBase;
+import org.revapi.classland.impl.model.element.VariableElementImpl;
+import org.revapi.classland.impl.model.signature.SignatureParser;
+import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
+import org.revapi.classland.impl.util.PrettyPrinting;
 import org.revapi.classland.impl.util.Memoized;
+import org.revapi.classland.impl.util.Nullable;
+
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValue {
-    private final Memoized<Object> getValue;
-    private final Kind kind;
 
-    public AnnotationValueImpl(Universe universe, Supplier<Object> getValue, Kind kind) {
+    private final Object value;
+
+    public AnnotationValueImpl(Universe universe, Object value) {
         super(universe);
-        this.getValue = Memoized.memoize(getValue);
-        this.kind = kind;
+        this.value = value;
+    }
+
+    public static AnnotationValueImpl fromAsmValue(Universe universe, Object value, TypeVariableResolutionContext resolutionContext, Memoized<@Nullable ModuleElementImpl> typeLookupSource) {
+        if (value instanceof Type) {
+            // class value
+            value = TypeMirrorFactory.create(universe, SignatureParser.parseInternalName(((Type) value).getInternalName()),
+                    resolutionContext, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, typeLookupSource);
+        } else if (value instanceof String[]) {
+            // enum constants
+            // the first element is the descriptor of the enum class, the second element is the name of the field
+            String enumTypeDescriptor = ((String[]) value)[0];
+            String enumConstantName = ((String[]) value)[1];
+
+            TypeElementBase enumType = universe.getTypeByInternalNameFromModule(
+                    Type.getType(enumTypeDescriptor).getInternalName(), typeLookupSource.get());
+
+            value = enumType.getField(enumConstantName);
+            if (value == null) {
+                value = new VariableElementImpl.Missing(universe, enumType, enumConstantName, "L" + enumType.getInternalName() + ";", ElementKind.ENUM_CONSTANT);
+            }
+        } else if (value instanceof AnnotationNode) {
+            // annotation
+            value = new AnnotationMirrorImpl((AnnotationNode) value, universe, universe.getTypeByInternalNameFromModule(Type.getType(((AnnotationNode) value).desc).getInternalName(), typeLookupSource.get()));
+        } else if (value instanceof List) {
+            // array of values
+
+            //noinspection unchecked
+            value = ((List<Object>) value).stream().map(v -> fromAsmValue(universe, v, resolutionContext, typeLookupSource)).collect(toList());
+        }
+
+        return new AnnotationValueImpl(universe, value);
     }
 
     @Override
     public Object getValue() {
-        return getValue.get();
+        return value;
     }
 
     @Override
     public String toString() {
-        // TODO implement - this is required to be implemented by AnnotationValue in a particular way
-        return "AnnotationValueImpl{}";
+        return PrettyPrinting.print(new StringBuilder(), this).toString();
     }
 
     @Override
     public <R, P> R accept(AnnotationValueVisitor<R, P> v, P p) {
-        Object value = getValue.get();
-        switch (kind) {
+        switch (Kind.of(value)) {
         case BOOLEAN:
             return v.visitBoolean((Boolean) value, p);
         case BYTE:
@@ -82,11 +124,27 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
             // noinspection unchecked
             return v.visitArray((List<? extends AnnotationValue>) value, p);
         default:
-            throw new IllegalStateException("Unsupported annotation value kind: " + kind + ". This is a bug.");
+            throw new IllegalStateException("Unsupported annotation value: " + value + ". This is a bug.");
         }
     }
 
-    private enum Kind {
-        BOOLEAN, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, CHAR, STRING, TYPE, ENUM, ANNO, ARRAY
+    public enum Kind {
+        BOOLEAN(Boolean.class), BYTE(Byte.class), SHORT(Short.class), INT(Integer.class), LONG(Long.class), FLOAT(Float.class), DOUBLE(Double.class), CHAR(Character.class), STRING(String.class), TYPE(TypeMirror.class), ENUM(VariableElement.class), ANNO(AnnotationMirror.class), ARRAY(List.class);
+
+        private final Class<?> type;
+
+        Kind(Class<?> type) {
+            this.type = type;
+        }
+
+        public static Kind of(Object value) {
+            for (Kind k : Kind.values()) {
+                if (k.type.isAssignableFrom(value.getClass())) {
+                    return k;
+                }
+            }
+
+            throw new IllegalStateException("Unsupported annotation value: " + value + ". This is a bug.");
+        }
     }
 }

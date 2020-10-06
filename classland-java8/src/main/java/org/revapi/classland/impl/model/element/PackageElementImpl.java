@@ -74,7 +74,7 @@ public final class PackageElementImpl extends ElementImpl implements PackageElem
     }
 
     @Override
-    public Name getQualifiedName() {
+    public NameImpl getQualifiedName() {
         return name;
     }
 
@@ -99,17 +99,17 @@ public final class PackageElementImpl extends ElementImpl implements PackageElem
     }
 
     @Override
-    public Name getSimpleName() {
+    public NameImpl getSimpleName() {
         return name;
     }
 
     @Override
-    public Element getEnclosingElement() {
+    public ElementImpl getEnclosingElement() {
         return module;
     }
 
     @Override
-    public List<? extends Element> getEnclosedElements() {
+    public List<? extends ElementImpl> getEnclosedElements() {
         return types.get();
     }
 

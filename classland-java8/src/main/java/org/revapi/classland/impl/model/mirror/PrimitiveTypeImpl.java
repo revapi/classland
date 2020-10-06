@@ -47,10 +47,4 @@ public final class PrimitiveTypeImpl extends TypeMirrorImpl implements Primitive
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitPrimitive(this, p);
     }
-
-    @Override
-    public List<AnnotationMirrorImpl> getAnnotationMirrors() {
-        // TODO implement
-        return null;
-    }
 }
