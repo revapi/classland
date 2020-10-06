@@ -28,6 +28,8 @@ import org.revapi.classland.impl.Universe;
 
 public final class Classland implements AutoCloseable {
     private final Universe universe;
+    private final ElementsImpl elements;
+    private final TypesImpl types;
 
     public Classland() {
         this(currentJvmSupportsModules());
@@ -35,6 +37,8 @@ public final class Classland implements AutoCloseable {
 
     public Classland(boolean analyzeModules) {
         this.universe = new Universe(analyzeModules);
+        this.elements = new ElementsImpl(universe);
+        this.types = new TypesImpl(universe);
     }
 
     private static boolean currentJvmSupportsModules() {
@@ -56,11 +60,11 @@ public final class Classland implements AutoCloseable {
     }
 
     public Elements getElements() {
-        return new ElementsImpl(universe);
+        return elements;
     }
 
     public Types getTypes() {
-        return new TypesImpl(universe);
+        return types;
     }
 
     @Override

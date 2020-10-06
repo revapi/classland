@@ -40,96 +40,115 @@ public class TypesImpl implements Types {
 
     @Override
     public Element asElement(TypeMirror t) {
+        // TODO implement
         return null;
     }
 
     @Override
     public boolean isSameType(TypeMirror t1, TypeMirror t2) {
+        // TODO implement
         return false;
     }
 
     @Override
     public boolean isSubtype(TypeMirror t1, TypeMirror t2) {
+        // TODO implement
         return false;
     }
 
     @Override
     public boolean isAssignable(TypeMirror t1, TypeMirror t2) {
+        // TODO implement
         return false;
     }
 
     @Override
     public boolean contains(TypeMirror t1, TypeMirror t2) {
+        // TODO implement
         return false;
     }
 
     @Override
     public boolean isSubsignature(ExecutableType m1, ExecutableType m2) {
+        // TODO implement
         return false;
     }
 
     @Override
     public List<? extends TypeMirror> directSupertypes(TypeMirror t) {
+        // TODO implement
         return null;
     }
 
     @Override
     public TypeMirror erasure(TypeMirror t) {
+        // TODO implement
         return null;
     }
 
     @Override
     public TypeElement boxedClass(PrimitiveType p) {
+        // TODO implement
         return null;
     }
 
     @Override
     public PrimitiveType unboxedType(TypeMirror t) {
+        // TODO implement
         return null;
     }
 
     @Override
     public TypeMirror capture(TypeMirror t) {
+        // TODO implement
         return null;
     }
 
     @Override
     public PrimitiveType getPrimitiveType(TypeKind kind) {
+        // TODO implement
         return null;
     }
 
     @Override
     public NullType getNullType() {
+        // TODO implement
         return null;
     }
 
     @Override
     public NoType getNoType(TypeKind kind) {
+        // TODO implement
         return null;
     }
 
     @Override
     public ArrayType getArrayType(TypeMirror componentType) {
+        // TODO implement
         return null;
     }
 
     @Override
     public WildcardType getWildcardType(TypeMirror extendsBound, TypeMirror superBound) {
+        // TODO implement
         return null;
     }
 
     @Override
     public DeclaredType getDeclaredType(TypeElement typeElem, TypeMirror... typeArgs) {
+        // TODO implement
         return null;
     }
 
     @Override
     public DeclaredType getDeclaredType(DeclaredType containing, TypeElement typeElem, TypeMirror... typeArgs) {
+        // TODO implement
         return null;
     }
 
     @Override
     public TypeMirror asMemberOf(DeclaredType containing, Element element) {
+        // TODO implement
         return null;
     }
 }

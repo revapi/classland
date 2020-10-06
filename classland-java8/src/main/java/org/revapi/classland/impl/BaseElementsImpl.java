@@ -16,21 +16,42 @@
  */
 package org.revapi.classland.impl;
 
-import java.io.Writer;
-import java.util.List;
-import java.util.Map;
-
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.SimpleElementVisitor8;
+import java.io.Writer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 abstract class BaseElementsImpl implements Elements {
     private final Universe universe;
+    private final Map<String, PackageElement> crossModulePackageSearchResults = new HashMap<>();
+    private final Map<String, TypeElement> crossModuleTypeSearchResults = new HashMap<>();
+    private final ElementVisitor<PackageElement, Void> packageByElement = new SimpleElementVisitor8<PackageElement, Void>() {
+
+        @Override
+        protected PackageElement defaultAction(Element e, Void ignored) {
+            return visit(e.getEnclosingElement());
+        }
+
+        @Override
+        public PackageElement visitPackage(PackageElement e, Void ignored) {
+            return e;
+        }
+
+        @Override
+        public PackageElement visitUnknown(Element e, Void aVoid) {
+            return null;
+        }
+    };
 
     protected BaseElementsImpl(Universe universe) {
         this.universe = universe;
@@ -38,14 +59,21 @@ abstract class BaseElementsImpl implements Elements {
 
     @Override
     public PackageElement getPackageElement(CharSequence name) {
-        return universe.getModules().stream().flatMap(m -> m.getMutablePackages().values().stream())
-                .filter(p -> p.getSimpleName().contentEquals(name)).findFirst().orElse(null);
+        String key = name.toString();
+        return crossModulePackageSearchResults.computeIfAbsent(key,
+                __ -> universe.getModules().stream().flatMap(m -> m.getMutablePackages().values().stream())
+                        .filter(p -> p.getSimpleName().contentEquals(name)).findFirst().orElse(null));
     }
 
     @Override
     public TypeElement getTypeElement(CharSequence name) {
-        // TODO implement
-        return null;
+        String key = name.toString();
+        return crossModuleTypeSearchResults.computeIfAbsent(key,
+                __ -> universe.getModules().stream().flatMap(m -> m.getMutablePackages().values().stream())
+                        .flatMap(p -> p.getMutableTypes().values().stream())
+                        .filter(t -> key.contentEquals(t.getQualifiedName()))
+                        .findFirst()
+                        .orElse(null));
     }
 
     @Override
@@ -62,56 +90,65 @@ abstract class BaseElementsImpl implements Elements {
 
     @Override
     public boolean isDeprecated(Element e) {
+        // TODO implement
         return false;
     }
 
     @Override
     public Name getBinaryName(TypeElement type) {
+        // TODO implement
         return null;
     }
 
     @Override
     public PackageElement getPackageOf(Element type) {
-        return null;
+        return packageByElement.visit(type);
     }
 
     @Override
     public List<? extends Element> getAllMembers(TypeElement type) {
+        // TODO implement
         return null;
     }
 
     @Override
     public List<? extends AnnotationMirror> getAllAnnotationMirrors(Element e) {
+        // TODO implement
         return null;
     }
 
     @Override
     public boolean hides(Element hider, Element hidden) {
+        // TODO implement
         return false;
     }
 
     @Override
     public boolean overrides(ExecutableElement overrider, ExecutableElement overridden, TypeElement type) {
+        // TODO implement
         return false;
     }
 
     @Override
     public String getConstantExpression(Object value) {
+        // TODO implement
         return null;
     }
 
     @Override
     public void printElements(Writer w, Element... elements) {
-
+        // TODO implement
     }
 
     @Override
     public Name getName(CharSequence cs) {
+        // TODO implement
         return null;
     }
 
     @Override
     public boolean isFunctionalInterface(TypeElement type) {
+        // TODO implement
         return false;
     }
 }

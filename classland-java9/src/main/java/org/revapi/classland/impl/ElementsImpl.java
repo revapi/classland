@@ -34,56 +34,76 @@ public class ElementsImpl extends BaseElementsImpl implements Elements {
 
     @Override
     public PackageElement getPackageElement(ModuleElement module, CharSequence name) {
+        // TODO implement
         return null;
     }
 
     @Override
     public Set<? extends PackageElement> getAllPackageElements(CharSequence name) {
+        // TODO implement
         return null;
     }
 
     @Override
     public TypeElement getTypeElement(ModuleElement module, CharSequence name) {
+        // TODO implement
         return null;
     }
 
     @Override
     public Set<? extends TypeElement> getAllTypeElements(CharSequence name) {
+        // TODO implement
         return null;
     }
 
     @Override
     public ModuleElement getModuleElement(CharSequence name) {
+        // TODO implement
         return null;
     }
 
     @Override
     public Set<? extends ModuleElement> getAllModuleElements() {
+        // TODO implement
         return null;
     }
 
     @Override
     public Origin getOrigin(Element e) {
+        // TODO implement
         return null;
     }
 
     @Override
     public Origin getOrigin(AnnotatedConstruct c, AnnotationMirror a) {
+        // TODO implement
         return null;
     }
 
     @Override
     public Origin getOrigin(ModuleElement m, ModuleElement.Directive directive) {
+        // TODO implement
         return null;
     }
 
     @Override
     public boolean isBridge(ExecutableElement e) {
+        // TODO implement
         return false;
     }
 
     @Override
     public ModuleElement getModuleOf(Element e) {
+        // TODO implement
         return null;
+    }
+
+    @Override
+    public PackageElement getPackageOf(Element type) {
+        if (type instanceof ModuleElement) {
+            return null;
+        } else {
+            return super.getPackageOf(type);
+        }
     }
 }
