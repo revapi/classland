@@ -50,13 +50,16 @@ public final class TypeMirrorFactory {
     private static final TypeSignature.Visitor<TypeMirrorImpl, ResolutionContext> SIGNATURE_VISITOR = new TypeSignature.Visitor<TypeMirrorImpl, ResolutionContext>() {
         @Override
         public TypeMirrorImpl visitPrimitiveType(TypeSignature.PrimitiveType type, ResolutionContext ctx) {
-            return new PrimitiveTypeImpl(ctx.universe, type.type, ctx.annotationSource, ctx.path, ctx.typeLookupSeed);
+            return asArray(new PrimitiveTypeImpl(ctx.universe, type.type, ctx.annotationSource,
+                    targetArrayDimension(ctx.path, type), ctx.typeLookupSeed), type.arrayDimension, ctx);
         }
 
         @Override
         public TypeMirrorImpl visitTypeVariable(TypeSignature.Variable typeVariable, ResolutionContext ctx) {
-            // TODO this is probably not correct... Type variables can also represent wildcard capture, which
+            // TODO this is not correct... Type variables can also represent wildcard capture, which
             // is currently not covered here...
+            // TODO we need to create the type variable anew here because of the annotations... we cannot reuse
+            // asType() of the type parameter element
             return ctx.variables.resolveTypeVariable(typeVariable.name).map(ElementImpl::asType).orElse(null);
         }
 
@@ -98,11 +101,35 @@ public final class TypeMirrorFactory {
             TypeMirrorImpl enclosing = typeReference.outerClass == null ? null
                     : typeReference.outerClass.accept(this, ctx);
 
+            TypeMirrorImpl ret;
             if (t instanceof MissingTypeImpl) {
-                return new ErrorTypeImpl(ctx.universe, t, enclosing, args, ctx.annotationSource, ctx.path);
+                ret = new ErrorTypeImpl(ctx.universe, t, enclosing, args, ctx.annotationSource,
+                        targetArrayDimension(ctx.path, typeReference));
             } else {
-                return new DeclaredTypeImpl(ctx.universe, t, enclosing, args, ctx.annotationSource, ctx.path);
+                ret = new DeclaredTypeImpl(ctx.universe, t, enclosing, args, ctx.annotationSource,
+                        targetArrayDimension(ctx.path, typeReference));
             }
+
+            return asArray(ret, typeReference.arrayDimension, ctx);
+        }
+
+        private AnnotationTargetPath targetArrayDimension(AnnotationTargetPath path, TypeSignature.Arrayable type) {
+            AnnotationTargetPath ret = path.clone();
+            int dim = type.arrayDimension;
+            while (dim-- > 0) {
+                ret = ret.array();
+            }
+
+            return ret;
+        }
+
+        private TypeMirrorImpl asArray(TypeMirrorImpl type, int dimensions, ResolutionContext ctx) {
+            int dim = 0;
+            while (dim++ < dimensions) {
+                type = new ArrayTypeImpl(type, dim, ctx.annotationSource, ctx.path, ctx.typeLookupSeed);
+            }
+
+            return type;
         }
     };
 

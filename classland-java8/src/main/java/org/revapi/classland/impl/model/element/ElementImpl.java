@@ -16,6 +16,8 @@
  */
 package org.revapi.classland.impl.model.element;
 
+import java.util.List;
+
 import javax.lang.model.element.Element;
 
 import org.revapi.classland.impl.Universe;
@@ -27,17 +29,21 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
-import java.util.List;
-
 public abstract class ElementImpl extends AnnotatedConstructImpl implements Element {
 
-    protected ElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path,
-            MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(universe, annotationSource, path, typeLookupSeed);
+    protected ElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
+        super(universe, annotationSource, path, typeLookupSeed, false);
     }
 
-    // TODO all elements should support ElementsImpl#isDeprecated() - this should read both the attribute and the
-    // annotation
+    public boolean isDeprecated() {
+        return false;
+    }
+
+    protected boolean isAnnotatedDeprecated() {
+        return getAnnotationMirrors().stream().anyMatch(
+                a -> a.getAnnotationType().asElement().getQualifiedName().contentEquals("java.lang.Deprecated"));
+    }
 
     @Override
     public abstract TypeMirrorImpl asType();

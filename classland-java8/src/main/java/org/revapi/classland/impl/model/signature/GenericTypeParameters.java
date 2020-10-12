@@ -25,12 +25,12 @@ import org.revapi.classland.impl.util.Nullable;
 
 public final class GenericTypeParameters {
     public final LinkedHashMap<String, TypeParameterBound> typeParameters;
-    public final TypeSignature superClass;
+    public final @Nullable TypeSignature superClass;
     public final List<TypeSignature> interfaces;
     public final @Nullable TypeElementBase outerClass;
 
-    public GenericTypeParameters(LinkedHashMap<String, TypeParameterBound> typeParameters, TypeSignature superClass,
-            List<TypeSignature> interfaces, @Nullable TypeElementBase outerClass) {
+    public GenericTypeParameters(LinkedHashMap<String, TypeParameterBound> typeParameters,
+            @Nullable TypeSignature superClass, List<TypeSignature> interfaces, @Nullable TypeElementBase outerClass) {
         this.typeParameters = typeParameters;
         this.superClass = superClass;
         this.interfaces = interfaces;
@@ -44,7 +44,7 @@ public final class GenericTypeParameters {
         if (o == null || getClass() != o.getClass())
             return false;
         GenericTypeParameters that = (GenericTypeParameters) o;
-        return typeParameters.equals(that.typeParameters) && superClass.equals(that.superClass)
+        return typeParameters.equals(that.typeParameters) && Objects.equals(superClass, that.superClass)
                 && interfaces.equals(that.interfaces) && Objects.equals(outerClass, that.outerClass);
     }
 

@@ -33,7 +33,8 @@ public class AnnotationFinder {
     private AnnotationFinder() {
     }
 
-    public static List<AnnotationNode> find(AnnotationTargetPath path, AnnotationSource annotationSource) {
+    public static List<AnnotationNode> find(AnnotationTargetPath path, AnnotationSource annotationSource,
+            boolean onlyTypeUse) {
         if (path.ref == null) {
             ArrayList<AnnotationNode> ret = new ArrayList<>(annotationSource.getVisibleAnnotations());
             ret.addAll(annotationSource.getInvisibleAnnotations());
@@ -44,8 +45,9 @@ public class AnnotationFinder {
             Stream<TypeAnnotationNode> typeAnnos = Stream.concat(annotationSource.getVisibleTypeAnnotations().stream(),
                     annotationSource.getInvisibleTypeAnnotations().stream()).filter(a -> matches(a, ref, p));
 
-            Stream<AnnotationNode> annos = Stream.concat(annotationSource.getVisibleAnnotations().stream(),
-                    annotationSource.getInvisibleAnnotations().stream());
+            Stream<AnnotationNode> annos = onlyTypeUse ? Stream.empty()
+                    : Stream.concat(annotationSource.getVisibleAnnotations().stream(),
+                            annotationSource.getInvisibleAnnotations().stream());
 
             return Stream.concat(annos, typeAnnos).collect(toList());
         }

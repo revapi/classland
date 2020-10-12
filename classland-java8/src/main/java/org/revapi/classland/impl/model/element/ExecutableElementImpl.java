@@ -211,7 +211,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
             int i = 0;
             List<TypeMirrorImpl> ret = new ArrayList<>(sig.exceptionTypes.size());
 
-            for(TypeSignature ex : sig.exceptionTypes) {
+            for (TypeSignature ex : sig.exceptionTypes) {
                 ret.add(TypeMirrorFactory.create(universe, ex, this, obtained(annotationSource),
                         new AnnotationTargetPath(TypeReference.newExceptionReference(i++)), parent.lookupModule()));
             }
@@ -221,8 +221,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
 
         this.type = memoize(() -> new ExecutableTypeImpl(this));
 
-        this.defaultValue = method.annotationDefault == null
-                ? null
+        this.defaultValue = method.annotationDefault == null ? null
                 : memoize(() -> fromAsmValue(universe, method.annotationDefault, this, parent.lookupModule()));
     }
 
@@ -236,6 +235,11 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
 
     public TypeElementImpl getType() {
         return parent;
+    }
+
+    @Override
+    public boolean isDeprecated() {
+        return hasFlag(method.access, Opcodes.ACC_DEPRECATED) || isAnnotatedDeprecated();
     }
 
     @Override

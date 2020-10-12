@@ -22,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
 
+import static org.revapi.classland.impl.util.Asm.hasFlag;
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
@@ -41,6 +42,7 @@ import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
@@ -79,7 +81,8 @@ public final class TypeElementImpl extends TypeElementBase {
     private final MemoizedValue<Map<String, VariableElementImpl.Field>> fields;
     private final MemoizedValue<GenericTypeParameters> signature;
 
-    public TypeElementImpl(Universe universe, String internalName, MemoizedValue<ClassNode> node, PackageElementImpl pkg) {
+    public TypeElementImpl(Universe universe, String internalName, MemoizedValue<ClassNode> node,
+            PackageElementImpl pkg) {
         super(universe, internalName, obtained(pkg), node.map(AnnotationSource::fromType));
         this.internalName = internalName;
         this.node = node;
@@ -200,9 +203,13 @@ public final class TypeElementImpl extends TypeElementBase {
             ClassNode n = s.classNode;
 
             if (n.signature == null) {
+                boolean noSuperClass = n.superName == null || elementKind.get() == ElementKind.INTERFACE
+                        || elementKind.get() == ElementKind.ANNOTATION_TYPE;
+
                 return new GenericTypeParameters(new LinkedHashMap<>(0, 0.01f),
-                        new TypeSignature.Reference(0, n.superName, emptyList(), null), n.interfaces.stream()
-                                .map(i -> new TypeSignature.Reference(0, i, emptyList(), null)).collect(toList()),
+                        noSuperClass ? null : new TypeSignature.Reference(0, n.superName, emptyList(), null),
+                        n.interfaces.stream().map(i -> new TypeSignature.Reference(0, i, emptyList(), null))
+                                .collect(toList()),
                         outerClass);
             } else {
                 return SignatureParser.parseType(n.signature, outerClass);
@@ -240,8 +247,7 @@ public final class TypeElementImpl extends TypeElementBase {
         methods = node.map(n -> n.methods.stream().filter(m -> !Modifiers.isSynthetic(m.access))
                 .collect(toMap(m -> m.name + "#" + m.desc, m -> new ExecutableElementImpl(universe, this, m))));
 
-        fields = node.map(n -> n.fields.stream()
-                .filter(f -> !Modifiers.isSynthetic(f.access))
+        fields = node.map(n -> n.fields.stream().filter(f -> !Modifiers.isSynthetic(f.access))
                 .map(f -> new VariableElementImpl.Field(universe, this, f))
                 .collect(Collectors.toMap(v -> v.getSimpleName().asString(), identity())));
 
@@ -249,10 +255,14 @@ public final class TypeElementImpl extends TypeElementBase {
             Stream<TypeElementBase> innerClasses = r.innerClasses.stream()
                     .map(c -> universe.getTypeByInternalNameFromPackage(c, pkg));
 
-            return concat(
-                    concat(fields.get().values().stream(), methods.get().values().stream()), innerClasses)
+            return concat(concat(fields.get().values().stream(), methods.get().values().stream()), innerClasses)
                     .collect(toList());
         });
+    }
+
+    @Override
+    public boolean isDeprecated() {
+        return hasFlag(node.get().access, Opcodes.ACC_DEPRECATED) || isAnnotatedDeprecated();
     }
 
     public MemoizedValue<ClassNode> getNode() {
@@ -274,9 +284,7 @@ public final class TypeElementImpl extends TypeElementBase {
     @Override
     public List<ExecutableElementImpl> getMethod(String methodName) {
         String methodKey = methodName + "#";
-        return methods.get().entrySet().stream()
-                .filter(e -> e.getKey().startsWith(methodKey))
-                .map(Map.Entry::getValue)
+        return methods.get().entrySet().stream().filter(e -> e.getKey().startsWith(methodKey)).map(Map.Entry::getValue)
                 .collect(toList());
     }
 

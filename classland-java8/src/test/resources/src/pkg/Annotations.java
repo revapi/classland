@@ -83,4 +83,12 @@ public class Annotations {
         void method(@VisibleTypeAnno AnnotatedReceiverType this, @VisibleTypeAnno int param) {}
         void method(double param) {}
     }
+
+    public class AnnotatedField {
+        @VisibleAnno @InvisibleTypeAnno int simpleField;
+
+        @VisibleAnno
+        @InvisibleTypeAnno
+        int @VisibleTypeAnno [] arrayField;
+    }
 }

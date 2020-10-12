@@ -24,6 +24,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.jar.JarFile;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Elements;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -32,7 +38,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.archive.JarFileArchive;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
+import org.revapi.classland.impl.model.mirror.ArrayTypeImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
+import org.revapi.classland.impl.model.mirror.PrimitiveTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
@@ -181,15 +189,55 @@ class AnnotationDeclarationsTest {
     }
 
     @Test
-    @Disabled
     void onField() throws Exception {
-        // TODO implement
+        TypeElementImpl AnnotatedField = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedField", null);
+        VariableElementImpl field = AnnotatedField.getField("simpleField");
+
+        assertNotNull(field);
+
+        List<AnnotationMirrorImpl> annos = field.getAnnotationMirrors();
+        assertEquals(2, annos.size());
+
+        assertSame(VisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(InvisibleTypeAnno, annos.get(1).getAnnotationType().asElement());
+
+        annos = field.asType().getAnnotationMirrors();
+        assertEquals(1, annos.size());
+        assertSame(InvisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
     }
 
     @Test
-    @Disabled
     void onFieldArray() throws Exception {
-        // TODO implement
+        TypeElementImpl AnnotatedField = (TypeElementImpl) u
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedField", null);
+        VariableElementImpl field = AnnotatedField.getField("arrayField");
+
+        VariableElement fld = ElementFilter
+                .fieldsIn(annotations.analyze().elements().getTypeElement("pkg.Annotations.AnnotatedField")
+                        .getEnclosedElements())
+                .stream().filter(f -> f.getSimpleName().contentEquals("arrayField")).findFirst().get();
+
+        List<? extends AnnotationMirror> as = fld.asType().getAnnotationMirrors();
+
+        assertNotNull(field);
+
+        List<AnnotationMirrorImpl> annos = field.getAnnotationMirrors();
+        assertEquals(2, annos.size());
+        assertSame(VisibleAnno, annos.get(0).getAnnotationType().asElement());
+        assertSame(InvisibleTypeAnno, annos.get(1).getAnnotationType().asElement());
+
+        TypeMirrorImpl fieldType = field.asType();
+        assertTrue(fieldType instanceof ArrayTypeImpl);
+        annos = fieldType.getAnnotationMirrors();
+        assertEquals(1, annos.size());
+        assertSame(VisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
+
+        fieldType = ((ArrayTypeImpl) fieldType).getComponentType();
+        assertTrue(fieldType instanceof PrimitiveTypeImpl);
+        annos = fieldType.getAnnotationMirrors();
+        assertEquals(1, annos.size());
+        assertSame(InvisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
     }
 
     @Test
@@ -223,6 +271,7 @@ class AnnotationDeclarationsTest {
         // TODO implement
         // Base.@Annotated Inner field;
     }
+
     @Test
     void onMethodReceiverType() throws Exception {
         TypeElementImpl Annotations = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations", null);

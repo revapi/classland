@@ -240,7 +240,8 @@ public class ExecutableElementImplTest {
         TypeMirrorImpl ex = throwsUnchecked.getThrownTypes().get(0);
         assertTrue(ex instanceof DeclaredTypeImpl);
 
-        assertEquals("java/lang/RuntimeException", ((TypeElementBase) ((DeclaredTypeImpl) ex).asElement()).internalName);
+        assertEquals("java/lang/RuntimeException",
+                ((TypeElementBase) ((DeclaredTypeImpl) ex).asElement()).internalName);
     }
 
     @Test
@@ -255,7 +256,9 @@ public class ExecutableElementImplTest {
         TypeMirrorImpl ex = throwsTypeParam.getThrownTypes().get(0);
         assertTrue(ex instanceof TypeVariableImpl);
 
-        assertEquals("java/lang/Throwable", ((TypeElementBase) ((DeclaredTypeImpl) ((TypeVariableImpl) ex).getUpperBound()).asElement()).internalName);
+        assertEquals("java/lang/Throwable",
+                ((TypeElementBase) ((DeclaredTypeImpl) ((TypeVariableImpl) ex).getUpperBound())
+                        .asElement()).internalName);
     }
 
     @Test
@@ -274,7 +277,9 @@ public class ExecutableElementImplTest {
 
         ex = throwsMany.getThrownTypes().get(1);
         assertTrue(ex instanceof TypeVariableImpl);
-        assertEquals("java/lang/RuntimeException", ((TypeElementBase) ((DeclaredTypeImpl) ((TypeVariableImpl) ex).getUpperBound()).asElement()).internalName);
+        assertEquals("java/lang/RuntimeException",
+                ((TypeElementBase) ((DeclaredTypeImpl) ((TypeVariableImpl) ex).getUpperBound())
+                        .asElement()).internalName);
 
         ex = throwsMany.getThrownTypes().get(2);
         assertTrue(ex instanceof DeclaredTypeImpl);
@@ -325,7 +330,8 @@ public class ExecutableElementImplTest {
         assertNotNull(defaultValue);
         Object value = defaultValue.getValue();
         assertTrue(value instanceof DeclaredTypeImpl);
-        assertEquals("java.lang.Void", ((TypeElementBase) ((DeclaredTypeImpl) value).asElement()).getQualifiedName().asString());
+        assertEquals("java.lang.Void",
+                ((TypeElementBase) ((DeclaredTypeImpl) value).asElement()).getQualifiedName().asString());
         assertEquals("java.lang.Void.class", defaultValue.toString());
     }
 
@@ -343,7 +349,8 @@ public class ExecutableElementImplTest {
         assertTrue(value instanceof VariableElementImpl);
         VariableElementImpl f = (VariableElementImpl) value;
         assertEquals("DEFAULT", f.getSimpleName().toString());
-        assertEquals("pkg.Methods.DefaultValues.EnumDefaults", ((TypeElementBase) f.getEnclosingElement()).getQualifiedName().asString());
+        assertEquals("pkg.Methods.DefaultValues.EnumDefaults",
+                ((TypeElementBase) f.getEnclosingElement()).getQualifiedName().asString());
         assertEquals("pkg.Methods.DefaultValues.EnumDefaults.DEFAULT", defaultValue.toString());
     }
 
@@ -360,14 +367,10 @@ public class ExecutableElementImplTest {
         Object value = defaultValue.getValue();
 
         assertTrue(value instanceof List);
-        @SuppressWarnings("unchecked") List<AnnotationValueImpl> vs = (List<AnnotationValueImpl>) value;
+        @SuppressWarnings("unchecked")
+        List<AnnotationValueImpl> vs = (List<AnnotationValueImpl>) value;
         assertEquals(2, vs.size());
-        assertEquals("{@java.lang.Native, @java.lang.Native}", defaultValue.toString());
-
-        AnnotationValueImpl first = vs.get(0);
-        AnnotationValueImpl second = vs.get(1);
-
-
+        assertEquals("{@java.lang.annotation.Native, @java.lang.annotation.Native}", defaultValue.toString());
     }
 
     @Test

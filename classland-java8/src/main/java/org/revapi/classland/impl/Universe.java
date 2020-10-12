@@ -110,6 +110,11 @@ public final class Universe implements AutoCloseable {
         return module == null ? null : module.getMutablePackages().get(packageName);
     }
 
+    public TypeElementBase getJavaLangObject() {
+        ModuleElementImpl javaBase = modules.get("java.base");
+        return getTypeByInternalNameFromModule("java/lang/Object", javaBase);
+    }
+
     public TypeElementBase getTypeByInternalNameFromPackage(String internalName, PackageElementImpl startingPackage) {
         return getTypeByInternalNameFromModule(internalName, startingPackage.getModule());
     }

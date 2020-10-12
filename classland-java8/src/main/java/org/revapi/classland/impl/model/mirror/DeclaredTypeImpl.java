@@ -22,6 +22,7 @@ import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.List;
 
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
@@ -59,7 +60,7 @@ public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
     }
 
     @Override
-    public ElementImpl asElement() {
+    public TypeElementBase asElement() {
         return source;
     }
 

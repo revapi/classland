@@ -16,11 +16,11 @@
  */
 package org.revapi.classland.impl.util;
 
-import org.apache.logging.log4j.LogManager;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+
+import org.apache.logging.log4j.LogManager;
 
 public class MemoizedFunction<T, R> implements Function<T, R> {
     private static final boolean DEBUG = LogManager.getLogger(MemoizedFunction.class).isDebugEnabled();

@@ -29,9 +29,9 @@ import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class TypeMirrorImpl extends AnnotatedConstructImpl implements TypeMirror {
-    protected TypeMirrorImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path,
-            MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(universe, annotationSource, path, typeLookupSeed);
+    protected TypeMirrorImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
+        super(universe, annotationSource, path, typeLookupSeed, true);
     }
 
     protected TypeMirrorImpl(Universe universe, MemoizedValue<List<AnnotationMirrorImpl>> annos) {

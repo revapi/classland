@@ -38,8 +38,8 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
     protected final MemoizedValue<List<AnnotationMirrorImpl>> annos;
 
     protected AnnotatedConstructImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
-            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        this(universe, annotationSource.map(s -> parseAnnotations(universe, s, path, typeLookupSeed.get())));
+            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed, boolean isTypeUse) {
+        this(universe, annotationSource.map(s -> parseAnnotations(universe, s, path, typeLookupSeed.get(), isTypeUse)));
     }
 
     protected AnnotatedConstructImpl(Universe universe, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
@@ -48,8 +48,8 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
     }
 
     private static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, AnnotationSource source,
-            AnnotationTargetPath path, @Nullable ModuleElementImpl typeLookupSeed) {
-        return AnnotationFinder.find(path, source).stream()
+            AnnotationTargetPath path, @Nullable ModuleElementImpl typeLookupSeed, boolean isTypeUse) {
+        return AnnotationFinder.find(path, source, isTypeUse).stream()
                 .map(a -> new AnnotationMirrorImpl(a, universe, universe
                         .getTypeByInternalNameFromModule(Type.getType(a.desc).getInternalName(), typeLookupSeed)))
                 .collect(toList());
@@ -57,7 +57,8 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
 
     private static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, ClassNode cls,
             ModuleElementImpl typeLookupSeed) {
-        return parseAnnotations(universe, AnnotationSource.fromType(cls), AnnotationTargetPath.ROOT, typeLookupSeed);
+        return parseAnnotations(universe, AnnotationSource.fromType(cls), AnnotationTargetPath.ROOT, typeLookupSeed,
+                false);
     }
 
     @Override

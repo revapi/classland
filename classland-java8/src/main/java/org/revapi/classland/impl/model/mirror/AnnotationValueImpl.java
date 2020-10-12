@@ -16,6 +16,9 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import static java.util.stream.Collectors.toList;
+
+import java.io.StringWriter;
 import java.util.List;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -36,12 +39,9 @@ import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.VariableElementImpl;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
-import org.revapi.classland.impl.util.PrettyPrinting;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
-
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import org.revapi.classland.impl.util.PrettyPrinting;
 
 public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValue {
 
@@ -52,11 +52,14 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
         this.value = value;
     }
 
-    public static AnnotationValueImpl fromAsmValue(Universe universe, Object value, TypeVariableResolutionContext resolutionContext, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSource) {
+    public static AnnotationValueImpl fromAsmValue(Universe universe, Object value,
+            TypeVariableResolutionContext resolutionContext,
+            MemoizedValue<@Nullable ModuleElementImpl> typeLookupSource) {
         if (value instanceof Type) {
             // class value
-            value = TypeMirrorFactory.create(universe, SignatureParser.parseInternalName(((Type) value).getInternalName()),
-                    resolutionContext, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, typeLookupSource);
+            value = TypeMirrorFactory.create(universe,
+                    SignatureParser.parseInternalName(((Type) value).getInternalName()), resolutionContext,
+                    AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, typeLookupSource);
         } else if (value instanceof String[]) {
             // enum constants
             // the first element is the descriptor of the enum class, the second element is the name of the field
@@ -68,16 +71,19 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
 
             value = enumType.getField(enumConstantName);
             if (value == null) {
-                value = new VariableElementImpl.Missing(universe, enumType, enumConstantName, "L" + enumType.getInternalName() + ";", ElementKind.ENUM_CONSTANT);
+                value = new VariableElementImpl.Missing(universe, enumType, enumConstantName,
+                        "L" + enumType.getInternalName() + ";", ElementKind.ENUM_CONSTANT);
             }
         } else if (value instanceof AnnotationNode) {
             // annotation
-            value = new AnnotationMirrorImpl((AnnotationNode) value, universe, universe.getTypeByInternalNameFromModule(Type.getType(((AnnotationNode) value).desc).getInternalName(), typeLookupSource.get()));
+            value = new AnnotationMirrorImpl((AnnotationNode) value, universe, universe.getTypeByInternalNameFromModule(
+                    Type.getType(((AnnotationNode) value).desc).getInternalName(), typeLookupSource.get()));
         } else if (value instanceof List) {
             // array of values
 
-            //noinspection unchecked
-            value = ((List<Object>) value).stream().map(v -> fromAsmValue(universe, v, resolutionContext, typeLookupSource)).collect(toList());
+            // noinspection unchecked
+            value = ((List<Object>) value).stream()
+                    .map(v -> fromAsmValue(universe, v, resolutionContext, typeLookupSource)).collect(toList());
         }
 
         return new AnnotationValueImpl(universe, value);
@@ -90,7 +96,7 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
 
     @Override
     public String toString() {
-        return PrettyPrinting.print(new StringBuilder(), this).toString();
+        return PrettyPrinting.print(new StringWriter(), this).toString();
     }
 
     @Override
@@ -129,7 +135,9 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
     }
 
     public enum Kind {
-        BOOLEAN(Boolean.class), BYTE(Byte.class), SHORT(Short.class), INT(Integer.class), LONG(Long.class), FLOAT(Float.class), DOUBLE(Double.class), CHAR(Character.class), STRING(String.class), TYPE(TypeMirror.class), ENUM(VariableElement.class), ANNO(AnnotationMirror.class), ARRAY(List.class);
+        BOOLEAN(Boolean.class), BYTE(Byte.class), SHORT(Short.class), INT(Integer.class), LONG(Long.class),
+        FLOAT(Float.class), DOUBLE(Double.class), CHAR(Character.class), STRING(String.class), TYPE(TypeMirror.class),
+        ENUM(VariableElement.class), ANNO(AnnotationMirror.class), ARRAY(List.class);
 
         private final Class<?> type;
 

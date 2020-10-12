@@ -20,6 +20,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 import static org.objectweb.asm.TypeReference.newFormalParameterReference;
+import static org.revapi.classland.impl.util.Asm.hasFlag;
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
@@ -31,6 +32,8 @@ import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.ParameterNode;
 import org.revapi.classland.impl.Universe;
@@ -48,7 +51,7 @@ import org.revapi.classland.impl.util.Nullable;
 public abstract class VariableElementImpl extends ElementImpl implements VariableElement {
     private VariableElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
             MemoizedValue<@Nullable ModuleElementImpl> module) {
-        super(universe, annotationSource, AnnotationTargetPath.ROOT, module);
+        this(universe, annotationSource, AnnotationTargetPath.ROOT, module);
     }
 
     private VariableElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
@@ -72,7 +75,8 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
             this.parent = parent;
             this.name = NameImpl.of(name);
             this.kind = kind;
-            this.type = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(descriptor), parent, AnnotationTargetPath.ROOT);
+            this.type = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(descriptor), parent,
+                    AnnotationTargetPath.ROOT);
         }
 
         @Override
@@ -126,8 +130,15 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
             this.parent = parent;
             this.type = memoize(() -> {
                 String sig = field.signature == null ? field.desc : field.signature;
-                return TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(sig), parent, AnnotationTargetPath.ROOT);
+                return TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(sig), parent,
+                        obtained(AnnotationSource.fromField(field)), new AnnotationTargetPath(TypeReference.FIELD),
+                        parent.lookupModule());
             });
+        }
+
+        @Override
+        public boolean isDeprecated() {
+            return hasFlag(field.access, Opcodes.ACC_DEPRECATED) || isAnnotatedDeprecated();
         }
 
         @Override
@@ -187,6 +198,11 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
                         obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
                         new AnnotationTargetPath(newFormalParameterReference(index)), method.getType().lookupModule());
             });
+        }
+
+        @Override
+        public boolean isDeprecated() {
+            return isAnnotatedDeprecated();
         }
 
         @Override

@@ -30,6 +30,10 @@ public class AnnotationTargetPath implements Cloneable {
         this.ref = ref;
     }
 
+    public AnnotationTargetPath(int typeReferenceSort) {
+        this(TypeReference.newTypeReference(typeReferenceSort));
+    }
+
     public AnnotationTargetPath array() {
         typePathSteps.append('[');
         return this;

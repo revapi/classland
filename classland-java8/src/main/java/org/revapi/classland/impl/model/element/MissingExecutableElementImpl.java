@@ -1,4 +1,31 @@
+/*
+ * Copyright 2020 Lukas Krejci
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.revapi.classland.impl.model.element;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.stream.Collectors.toList;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
 
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
@@ -12,16 +39,6 @@ import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.Modifier;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptySet;
-import static java.util.stream.Collectors.toList;
-
 public class MissingExecutableElementImpl extends ExecutableElementBase {
     private final TypeElementBase parent;
     private final NameImpl name;
@@ -29,12 +46,13 @@ public class MissingExecutableElementImpl extends ExecutableElementBase {
     private final List<VariableElementImpl> paramTypes;
     private final ExecutableTypeImpl type;
 
-    public MissingExecutableElementImpl(Universe universe, TypeElementBase parent, String name, String returnTypeDescriptor, List<String> parameterDescriptors) {
+    public MissingExecutableElementImpl(Universe universe, TypeElementBase parent, String name,
+            String returnTypeDescriptor, List<String> parameterDescriptors) {
         super(universe, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, parent.lookupModule());
         this.parent = parent;
         this.name = NameImpl.of(name);
-        this.returnType = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(returnTypeDescriptor),
-                this, AnnotationTargetPath.ROOT);
+        this.returnType = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(returnTypeDescriptor), this,
+                AnnotationTargetPath.ROOT);
         this.paramTypes = parameterDescriptors.stream()
                 .map(t -> new VariableElementImpl.Missing(universe, parent, "", t, ElementKind.PARAMETER))
                 .collect(toList());
