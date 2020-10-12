@@ -16,6 +16,7 @@
  */
 package org.revapi.classland.impl;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.lang.model.AnnotatedConstruct;
@@ -27,6 +28,8 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
+
 public class ElementsImpl extends BaseElementsImpl implements Elements {
     public ElementsImpl(Universe universe) {
         super(universe);
@@ -34,68 +37,62 @@ public class ElementsImpl extends BaseElementsImpl implements Elements {
 
     @Override
     public PackageElement getPackageElement(ModuleElement module, CharSequence name) {
-        // TODO implement
-        return null;
+        return ((ModuleElementImpl) module).getMutablePackages().get(name.toString());
     }
 
     @Override
     public Set<? extends PackageElement> getAllPackageElements(CharSequence name) {
-        // TODO implement
-        return null;
+        return new HashSet<>(crossModulePackagesByName.apply(name).values());
     }
 
     @Override
     public TypeElement getTypeElement(ModuleElement module, CharSequence name) {
-        // TODO implement
-        return null;
+        return ((ModuleElementImpl) module).getMutablePackages().values().stream()
+                .flatMap(p -> p.getMutableTypes().values().stream())
+                .filter(t -> t.getQualifiedName().contentEquals(name)).findFirst().orElse(null);
     }
 
     @Override
     public Set<? extends TypeElement> getAllTypeElements(CharSequence name) {
-        // TODO implement
-        return null;
+        return new HashSet<>(crossModuleTypesByFqn.apply(name).values());
     }
 
     @Override
     public ModuleElement getModuleElement(CharSequence name) {
-        // TODO implement
-        return null;
+        return universe.getModule(name.toString());
     }
 
     @Override
     public Set<? extends ModuleElement> getAllModuleElements() {
-        // TODO implement
-        return null;
+        return new HashSet<>(universe.getModules());
     }
 
     @Override
     public Origin getOrigin(Element e) {
-        // TODO implement
-        return null;
+        return Origin.EXPLICIT;
     }
 
     @Override
     public Origin getOrigin(AnnotatedConstruct c, AnnotationMirror a) {
-        // TODO implement
-        return null;
+        return Origin.EXPLICIT;
     }
 
     @Override
     public Origin getOrigin(ModuleElement m, ModuleElement.Directive directive) {
-        // TODO implement
-        return null;
+        return Origin.EXPLICIT;
     }
 
     @Override
     public boolean isBridge(ExecutableElement e) {
-        // TODO implement
         return false;
     }
 
     @Override
     public ModuleElement getModuleOf(Element e) {
-        // TODO implement
-        return null;
+        while (!(e instanceof ModuleElement)) {
+            e = e.getEnclosingElement();
+        }
+        return (ModuleElement) e;
     }
 
     @Override
