@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 
 public class MemoizedValue<T> implements Supplier<T> {
     private static final boolean DEBUG = LogManager.getLogger(MemoizedValue.class).isDebugEnabled();
+    private static final MemoizedValue<?> NULL = obtained(null);
 
     private @Nullable Supplier<T> action;
     protected volatile boolean obtained;
@@ -38,6 +39,11 @@ public class MemoizedValue<T> implements Supplier<T> {
         } else {
             return new MemoizedValue<>(action);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> MemoizedValue<T> obtainedNull() {
+        return (MemoizedValue<T>) NULL;
     }
 
     public static <T> MemoizedValue<T> memoize(Supplier<T> action) {

@@ -35,12 +35,13 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.archive.jar.JarFileArchive;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
@@ -277,6 +278,26 @@ class TypeElementImplTest {
         assertSame(StaticMember, StaticAnonymous.getEnclosingElement());
 
         assertSame(method, StaticLocal.getEnclosingElement());
+    }
+
+    @Test
+    void testCRTP() throws Exception {
+        Universe u = new Universe(false);
+        u.registerArchive(new JarFileArchive(new JarFile(generics.jarFile())));
+
+        TypeElementImpl CRTP = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Generics$CRTP", null);
+
+        List<TypeParameterElementImpl> typeParams = CRTP.getTypeParameters();
+        assertEquals(1, typeParams.size());
+
+        TypeParameterElementImpl typeParam = typeParams.get(0);
+        List<TypeMirrorImpl> bounds = typeParam.getBounds();
+        assertEquals(1, bounds.size());
+        DeclaredTypeImpl bound = (DeclaredTypeImpl) bounds.get(0);
+        List<TypeMirrorImpl> typeArgs = bound.getTypeArguments();
+        assertEquals(1, typeArgs.size());
+        TypeVariableImpl arg = (TypeVariableImpl) typeArgs.get(0);
+        assertSame(bound, arg.getUpperBound());
     }
 
     @SafeVarargs

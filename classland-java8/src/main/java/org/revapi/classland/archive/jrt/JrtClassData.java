@@ -14,30 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.archive;
+package org.revapi.classland.archive.jrt;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
-public class JModEntryClassData extends AbstractClassData {
-    private final ZipFile file;
-    private final ZipEntry entry;
+import org.revapi.classland.archive.AbstractClassData;
 
-    public JModEntryClassData(ZipFile file, ZipEntry entry) {
-        super(entry.getName().substring("classes/".length()));
+public class JrtClassData extends AbstractClassData {
+    private final Path file;
+
+    public JrtClassData(Path file) {
+        super(nameFromFile(file));
         this.file = file;
-        this.entry = entry;
+    }
+
+    private static String nameFromFile(Path file) {
+        // the paths look like /modules/<module-name>/....
+        return file.subpath(2, file.getNameCount()).toString();
     }
 
     @Override
     public InputStream read() throws IOException {
-        return file.getInputStream(entry);
-    }
-
-    @Override
-    public String toString() {
-        return "JmodEntryClassData{" + "file=" + file + ", entry=" + entry + '}';
+        return Files.newInputStream(file, StandardOpenOption.READ);
     }
 }

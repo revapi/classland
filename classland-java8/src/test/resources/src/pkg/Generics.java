@@ -33,4 +33,6 @@ public class Generics {
     interface BaseIface<T> {}
 
     static class GenericWithParamUsedInInterface<T extends String> implements Cloneable, BaseIface<T> {}
+
+    static class CRTP<T extends CRTP<T>> {}
 }

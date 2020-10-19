@@ -35,7 +35,7 @@ import javax.lang.model.util.ElementFilter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.archive.jar.JarFileArchive;
 import org.revapi.classland.impl.Universe;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;

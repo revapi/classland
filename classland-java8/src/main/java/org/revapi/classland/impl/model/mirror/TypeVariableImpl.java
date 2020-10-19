@@ -17,6 +17,7 @@
 package org.revapi.classland.impl.model.mirror;
 
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.NoElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
 import org.revapi.classland.impl.util.MemoizedValue;
@@ -35,19 +37,17 @@ import org.revapi.classland.impl.util.Nullable;
 
 public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     private final ElementImpl owner;
-    private final TypeMirrorImpl upperBound;
+    private final MemoizedValue<TypeMirrorImpl> upperBound;
     private final TypeMirrorImpl lowerBound;
 
     // used to construct a wildcard capture
     public TypeVariableImpl(Universe universe, @Nullable TypeMirrorImpl upperBound, @Nullable TypeMirrorImpl lowerBound,
-            MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path) {
-        // TODO the unnamed module is wrong here, but this ctor is not used yet as of now, so I've put it here so that
-        // stuff compiles. Revisit once this ctor is actually used.
-        super(universe, annotationSource, path, memoize(universe::getUnnamedModule));
+            MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path,
+            MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
+        super(universe, annotationSource, path, typeLookupSeed);
         this.owner = new NoElementImpl(universe);
         this.lowerBound = lowerBound == null ? new NullTypeImpl(universe) : lowerBound;
-        // TODO the unnamed module is most probably wrong as a lookup seed here, too
-        this.upperBound = upperBound == null ? TypeMirrorFactory.createJavaLangObject(universe) : upperBound;
+        this.upperBound = obtained(upperBound == null ? TypeMirrorFactory.createJavaLangObject(universe) : upperBound);
     }
 
     // used to construct a typevar based on the type parameter
@@ -55,12 +55,30 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
         super(owner.getUniverse(), memoize(owner::getAnnotationMirrors));
         this.owner = owner;
         this.lowerBound = new NullTypeImpl(universe);
-        List<TypeMirrorImpl> bounds = owner.getBounds();
-        if (bounds.size() == 1) {
-            this.upperBound = bounds.get(0);
-        } else {
-            this.upperBound = new IntersectionTypeImpl(owner.getUniverse(), bounds);
-        }
+        // this needs to be lazily evaluated to avoid infinite loop in case of CRTP type params (Cls<T extends Cls<T>>)
+        this.upperBound = owner.getLazyBounds().map(bounds -> {
+            if (bounds.size() == 1) {
+                return bounds.get(0);
+            } else {
+                return new IntersectionTypeImpl(owner.getUniverse(), bounds);
+            }
+        });
+    }
+
+    // used to construct typevar referencing a type parameter in a type-use position
+    public TypeVariableImpl(TypeParameterElementImpl owner, MemoizedValue<AnnotationSource> annotationSource,
+            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
+        super(owner.getUniverse(), annotationSource, path, typeLookupSeed);
+        this.owner = owner;
+        this.lowerBound = new NullTypeImpl(universe);
+        // this needs to be lazily evaluated to avoid infinite loop in case of CRTP type params (Cls<T extends Cls<T>>)
+        this.upperBound = owner.getLazyBounds().map(bounds -> {
+            if (bounds.size() == 1) {
+                return bounds.get(0);
+            } else {
+                return new IntersectionTypeImpl(owner.getUniverse(), bounds);
+            }
+        });
     }
 
     @Override
@@ -70,7 +88,7 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
 
     @Override
     public TypeMirrorImpl getUpperBound() {
-        return upperBound;
+        return upperBound.get();
     }
 
     @Override

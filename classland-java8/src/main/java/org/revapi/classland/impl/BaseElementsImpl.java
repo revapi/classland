@@ -27,73 +27,34 @@ import java.util.Map;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementVisitor;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ErrorType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.SimpleElementVisitor8;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
+import org.revapi.classland.PrettyPrinting;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.PackageElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
+import org.revapi.classland.impl.model.element.TypeElementImpl;
+import org.revapi.classland.impl.model.mirror.ExecutableTypeImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.MemoizedFunction;
-import org.revapi.classland.impl.util.PrettyPrinting;
 
 abstract class BaseElementsImpl implements Elements {
     protected final Universe universe;
     protected final MemoizedFunction<CharSequence, Map<ModuleElementImpl, PackageElement>> crossModulePackagesByName;
     protected final MemoizedFunction<CharSequence, Map<ModuleElementImpl, TypeElement>> crossModuleTypesByFqn;
     protected final MemoizedFunction<TypeElement, List<TypeElement>> allSuperTypes;
-    protected final MemoizedFunction<AnnotationMirror, Map<ExecutableElement, AnnotationValue>> annotationAttributesWithDefaults;
-
-    protected final ElementVisitor<PackageElement, Void> packageByElement = new SimpleElementVisitor8<PackageElement, Void>() {
-
-        @Override
-        protected PackageElement defaultAction(Element e, Void ignored) {
-            return visit(e.getEnclosingElement());
-        }
-
-        @Override
-        public PackageElement visitPackage(PackageElement e, Void ignored) {
-            return e;
-        }
-
-        @Override
-        public PackageElement visitUnknown(Element e, Void aVoid) {
-            return null;
-        }
-    };
-
-    private final TypeVisitor<TypeElement, Void> asTypeElement = new SimpleTypeVisitor8<TypeElement, Void>() {
-        final SimpleElementVisitor8<TypeElement, Void> ifType = new SimpleElementVisitor8<TypeElement, Void>() {
-            @Override
-            public TypeElement visitType(TypeElement e, Void aVoid) {
-                return e;
-            }
-        };
-
-        @Override
-        public TypeElement visitDeclared(DeclaredType t, Void ignored) {
-            return ifType.visit(t.asElement());
-        }
-
-        @Override
-        public TypeElement visitError(ErrorType t, Void ignored) {
-            return visitDeclared(t, null);
-        }
-    };
 
     protected BaseElementsImpl(Universe universe) {
         this.universe = universe;
@@ -136,33 +97,20 @@ abstract class BaseElementsImpl implements Elements {
                 return Collections.singletonList(universe.getJavaLangObject());
             } else {
                 TypeMirror superClassType = type.getSuperclass();
-                TypeElement superClass = superClassType == null ? null : asTypeElement.visit(superClassType);
+                TypeElement superClass = superClassType == null ? null : TypeUtils.asTypeElement(superClassType);
                 List<TypeElement> ret = new ArrayList<>(4);
                 if (superClass != null) {
                     ret.add(superClass);
                 }
 
                 for (TypeMirror t : type.getInterfaces()) {
-                    TypeElement te = asTypeElement.visit(t);
+                    TypeElement te = TypeUtils.asTypeElement(t);
                     if (te != null) {
                         ret.add(te);
                     }
                 }
                 return ret;
             }
-        });
-
-        this.annotationAttributesWithDefaults = MemoizedFunction.memoize(am -> {
-            Map<ExecutableElement, AnnotationValue> ret = new HashMap<>(am.getElementValues());
-            TypeElement t = asTypeElement.visit(am.getAnnotationType());
-
-            for (ExecutableElement e : ElementFilter.methodsIn(t.getEnclosedElements())) {
-                AnnotationValue v = e.getDefaultValue();
-                if (v != null && !ret.containsKey(e)) {
-                    ret.put(e, v);
-                }
-            }
-            return ret;
         });
     }
 
@@ -181,7 +129,17 @@ abstract class BaseElementsImpl implements Elements {
     @Override
     public Map<? extends ExecutableElement, ? extends AnnotationValue> getElementValuesWithDefaults(
             AnnotationMirror a) {
-        return annotationAttributesWithDefaults.apply(a);
+        Map<ExecutableElement, AnnotationValue> ret = new HashMap<>(a.getElementValues());
+        TypeElement t = TypeUtils.asTypeElement(a.getAnnotationType());
+
+        for (ExecutableElement e : ElementFilter.methodsIn(t.getEnclosedElements())) {
+            AnnotationValue v = e.getDefaultValue();
+            if (v != null && !ret.containsKey(e)) {
+                ret.put(e, v);
+            }
+        }
+        return ret;
+
     }
 
     @Override
@@ -201,7 +159,7 @@ abstract class BaseElementsImpl implements Elements {
 
     @Override
     public PackageElement getPackageOf(Element type) {
-        return packageByElement.visit(type);
+        return TypeUtils.getPackageOf(type);
     }
 
     @Override
@@ -218,20 +176,93 @@ abstract class BaseElementsImpl implements Elements {
 
     @Override
     public List<? extends AnnotationMirror> getAllAnnotationMirrors(Element e) {
-        // TODO implement
-        return null;
+        List<AnnotationMirror> ret = new ArrayList<>(e.getAnnotationMirrors());
+        while (e instanceof TypeElementImpl) {
+            TypeMirrorImpl superClassType = ((TypeElementImpl) e).getSuperclass();
+            if (superClassType.getKind() == TypeKind.ERROR) {
+                break;
+            }
+
+            TypeElement superClass = TypeUtils.asTypeElement(superClassType);
+
+            if (superClass == universe.getJavaLangObject()) {
+                break;
+            }
+
+            List<? extends AnnotationMirror> superAnnos = superClass.getAnnotationMirrors();
+            for (AnnotationMirror a : superAnnos) {
+                if (isInherited(a.getAnnotationType().asElement()) && !containsAnnotationOfType(ret, a)) {
+                    ret.add(a);
+                }
+            }
+        }
+
+        return ret;
     }
 
     @Override
     public boolean hides(Element hider, Element hidden) {
-        // TODO implement
-        return false;
+        // different element kinds live in different namespaces
+        if (hider.getKind() != hidden.getKind()) {
+            return false;
+        }
+
+        if (!hider.getSimpleName().contentEquals(hidden.getSimpleName())) {
+            return false;
+        }
+
+        if (hider.getKind() == ElementKind.METHOD) {
+            if (!hider.getModifiers().contains(Modifier.STATIC)) {
+                // only static methods hide... instance methods overload
+                return false;
+            }
+
+            if (!TypeUtils.isSubSignature((ExecutableTypeImpl) hider.asType(), (ExecutableTypeImpl) hidden.asType())) {
+                return false;
+            }
+        }
+
+        // hider must be in a subclass of hidden
+        TypeElement hiderType = TypeUtils.getNearestType(hider);
+        TypeElement hiddenType = TypeUtils.getNearestType(hidden);
+
+        if (hiderType == null || hiddenType == null) {
+            // this really should not happen actually
+            return false;
+        }
+
+        if (!TypeUtils.isSubclass(hiderType, hiddenType)) {
+            return false;
+        }
+
+        // hidden must be accessible in the hider's class
+        if (!TypeUtils.isAccessibleIn(hidden, hiderType)) {
+            return false;
+        }
+
+        return true;
     }
 
     @Override
     public boolean overrides(ExecutableElement overrider, ExecutableElement overridden, TypeElement type) {
-        // TODO implement
-        return false;
+        if (overrider == overridden) {
+            return false;
+        }
+
+        if (!overrider.getSimpleName().contentEquals(overridden.getSimpleName())) {
+            return false;
+        }
+
+        if (overrider.getModifiers().contains(Modifier.STATIC)) {
+            // static methods don't override
+            return false;
+        }
+
+        if (!TypeUtils.isMemberOf(overridden, type)) {
+            return false;
+        }
+
+        return TypeUtils.overrides(overrider, overridden, type);
     }
 
     @Override
@@ -254,6 +285,28 @@ abstract class BaseElementsImpl implements Elements {
     @Override
     public boolean isFunctionalInterface(TypeElement type) {
         // TODO implement
+        return false;
+    }
+
+    private boolean isInherited(Element annotationElement) {
+        for (AnnotationMirror a : annotationElement.getAnnotationMirrors()) {
+            Name annoTypeName = TypeUtils.asTypeElement(a.getAnnotationType()).getQualifiedName();
+            if ("java.lang.annotation.Inherited".contentEquals(annoTypeName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean containsAnnotationOfType(List<AnnotationMirror> annos, AnnotationMirror am) {
+        Element annoType = am.getAnnotationType().asElement();
+        for (AnnotationMirror a : annos) {
+            if (a.getAnnotationType().asElement() == annoType) {
+                return true;
+            }
+        }
+
         return false;
     }
 }

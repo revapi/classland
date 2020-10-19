@@ -16,6 +16,7 @@
  */
 package org.revapi.classland.impl;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,13 +29,15 @@ import org.revapi.classland.archive.ClassData;
 import org.revapi.classland.impl.util.Nullable;
 
 public class ArchiveContents {
-    private static final int PACKAGE_CLASS_NAME_LENGTH = "package-info.class".length();
+    // TODO support automatic module names - this requires more than just reading class files in the archives
+    private static final int PACKAGE_INFO_NAME_LENGTH = "package-info".length();
     private final Archive source;
     private volatile boolean scanned = false;
     private final Map<String, @Nullable ClassData> packages = new HashMap<>();
     private final Set<ClassData> classes = new HashSet<>();
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<ClassData> module;
+    private Optional<String> moduleName;
 
     public ArchiveContents(Archive source) {
         this.source = source;
@@ -48,6 +51,11 @@ public class ArchiveContents {
     public Optional<ClassData> getModule() {
         scan();
         return module;
+    }
+
+    public Optional<String> getModuleName() {
+        scan();
+        return moduleName;
     }
 
     public Set<ClassData> getTypes() {
@@ -70,8 +78,8 @@ public class ArchiveContents {
                 String name = cd.getName();
                 if (name.equals("module-info")) {
                     foundModule = cd;
-                } else if (name.equals("package-info")) {
-                    String pkgName = name.substring(0, name.length() - PACKAGE_CLASS_NAME_LENGTH).replace('/', '.');
+                } else if (name.endsWith("package-info")) {
+                    String pkgName = name.substring(0, name.length() - PACKAGE_INFO_NAME_LENGTH).replace('/', '.');
                     packages.put(pkgName, cd);
                 } else {
                     int lastSlash = name.lastIndexOf('/');
@@ -80,6 +88,15 @@ public class ArchiveContents {
                         packages.put(pkgName, null);
                     }
                     classes.add(cd);
+                }
+            }
+
+            if (foundModule == null) {
+                try {
+                    moduleName = source.getManifest()
+                            .map(manifest -> (String) manifest.getMainAttributes().get("Automatic-Module-Name"));
+                } catch (IOException e) {
+                    throw new IllegalArgumentException("Failed to scan the manifest of the archive.", e);
                 }
             }
 

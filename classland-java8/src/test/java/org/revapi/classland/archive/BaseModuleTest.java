@@ -23,6 +23,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.revapi.classland.archive.BaseModule;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BaseModuleTest {

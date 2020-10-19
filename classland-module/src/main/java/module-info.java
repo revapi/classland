@@ -22,4 +22,8 @@ open module org.revapi.classland {
 
     exports org.revapi.classland;
     exports org.revapi.classland.archive;
+    exports org.revapi.classland.archive.filesystem;
+    exports org.revapi.classland.archive.jar;
+    exports org.revapi.classland.archive.jmod;
+    exports org.revapi.classland.archive.jrt;
 }

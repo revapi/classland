@@ -59,7 +59,7 @@ public class ElementsImpl extends BaseElementsImpl implements Elements {
 
     @Override
     public ModuleElement getModuleElement(CharSequence name) {
-        return universe.getModule(name.toString());
+        return universe.getModule(name.toString()).get();
     }
 
     @Override

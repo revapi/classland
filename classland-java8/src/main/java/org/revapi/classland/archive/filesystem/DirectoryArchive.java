@@ -14,36 +14,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.archive;
+package org.revapi.classland.archive.filesystem;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class DirectoryArchive implements Archive {
-    private final File rootDir;
+import org.revapi.classland.archive.Archive;
+import org.revapi.classland.archive.ClassData;
 
-    public DirectoryArchive(File rootDir) {
+public class DirectoryArchive implements Archive {
+    private final Path rootDir;
+
+    public DirectoryArchive(Path rootDir) {
         this.rootDir = rootDir;
     }
 
     @Override
     public Iterator<ClassData> iterator() {
-        try (Stream<Path> str = Files.find(rootDir.toPath(), Integer.MAX_VALUE,
-                (p, attrs) -> p.getName(p.getNameCount()).toString().endsWith(".class"),
-                FileVisitOption.FOLLOW_LINKS)) {
+        try (Stream<Path> str = Files.find(rootDir, Integer.MAX_VALUE,
+                (p, attrs) -> p.getFileName().toString().endsWith(".class"), FileVisitOption.FOLLOW_LINKS)) {
             List<ClassData> paths = str.map(FileClassData::new).collect(Collectors.toList());
             return paths.iterator();
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to traverse the directory " + rootDir.getAbsolutePath()
-                    + " while looking for class files.");
+            throw new IllegalStateException(
+                    "Failed to traverse the directory " + rootDir + " while looking for class files.");
         }
     }
 
@@ -69,5 +74,17 @@ public class DirectoryArchive implements Archive {
     @Override
     public String toString() {
         return "DirectoryModuleSource{" + "rootDir=" + rootDir + '}';
+    }
+
+    @Override
+    public Optional<Manifest> getManifest() throws IOException {
+        Path manifestPath = rootDir.resolve(Paths.get("META-INF", "MANIFEST.MF"));
+        if (Files.exists(manifestPath)) {
+            try (InputStream in = Files.newInputStream(manifestPath)) {
+                return Optional.of(new Manifest(in));
+            }
+        } else {
+            return Optional.empty();
+        }
     }
 }

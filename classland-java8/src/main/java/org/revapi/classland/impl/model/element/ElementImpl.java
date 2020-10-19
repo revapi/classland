@@ -16,10 +16,12 @@
  */
 package org.revapi.classland.impl.model.element;
 
+import java.io.StringWriter;
 import java.util.List;
 
 import javax.lang.model.element.Element;
 
+import org.revapi.classland.PrettyPrinting;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.NameImpl;
@@ -56,4 +58,11 @@ public abstract class ElementImpl extends AnnotatedConstructImpl implements Elem
 
     @Override
     public abstract List<? extends ElementImpl> getEnclosedElements();
+
+    @Override
+    public String toString() {
+        StringWriter wrt = new StringWriter();
+        PrettyPrinting.print(wrt, this);
+        return wrt.toString();
+    }
 }

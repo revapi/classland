@@ -16,9 +16,15 @@
  */
 package org.revapi.classland.archive;
 
+import java.io.IOException;
+import java.util.Optional;
+import java.util.jar.Manifest;
+
 /**
  * This is an abstraction of some kind of archive representing java class data. This data represents all kinds of Java
  * elements stored in a class file like types, modules or package info classes.
  */
 public interface Archive extends Iterable<ClassData>, AutoCloseable {
+
+    Optional<Manifest> getManifest() throws IOException;
 }

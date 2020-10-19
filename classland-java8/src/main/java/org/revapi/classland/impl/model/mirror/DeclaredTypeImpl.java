@@ -59,6 +59,10 @@ public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
         this.typeArguments = typeArguments;
     }
 
+    public DeclaredTypeImpl rebind(TypeMirrorImpl enclosingType, List<TypeMirrorImpl> newTypeArguments) {
+        return new DeclaredTypeImpl(getUniverse(), source, enclosingType, newTypeArguments, annos);
+    }
+
     @Override
     public TypeElementBase asElement() {
         return source;

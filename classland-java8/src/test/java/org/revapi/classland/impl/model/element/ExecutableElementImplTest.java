@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -38,7 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.archive.jar.JarFileArchive;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.AnnotationValueImpl;

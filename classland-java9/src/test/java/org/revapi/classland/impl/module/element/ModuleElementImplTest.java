@@ -32,7 +32,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.archive.jar.JarFileArchive;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 
@@ -47,8 +47,8 @@ class ModuleElementImplTest {
         JarFile jar = new JarFile(getClass().getClassLoader().getResource("asm-8.0.1.jar").getPath());
         universe = new Universe(true);
         universe.registerArchive(new JarFileArchive(jar));
-        assertEquals(1, universe.getModules().size());
-        module = universe.getModules().iterator().next();
+        assertEquals(2, universe.getModules().size());
+        module = universe.getModules().stream().filter(m -> m.getQualifiedName().length() != 0).findFirst().get();
     }
 
     @AfterAll

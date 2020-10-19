@@ -18,4 +18,10 @@ open module integration.tests {
     requires org.revapi.classland;
     requires org.junit.jupiter.api;
     requires org.junit.jupiter.engine;
+
+    requires jmh.core;
+
+    requires org.revapi.testjars.core;
+
+    requires java.compiler;
 }

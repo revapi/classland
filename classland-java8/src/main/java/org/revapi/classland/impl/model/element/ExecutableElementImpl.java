@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.toMap;
 import static org.objectweb.asm.TypeReference.METHOD_RETURN;
 import static org.objectweb.asm.TypeReference.newTypeReference;
 import static org.revapi.classland.impl.model.mirror.AnnotationValueImpl.fromAsmValue;
+import static org.revapi.classland.impl.model.signature.SignatureParser.parseInternalName;
 import static org.revapi.classland.impl.util.Asm.hasFlag;
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 import static org.revapi.classland.impl.util.MemoizedValue.obtained;
@@ -92,7 +93,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
         this.signature = memoize(() -> {
             if (method.signature == null) {
                 return new GenericMethodParameters(new LinkedHashMap<>(0, 0.01f),
-                        SignatureParser.parseTypeRef(methodType.getReturnType().getInternalName()),
+                        SignatureParser.parseTypeRef(methodType.getReturnType().getDescriptor()),
                         Stream.of(methodType.getArgumentTypes())
                                 .map(t -> SignatureParser.parseTypeRef(t.getDescriptor())).collect(toList()),
                         method.exceptions.stream().map(SignatureParser::parseInternalName).collect(toList()), parent);
@@ -114,8 +115,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
                 return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
             }
 
-            boolean isStaticClass = hasFlag(cls.access, Opcodes.ACC_STATIC)
-                    || parent.getInternalName().indexOf('$') == -1 || parent.getNestingKind() == NestingKind.TOP_LEVEL;
+            boolean isStaticClass = parent.getModifiers().contains(Modifier.STATIC);
 
             if ("<init>".equals(method.name)) {
                 if (isStaticClass) {
@@ -129,8 +129,10 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
 
                         @Override
                         public TypeMirrorImpl visitType(TypeElement e, Void aVoid) {
-                            if (parameterTypes[0].getInternalName().equals(((TypeElementImpl) e).getInternalName())) {
-                                return TypeMirrorFactory.create(universe, signature.get().parameterTypes.get(0),
+                            String parentInternalName = ((TypeElementBase) e).getInternalName();
+                            if (parameterTypes.length == 0
+                                    || parameterTypes[0].getInternalName().equals(parentInternalName)) {
+                                return TypeMirrorFactory.create(universe, parseInternalName(parentInternalName),
                                         ExecutableElementImpl.this, obtained(annotationSource),
                                         new AnnotationTargetPath(TypeReference.newFormalParameterReference(0)),
                                         parent.lookupModule());
@@ -148,8 +150,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
                                 && method.visibleAnnotableParameterCount < method.invisibleTypeAnnotations.size());
 
                 if (hasAnnotatedReceiverParam) {
-                    return TypeMirrorFactory.create(universe,
-                            SignatureParser.parseInternalName(parent.getInternalName()), this,
+                    return TypeMirrorFactory.create(universe, parseInternalName(parent.getInternalName()), this,
                             obtained(annotationSource),
                             new AnnotationTargetPath(TypeReference.newFormalParameterReference(0)),
                             parent.lookupModule());
@@ -159,7 +160,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
             }
         });
 
-        this.parameters = parameterTypes.length == 0 ? obtained(emptyList()) : receiverType.map(receiver -> {
+        this.parameters = receiverType.map(receiver -> {
             int paramShift;
             if ("<init>".equals(method.name)) {
                 // we need to look out for the synthetic parameter of the instance inner class constructors that
@@ -171,8 +172,9 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
                 paramShift = 0;
             }
 
-            List<VariableElementImpl> ret = new ArrayList<>(parameterTypes.length - paramShift);
-            for (int i = paramShift; i < parameterTypes.length; ++i) {
+            int size = signature.get().parameterTypes.size();
+            List<VariableElementImpl> ret = new ArrayList<>(size);
+            for (int i = paramShift; i < size; ++i) {
                 ret.add(new VariableElementImpl.Parameter(universe, this, i));
             }
             return ret;

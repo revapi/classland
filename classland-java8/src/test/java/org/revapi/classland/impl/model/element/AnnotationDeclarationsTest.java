@@ -25,17 +25,15 @@ import java.util.List;
 import java.util.jar.JarFile;
 
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.archive.jar.JarFileArchive;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.ArrayTypeImpl;
@@ -315,4 +313,6 @@ class AnnotationDeclarationsTest {
         assertEquals(1, annos.size());
         assertSame(VisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
     }
+
+    // TODO shamelessly copy the comprehensive type annotation handling test from Jandex.
 }

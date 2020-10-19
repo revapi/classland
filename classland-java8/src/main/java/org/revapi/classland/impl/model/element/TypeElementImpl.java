@@ -252,8 +252,8 @@ public final class TypeElementImpl extends TypeElementBase {
                 .collect(Collectors.toMap(v -> v.getSimpleName().asString(), identity())));
 
         enclosedElements = scan.map(r -> {
-            Stream<TypeElementBase> innerClasses = r.innerClasses.stream()
-                    .map(c -> universe.getTypeByInternalNameFromPackage(c, pkg));
+            Stream<TypeElementBase> innerClasses = r.innerClasses == null ? Stream.empty()
+                    : r.innerClasses.stream().map(c -> universe.getTypeByInternalNameFromPackage(c, pkg));
 
             return concat(concat(fields.get().values().stream(), methods.get().values().stream()), innerClasses)
                     .collect(toList());
@@ -271,10 +271,6 @@ public final class TypeElementImpl extends TypeElementBase {
 
     public MemoizedValue<DeclaredTypeImpl> getType() {
         return type;
-    }
-
-    public boolean isInPackage(PackageElementImpl pkg) {
-        return getNestingKind() == NestingKind.TOP_LEVEL && this.pkg.get().equals(pkg);
     }
 
     public @Nullable ExecutableElementImpl getMethod(String methodName, String methodDescriptor) {
@@ -390,11 +386,6 @@ public final class TypeElementImpl extends TypeElementBase {
     @Override
     public int hashCode() {
         return Objects.hash(internalName);
-    }
-
-    @Override
-    public String toString() {
-        return "TypeElementImpl{" + internalName + "}";
     }
 
     private static final class ScanningResult {

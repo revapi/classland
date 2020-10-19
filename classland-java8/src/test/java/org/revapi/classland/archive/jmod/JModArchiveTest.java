@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.archive;
+package org.revapi.classland.archive.jmod;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

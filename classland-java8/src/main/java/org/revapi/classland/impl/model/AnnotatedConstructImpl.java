@@ -47,7 +47,7 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
         this.annos = annos;
     }
 
-    private static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, AnnotationSource source,
+    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, AnnotationSource source,
             AnnotationTargetPath path, @Nullable ModuleElementImpl typeLookupSeed, boolean isTypeUse) {
         return AnnotationFinder.find(path, source, isTypeUse).stream()
                 .map(a -> new AnnotationMirrorImpl(a, universe, universe

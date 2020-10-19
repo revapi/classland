@@ -18,17 +18,21 @@ package org.revapi.classland.impl.model.mirror;
 
 import static java.util.stream.Collectors.toList;
 
+import static org.revapi.classland.impl.model.AnnotatedConstructImpl.parseAnnotations;
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 import static org.revapi.classland.impl.util.MemoizedValue.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.obtainedNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.util.SimpleElementVisitor8;
 
 import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
@@ -50,17 +54,24 @@ public final class TypeMirrorFactory {
     private static final TypeSignature.Visitor<TypeMirrorImpl, ResolutionContext> SIGNATURE_VISITOR = new TypeSignature.Visitor<TypeMirrorImpl, ResolutionContext>() {
         @Override
         public TypeMirrorImpl visitPrimitiveType(TypeSignature.PrimitiveType type, ResolutionContext ctx) {
-            return asArray(new PrimitiveTypeImpl(ctx.universe, type.type, ctx.annotationSource,
-                    targetArrayDimension(ctx.path, type), ctx.typeLookupSeed), type.arrayDimension, ctx);
+            return type.type == TypeKind.VOID
+                    ? new NoTypeImpl(ctx.universe,
+                            memoize(() -> parseAnnotations(ctx.universe, ctx.annotationSource.get(), ctx.path,
+                                    ctx.typeLookupSeed.get(), true)),
+                            TypeKind.VOID)
+                    : asArray(
+                            new PrimitiveTypeImpl(ctx.universe, type.type, ctx.annotationSource,
+                                    targetArrayDimension(ctx.path, type), ctx.typeLookupSeed),
+                            type.arrayDimension, ctx);
         }
 
         @Override
         public TypeMirrorImpl visitTypeVariable(TypeSignature.Variable typeVariable, ResolutionContext ctx) {
             // TODO this is not correct... Type variables can also represent wildcard capture, which
             // is currently not covered here...
-            // TODO we need to create the type variable anew here because of the annotations... we cannot reuse
-            // asType() of the type parameter element
-            return ctx.variables.resolveTypeVariable(typeVariable.name).map(ElementImpl::asType).orElse(null);
+            return ctx.variables.resolveTypeVariable(typeVariable.name)
+                    .map(tp -> new TypeVariableImpl(tp, ctx.annotationSource, ctx.path, ctx.typeLookupSeed))
+                    .orElse(null);
         }
 
         @Override
@@ -155,7 +166,7 @@ public final class TypeMirrorFactory {
 
     public static DeclaredTypeImpl createJavaLangObject(Universe universe) {
         return (DeclaredTypeImpl) create(universe, Universe.JAVA_LANG_OBJECT_SIG, universe.noTypeVariables,
-                AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtained(null));
+                AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtainedNull());
     }
 
     public static TypeMirrorImpl create(Universe universe, TypeSignature type,
@@ -169,6 +180,11 @@ public final class TypeMirrorFactory {
             TypeVariableResolutionContext resolutionContext, AnnotationTargetPath startPath) {
         return create(type, new ResolutionContext(universe, resolutionContext, resolutionContext.asAnnotationSource(),
                 startPath, resolutionContext.lookupModule()));
+    }
+
+    public static PrimitiveTypeImpl createPrimitive(Universe universe, TypeKind kind) {
+        return new PrimitiveTypeImpl(universe, kind, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT,
+                obtainedNull());
     }
 
     private static TypeMirrorImpl create(TypeSignature type, ResolutionContext ctx) {

@@ -16,10 +16,12 @@
  */
 package org.revapi.classland.impl.model.element;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 import static org.revapi.classland.impl.util.MemoizedValue.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.obtainedNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +47,7 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
-abstract class BaseModuleElementImpl extends ElementImpl {
+public abstract class BaseModuleElementImpl extends ElementImpl {
     protected final @Nullable ModuleNode module;
     protected final NameImpl name;
     protected final MemoizedValue<List<AnnotationMirrorImpl>> annos;
@@ -59,7 +61,7 @@ abstract class BaseModuleElementImpl extends ElementImpl {
                 AnnotationTargetPath.ROOT,
                 // a roundabout way to "this" before we initialize it
                 memoize(() -> moduleType == null ? universe.getUnnamedModule()
-                        : universe.getModule(moduleType.module.name)));
+                        : universe.getModule(moduleType.module.name).get()));
 
         this.module = moduleType == null ? null : moduleType.module;
         this.name = NameImpl.of(module == null ? null : module.name);
@@ -68,11 +70,20 @@ abstract class BaseModuleElementImpl extends ElementImpl {
         // of ModuleElementImpl for the different java versions, let's be just be this courageous...
         ModuleElementImpl castThis = (ModuleElementImpl) this;
 
-        this.type = memoize(
-                () -> new NoTypeImpl(universe, memoize(() -> parseAnnotations(moduleType, castThis)), actualKind));
-        this.packages = memoize(() -> new ArrayList<>(mutablePackages.values()));
+        this.annos = moduleType == null ? obtained(emptyList()) : memoize(() -> parseAnnotations(moduleType, castThis));
 
-        this.annos = memoize(() -> parseAnnotations(moduleType, castThis));
+        this.type = memoize(() -> new NoTypeImpl(universe, annos, actualKind));
+
+        this.packages = memoize(() -> new ArrayList<>(mutablePackages.values()));
+    }
+
+    protected BaseModuleElementImpl(Universe universe, String moduleName, TypeKind actualKind) {
+        super(universe, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtainedNull());
+        this.module = null;
+        this.name = NameImpl.of(moduleName);
+        this.annos = obtained(emptyList());
+        this.type = memoize(() -> new NoTypeImpl(universe, annos, actualKind));
+        this.packages = memoize(() -> new ArrayList<>(mutablePackages.values()));
     }
 
     public Map<String, PackageElementImpl> getMutablePackages() {
@@ -129,6 +140,6 @@ abstract class BaseModuleElementImpl extends ElementImpl {
     public interface ReachableModule {
         boolean isTransitive();
 
-        ModuleElementImpl getDependency();
+        String getModuleName();
     }
 }

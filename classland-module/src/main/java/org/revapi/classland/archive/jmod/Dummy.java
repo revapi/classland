@@ -14,21 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package integration;
+package org.revapi.classland.archive.jmod;
 
-import java.util.jar.JarFile;
-
-import org.junit.jupiter.api.Test;
-import org.revapi.classland.Classland;
-import org.revapi.classland.archive.JarFileArchive;
-
-class ModularTest {
-
-    @Test
-    void test() throws Exception {
-        try (Classland classland = new Classland()) {
-            JarFile jar = new JarFile(getClass().getClassLoader().getResource("asm-8.0.1.jar").getPath());
-            classland.registerArchive(() -> new JarFileArchive(jar));
-        }
-    }
+public class Dummy {
 }

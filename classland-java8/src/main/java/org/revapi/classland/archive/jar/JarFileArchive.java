@@ -14,11 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.archive;
+package org.revapi.classland.archive.jar;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+
+import org.revapi.classland.archive.Archive;
+import org.revapi.classland.archive.ClassData;
 
 public class JarFileArchive implements Archive {
     private final JarFile jarFile;
@@ -31,6 +39,18 @@ public class JarFileArchive implements Archive {
     public Iterator<ClassData> iterator() {
         return jarFile.stream().filter(e -> e.getName().endsWith(".class"))
                 .map(e -> (ClassData) new ZipEntryClassData(jarFile, e)).iterator();
+    }
+
+    @Override
+    public Optional<Manifest> getManifest() throws IOException {
+        ZipEntry entry = jarFile.getEntry("META-INF/MANIFEST.MF");
+        if (entry == null) {
+            return Optional.empty();
+        } else {
+            try (InputStream in = jarFile.getInputStream(entry)) {
+                return Optional.of(new Manifest(in));
+            }
+        }
     }
 
     @Override

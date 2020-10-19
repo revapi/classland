@@ -27,7 +27,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.archive.Archive;
 import org.revapi.classland.archive.ClassData;
-import org.revapi.classland.archive.JarFileArchive;
+import org.revapi.classland.archive.jar.JarFileArchive;
 import org.revapi.classland.impl.ArchiveContents;
 
 class ArchiveContentsTest {

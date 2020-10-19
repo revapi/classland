@@ -16,6 +16,7 @@
  */
 package org.revapi.classland.impl.model.element;
 
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
 
@@ -23,7 +24,9 @@ import static org.objectweb.asm.Opcodes.ACC_OPEN;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,6 +71,11 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
         });
     }
 
+    public ModuleElementImpl(Universe universe, String moduleName) {
+        super(universe, moduleName, TypeKind.MODULE);
+        this.directives = obtained(emptyList());
+    }
+
     @Override
     public Stream<ReachableModule> getReachableModules() {
         return directives.get().stream().filter(d -> d.getKind() == DirectiveKind.REQUIRES)
@@ -100,7 +108,7 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
 
         public ExportsDirectiveImpl(ModuleExportNode n) {
             pkg = memoize(() -> getMutablePackages().get(n.packaze));
-            targets = memoize(() -> n.modules.stream().map(universe::getModule).collect(Collectors.toList()));
+            targets = memoize(() -> n.modules.stream().map(m -> universe.getModule(m).get()).collect(toList()));
         }
 
         @Override
@@ -130,7 +138,7 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
 
         private OpensDirectiveImpl(ModuleOpenNode n) {
             pkg = memoize(() -> getMutablePackages().get(n.packaze));
-            targets = memoize(() -> n.modules.stream().map(universe::getModule).collect(Collectors.toList()));
+            targets = memoize(() -> n.modules.stream().map(m -> universe.getModule(m).get()).collect(toList()));
         }
 
         @Override
@@ -191,7 +199,7 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
 
         public RequiresDirectiveImpl(ModuleRequireNode n) {
             this.n = n;
-            dep = memoize(() -> universe.getModule(n.module));
+            dep = universe.getModule(n.module);
         }
 
         @Override
@@ -202,6 +210,11 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
         @Override
         public boolean isTransitive() {
             return (n.access & ACC_TRANSITIVE) == ACC_TRANSITIVE;
+        }
+
+        @Override
+        public String getModuleName() {
+            return n.module;
         }
 
         @Override

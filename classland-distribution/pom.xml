@@ -60,14 +60,54 @@
                 <version>3.1.2</version>
                 <executions>
                     <execution>
+                        <id>module-info</id>
                         <goals>
                             <goal>unpack-dependencies</goal>
                         </goals>
                         <phase>prepare-package</phase>
                         <configuration>
                             <includeGroupIds>org.revapi.classland</includeGroupIds>
+                            <includeArtifactIds>classland-module</includeArtifactIds>
                             <outputDirectory>${project.build.outputDirectory}</outputDirectory>
                             <excludes>**/Dummy.class</excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>8</id>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <includeGroupIds>org.revapi.classland</includeGroupIds>
+                            <includeArtifactIds>classland-java8</includeArtifactIds>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>9</id>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <includeGroupIds>org.revapi.classland</includeGroupIds>
+                            <includeArtifactIds>classland-java9</includeArtifactIds>
+                            <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
+                            <excludes>/META-INF/**</excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>15</id>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <includeGroupIds>org.revapi.classland</includeGroupIds>
+                            <includeArtifactIds>classland-java15</includeArtifactIds>
+                            <outputDirectory>${project.build.outputDirectory}/META-INF/versions/15</outputDirectory>
+                            <excludes>/META-INF/**</excludes>
                         </configuration>
                     </execution>
                 </executions>

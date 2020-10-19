@@ -16,6 +16,6 @@
  */
 package org.revapi.classland.impl;
 
-public class ElementsImplTest {
+class ElementsImplTest {
     // TODO implement
 }

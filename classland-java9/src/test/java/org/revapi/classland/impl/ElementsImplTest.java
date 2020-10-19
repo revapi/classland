@@ -16,6 +16,16 @@
  */
 package org.revapi.classland.impl;
 
+import org.junit.jupiter.api.Test;
+import org.revapi.classland.Classland;
+
 public class ElementsImplTest {
     // TODO implement
+
+    @Test
+    void loadModules() {
+        Classland classland = Classland.builder().withModules(true).withStandardRuntime().withAllReachableModules(true)
+                .build();
+        System.out.println(classland.getElements().getAllModuleElements());
+    }
 }

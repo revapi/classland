@@ -137,6 +137,10 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
         return bounds.get();
     }
 
+    public MemoizedValue<List<TypeMirrorImpl>> getLazyBounds() {
+        return bounds;
+    }
+
     @Override
     public ElementImpl getEnclosingElement() {
         return getGenericElement();

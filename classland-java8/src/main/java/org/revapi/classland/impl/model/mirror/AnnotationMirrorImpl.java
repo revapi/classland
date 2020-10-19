@@ -87,7 +87,7 @@ public final class AnnotationMirrorImpl extends BaseModelImpl implements Annotat
                 return "[Ljava/lang/Object;";
             } else {
                 // noinspection unchecked
-                return "[" + deduceTypeFromAnnotationValue(((List<AnnotationValueImpl>) value).get(0));
+                return "[" + deduceTypeFromAnnotationValue(((List<AnnotationValueImpl>) value.getValue()).get(0));
             }
         case LONG:
             return Type.LONG_TYPE.getDescriptor();

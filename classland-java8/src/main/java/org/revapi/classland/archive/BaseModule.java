@@ -20,6 +20,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.jar.JarFile;
 
+import org.revapi.classland.archive.jar.JarFileArchive;
+import org.revapi.classland.archive.jmod.JModArchive;
+
 /**
  * This is a helper class for locating the base modules of the different JDK versions.
  */

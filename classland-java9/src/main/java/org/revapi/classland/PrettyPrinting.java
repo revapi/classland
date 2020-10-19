@@ -14,28 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.archive;
+package org.revapi.classland;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
+import java.io.Writer;
 
-public class FileClassData extends AbstractClassData {
-    private final Path file;
+import javax.lang.model.AnnotatedConstruct;
+import javax.lang.model.element.ModuleElement;
 
-    public FileClassData(Path path) {
-        super(path.toString());
-        this.file = path;
+import org.revapi.classland.impl.util.BasePrettyPrinting;
+
+public class PrettyPrinting extends BasePrettyPrinting {
+    private PrettyPrinting() {
+
     }
 
-    @Override
-    public InputStream read() throws IOException {
-        return new FileInputStream(file.toFile());
-    }
-
-    @Override
-    public String toString() {
-        return "FileClassData{" + "file=" + file + '}';
+    public static Writer print(Writer wrt, AnnotatedConstruct e) {
+        if (e instanceof ModuleElement) {
+            silentWrite(e, wrt, ((ModuleElement) e).getQualifiedName());
+            return wrt;
+        } else {
+            return BasePrettyPrinting.print(wrt, e);
+        }
     }
 }

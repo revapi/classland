@@ -26,4 +26,8 @@ public class ModuleElementImpl extends BaseModuleElementImpl {
     public ModuleElementImpl(Universe universe, @Nullable ClassNode moduleType) {
         super(universe, moduleType, TypeKind.OTHER);
     }
+
+    public ModuleElementImpl(Universe universe, String moduleName) {
+        super(universe, moduleName, TypeKind.OTHER);
+    }
 }

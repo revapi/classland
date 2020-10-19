@@ -1,0 +1,4 @@
+= Classland
+
+This is an implementation of the `javax.lang.model` API on top of bytecode. It can be thought of as equivalent to Jandex
+but with different purpose and speed/memory tradeoffs.

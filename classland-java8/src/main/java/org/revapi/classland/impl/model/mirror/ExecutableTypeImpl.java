@@ -26,15 +26,21 @@ import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
+import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.ExecutableElementBase;
+import org.revapi.classland.impl.model.element.ModuleElementImpl;
+import org.revapi.classland.impl.util.MemoizedValue;
+import org.revapi.classland.impl.util.Nullable;
 
 public class ExecutableTypeImpl extends TypeMirrorImpl implements ExecutableType {
     private final List<TypeVariableImpl> typeVars;
     private final TypeMirrorImpl returnType;
     private final List<TypeMirrorImpl> parameterTypes;
     private final TypeMirrorImpl receiverType;
-    private final List<TypeMirrorImpl> throwsTypes;
+    private final List<TypeMirrorImpl> thrownTypes;
 
     public ExecutableTypeImpl(ExecutableElementBase source) {
         super(source.getUniverse(), memoize(source::getAnnotationMirrors));
@@ -42,7 +48,20 @@ public class ExecutableTypeImpl extends TypeMirrorImpl implements ExecutableType
         returnType = source.getReturnType();
         parameterTypes = source.getParameters().stream().map(ElementImpl::asType).collect(toList());
         receiverType = source.getReceiverType();
-        throwsTypes = source.getThrownTypes();
+        thrownTypes = source.getThrownTypes();
+    }
+
+    public ExecutableTypeImpl(Universe universe, List<TypeVariableImpl> typeVariables, TypeMirrorImpl returnType,
+            TypeMirrorImpl receiverType, List<TypeMirrorImpl> parameterTypes, List<TypeMirrorImpl> thrownTypes,
+            MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path,
+            MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
+        super(universe, annotationSource, path, typeLookupSeed);
+
+        this.typeVars = typeVariables;
+        this.returnType = returnType;
+        this.parameterTypes = parameterTypes;
+        this.receiverType = receiverType;
+        this.thrownTypes = thrownTypes;
     }
 
     @Override
@@ -67,7 +86,7 @@ public class ExecutableTypeImpl extends TypeMirrorImpl implements ExecutableType
 
     @Override
     public List<TypeMirrorImpl> getThrownTypes() {
-        return throwsTypes;
+        return thrownTypes;
     }
 
     @Override

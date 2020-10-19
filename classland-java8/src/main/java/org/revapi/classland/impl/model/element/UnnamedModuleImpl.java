@@ -22,7 +22,7 @@ import org.revapi.classland.impl.Universe;
 
 public class UnnamedModuleImpl extends ModuleElementImpl {
     public UnnamedModuleImpl(Universe universe) {
-        super(universe, null);
+        super(universe, (String) null);
     }
 
     @Override
@@ -35,8 +35,8 @@ public class UnnamedModuleImpl extends ModuleElementImpl {
             }
 
             @Override
-            public ModuleElementImpl getDependency() {
-                return m;
+            public String getModuleName() {
+                return m.getQualifiedName().toString();
             }
         });
     }

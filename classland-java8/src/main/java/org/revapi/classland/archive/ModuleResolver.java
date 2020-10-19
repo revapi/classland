@@ -16,5 +16,24 @@
  */
 package org.revapi.classland.archive;
 
-public class DirectoryModuleSourceTest {
+import java.io.IOException;
+import java.util.Optional;
+
+/**
+ * A module resolver is able to find modules and their archives by name.
+ */
+public interface ModuleResolver {
+
+    /**
+     * Tries to find a module.
+     *
+     * @param moduleName
+     *            the name of the module
+     * 
+     * @return a non-empty optional if the module is found, empty optional if the module could not be found
+     * 
+     * @throws IOException
+     *             on error while looking for the module
+     */
+    Optional<Archive> getModuleArchive(String moduleName) throws IOException;
 }

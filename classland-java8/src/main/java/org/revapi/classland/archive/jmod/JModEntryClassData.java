@@ -14,32 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.archive;
+package org.revapi.classland.archive.jmod;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Iterator;
+import java.io.InputStream;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-/**
- * Reads classes from the jmod files (i.e. the files used for the JDK modules).
- */
-public class JModArchive implements Archive {
-    private final ZipFile jmodFile;
+import org.revapi.classland.archive.AbstractClassData;
 
-    public JModArchive(Path jmodFile) throws IOException {
-        this.jmodFile = new ZipFile(jmodFile.toFile());
+public class JModEntryClassData extends AbstractClassData {
+    private final ZipFile file;
+    private final ZipEntry entry;
+
+    public JModEntryClassData(ZipFile file, ZipEntry entry) {
+        super(entry.getName().substring("classes/".length()));
+        this.file = file;
+        this.entry = entry;
     }
 
     @Override
-    public void close() throws Exception {
-        jmodFile.close();
+    public InputStream read() throws IOException {
+        return file.getInputStream(entry);
     }
 
     @Override
-    public Iterator<ClassData> iterator() {
-        return jmodFile.stream().filter(e -> e.getName().startsWith("classes"))
-                .filter(e -> e.getName().endsWith(".class")).map(e -> (ClassData) new JModEntryClassData(jmodFile, e))
-                .iterator();
+    public String toString() {
+        return "JmodEntryClassData{" + "file=" + file + ", entry=" + entry + '}';
     }
 }

@@ -16,6 +16,12 @@
  */
 package org.revapi.classland.impl;
 
+import static java.util.Collections.emptyList;
+
+import static org.revapi.classland.impl.util.MemoizedValue.memoize;
+import static org.revapi.classland.impl.util.MemoizedValue.obtainedNull;
+
+import java.util.Collections;
 import java.util.List;
 
 import javax.lang.model.element.Element;
@@ -30,6 +36,16 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Types;
+
+import org.revapi.classland.impl.model.anno.AnnotationSource;
+import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.mirror.ArrayTypeImpl;
+import org.revapi.classland.impl.model.mirror.NoTypeImpl;
+import org.revapi.classland.impl.model.mirror.NullTypeImpl;
+import org.revapi.classland.impl.model.mirror.PrimitiveTypeImpl;
+import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
+import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.util.MemoizedValue;
 
 public class TypesImpl implements Types {
     private final Universe universe;
@@ -70,8 +86,7 @@ public class TypesImpl implements Types {
 
     @Override
     public boolean isSubsignature(ExecutableType m1, ExecutableType m2) {
-        // TODO implement
-        return false;
+        return TypeUtils.isSubSignature(m1, m2);
     }
 
     @Override
@@ -82,8 +97,7 @@ public class TypesImpl implements Types {
 
     @Override
     public TypeMirror erasure(TypeMirror t) {
-        // TODO implement
-        return null;
+        return TypeUtils.erasure(t);
     }
 
     @Override
@@ -106,26 +120,23 @@ public class TypesImpl implements Types {
 
     @Override
     public PrimitiveType getPrimitiveType(TypeKind kind) {
-        // TODO implement
-        return null;
+        return TypeMirrorFactory.createPrimitive(universe, kind);
     }
 
     @Override
     public NullType getNullType() {
-        // TODO implement
-        return null;
+        return new NullTypeImpl(universe);
     }
 
     @Override
     public NoType getNoType(TypeKind kind) {
-        // TODO implement
-        return null;
+        return new NoTypeImpl(universe, memoize(Collections::emptyList), kind);
     }
 
     @Override
     public ArrayType getArrayType(TypeMirror componentType) {
-        // TODO implement
-        return null;
+        return new ArrayTypeImpl((TypeMirrorImpl) componentType, -1, AnnotationSource.MEMOIZED_EMPTY,
+                AnnotationTargetPath.ROOT, obtainedNull());
     }
 
     @Override

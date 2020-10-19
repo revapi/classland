@@ -14,12 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.revapi.classland.archive;
+package org.revapi.classland.archive.jar;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import org.revapi.classland.archive.AbstractClassData;
 
 public class ZipEntryClassData extends AbstractClassData {
     private final ZipFile file;

@@ -30,6 +30,7 @@ import javax.lang.model.type.TypeMirror;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.revapi.classland.PrettyPrinting;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.BaseModelImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
@@ -41,7 +42,6 @@ import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
-import org.revapi.classland.impl.util.PrettyPrinting;
 
 public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValue {
 
