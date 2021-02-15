@@ -138,8 +138,8 @@ abstract class BaseElementsImpl implements Elements {
                 ret.put(e, v);
             }
         }
-        return ret;
 
+        return ret;
     }
 
     @Override

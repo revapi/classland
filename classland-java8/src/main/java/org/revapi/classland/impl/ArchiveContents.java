@@ -29,7 +29,6 @@ import org.revapi.classland.archive.ClassData;
 import org.revapi.classland.impl.util.Nullable;
 
 public class ArchiveContents {
-    // TODO support automatic module names - this requires more than just reading class files in the archives
     private static final int PACKAGE_INFO_NAME_LENGTH = "package-info".length();
     private final Archive source;
     private volatile boolean scanned = false;
@@ -37,6 +36,7 @@ public class ArchiveContents {
     private final Set<ClassData> classes = new HashSet<>();
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<ClassData> module;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<String> moduleName;
 
     public ArchiveContents(Archive source) {

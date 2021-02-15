@@ -40,11 +40,13 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
     }
 
     @Override
+    @Nullable
     public TypeMirrorImpl getExtendsBound() {
         return extendsBound;
     }
 
     @Override
+    @Nullable
     public TypeMirrorImpl getSuperBound() {
         return superBound;
     }

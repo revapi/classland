@@ -48,7 +48,7 @@ import org.revapi.testjars.junit5.JarSources;
 @ExtendWith(CompiledJarExtension.class)
 class AnnotationDeclarationsTest {
 
-    @JarSources(root = "/src/", sources = "pkg/Annotations.java")
+    @JarSources(root = "/src/model/element/", sources = "pkg/Annotations.java")
     CompiledJar annotations;
 
     Universe u;

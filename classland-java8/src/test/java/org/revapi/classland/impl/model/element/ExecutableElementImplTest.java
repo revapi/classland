@@ -51,7 +51,7 @@ import org.revapi.testjars.junit5.JarSources;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(CompiledJarExtension.class)
 public class ExecutableElementImplTest {
-    @JarSources(root = "/src/", sources = { "pkg/Methods.java" })
+    @JarSources(root = "/src/model/element/", sources = { "pkg/Methods.java" })
     CompiledJar methods;
 
     Universe universe;

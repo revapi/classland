@@ -38,7 +38,7 @@ import org.revapi.testjars.junit5.JarSources;
 
 @ExtendWith(CompiledJarExtension.class)
 class PrettyPrintingTest {
-    @JarSources(root = "/src/", sources = "pkg/Enums.java")
+    @JarSources(root = "/src/model/element/", sources = "pkg/Enums.java")
     CompiledJar enums;
 
     @Test

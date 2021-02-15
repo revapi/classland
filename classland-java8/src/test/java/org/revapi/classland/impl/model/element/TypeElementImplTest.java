@@ -53,19 +53,19 @@ import org.revapi.testjars.junit5.JarSources;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(CompiledJarExtension.class)
 class TypeElementImplTest {
-    @JarSources(root = "/src/", sources = { "pkg/names/Dollar$1.java", "pkg/names/Dollars.java" })
+    @JarSources(root = "/src/model/element/", sources = { "pkg/names/Dollar$1.java", "pkg/names/Dollars.java" })
     CompiledJar names;
 
-    @JarSources(root = "/src/", sources = { "pkg/Kinds.java" })
+    @JarSources(root = "/src/model/element/", sources = { "pkg/Kinds.java" })
     CompiledJar kinds;
 
-    @JarSources(root = "/src/", sources = { "pkg/Modifiers.java" })
+    @JarSources(root = "/src/model/element/", sources = { "pkg/Modifiers.java" })
     CompiledJar modifiers;
 
-    @JarSources(root = "/src/", sources = { "pkg/Generics.java" })
+    @JarSources(root = "/src/model/element/", sources = { "pkg/Generics.java" })
     CompiledJar generics;
 
-    @JarSources(root = "/src/", sources = { "pkg/InnerClasses.java" })
+    @JarSources(root = "/src/model/element/", sources = { "pkg/InnerClasses.java" })
     CompiledJar innerClasses;
 
     @Test

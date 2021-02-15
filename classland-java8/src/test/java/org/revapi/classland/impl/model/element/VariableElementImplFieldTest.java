@@ -44,7 +44,7 @@ import org.revapi.testjars.junit5.JarSources;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(CompiledJarExtension.class)
 public class VariableElementImplFieldTest {
-    @JarSources(root = "/src/", sources = { "pkg/Fields.java" })
+    @JarSources(root = "/src/model/element/", sources = { "pkg/Fields.java" })
     CompiledJar fields;
 
     @Test

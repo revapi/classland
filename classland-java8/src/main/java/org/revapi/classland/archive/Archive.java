@@ -25,6 +25,9 @@ import java.util.jar.Manifest;
  * elements stored in a class file like types, modules or package info classes.
  */
 public interface Archive extends Iterable<ClassData>, AutoCloseable {
-
+    /**
+     * Returns the manifest contained in the archive, if any.
+     * @throws IOException on error reading the manifest file.
+     */
     Optional<Manifest> getManifest() throws IOException;
 }
