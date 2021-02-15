@@ -30,6 +30,10 @@ import org.revapi.classland.impl.util.Nullable;
 public final class PrimitiveTypeImpl extends TypeMirrorImpl implements PrimitiveType {
     private final TypeKind typeKind;
 
+    public PrimitiveTypeImpl(Universe universe, TypeKind typeKind) {
+        this(universe, typeKind, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, MemoizedValue.obtainedNull());
+    }
+
     public PrimitiveTypeImpl(Universe universe, TypeKind typeKind, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
         super(universe, annotationSource, path, typeLookupSeed);

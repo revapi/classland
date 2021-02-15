@@ -16,6 +16,8 @@
  */
 package org.revapi.classland.impl.util;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -24,6 +26,7 @@ import org.apache.logging.log4j.LogManager;
 public class MemoizedValue<T> implements Supplier<T> {
     private static final boolean DEBUG = LogManager.getLogger(MemoizedValue.class).isDebugEnabled();
     private static final MemoizedValue<?> NULL = obtained(null);
+    private static final MemoizedValue<?> EMPTY_LIST = obtained(Collections.emptyList());
 
     private @Nullable Supplier<T> action;
     protected volatile boolean obtained;
@@ -44,6 +47,11 @@ public class MemoizedValue<T> implements Supplier<T> {
     @SuppressWarnings("unchecked")
     public static <T> MemoizedValue<T> obtainedNull() {
         return (MemoizedValue<T>) NULL;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> MemoizedValue<List<T>> obtainedEmptyList() {
+        return (MemoizedValue<List<T>>) EMPTY_LIST;
     }
 
     public static <T> MemoizedValue<T> memoize(Supplier<T> action) {

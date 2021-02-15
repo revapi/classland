@@ -23,6 +23,16 @@ public class ElementsImplTest {
     // TODO implement
 
     @Test
+    void testGetPackageElementAcrossModules() {
+        // TODO implement
+    }
+
+    @Test
+    void testGetTypeElementAcrossModules() {
+        // TODO implement
+    }
+
+    @Test
     void loadModules() {
         Classland classland = Classland.builder().withModules(true).withStandardRuntime().withAllReachableModules(true)
                 .build();

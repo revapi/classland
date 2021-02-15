@@ -31,7 +31,6 @@ import static org.revapi.classland.impl.util.Packages.getPackageNameFromInternal
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -120,11 +119,16 @@ public final class Universe implements AutoCloseable {
     }
 
     public TypeElementBase getJavaLangObject() {
+        return getTypeByInternalNameFromModule("java/lang/Object", getJavaBase());
+    }
+
+    public ModuleElementImpl getJavaBase() {
         ModuleElementImpl javaBase = analyzeModules ? modules.get("java.base").get() : unnamedModule;
         if (javaBase == null) {
             javaBase = unnamedModule;
         }
-        return getTypeByInternalNameFromModule("java/lang/Object", javaBase);
+
+        return javaBase;
     }
 
     public TypeElementBase getTypeByInternalNameFromPackage(String internalName, PackageElementImpl startingPackage) {
