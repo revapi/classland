@@ -227,6 +227,7 @@ public final class Universe implements AutoCloseable {
             return m;
         }).orElseGet(() -> contents.getModuleName().map(n -> new ModuleElementImpl(this, n)).orElse(unnamedModule));
 
+
         contents.getPackages().forEach((name, data) -> {
             module.getMutablePackages().put(name,
                     new PackageElementImpl(this, name, lazyParse(data), analyzeModules ? module : null));

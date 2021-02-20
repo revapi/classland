@@ -50,6 +50,8 @@ public abstract class TypeElementBase extends ElementImpl implements TypeElement
     }
 
     public MemoizedValue<ModuleElementImpl> lookupModule() {
+        // TODO this is returning a new value instance each time, effectively
+        // making it NOT lazy. Is this what we want here?
         return pkg.map(p -> p == null ? null : p.getModule());
     }
 

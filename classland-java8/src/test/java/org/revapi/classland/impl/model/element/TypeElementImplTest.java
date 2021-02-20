@@ -232,6 +232,8 @@ class TypeElementImplTest {
         assertTrue("java.lang.String"
                 .contentEquals(((TypeElement) ((DeclaredTypeImpl) arg).asElement()).getQualifiedName()));
         assertEquals(TypeKind.ERROR, arg.getKind()); // we're not loading types from the base module...
+
+        // TODO add tests for superClass of java.lang.Object and interface types
     }
 
     @Test

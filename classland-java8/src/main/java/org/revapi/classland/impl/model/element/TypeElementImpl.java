@@ -25,6 +25,7 @@ import static java.util.stream.Stream.concat;
 import static org.revapi.classland.impl.util.Asm.hasFlag;
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 import static org.revapi.classland.impl.util.MemoizedValue.obtained;
+import static org.revapi.classland.impl.util.MemoizedValue.obtainedEmptyList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
+import javax.lang.model.type.TypeKind;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypeReference;
@@ -51,6 +53,7 @@ import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
+import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.GenericTypeParameters;
@@ -218,8 +221,15 @@ public final class TypeElementImpl extends TypeElementBase {
 
         type = memoize(() -> TypeMirrorFactory.create(universe, this));
 
-        superClass = signature.map(ts -> TypeMirrorFactory.create(universe, ts.superClass, this, asAnnotationSource(),
-                new AnnotationTargetPath(TypeReference.newSuperTypeReference(-1)), obtained(pkg.getModule())));
+        superClass = signature.map(ts -> {
+            if (ts.superClass == null) {
+                // java.lang.Object or interfaces
+                return new NoTypeImpl(universe, obtainedEmptyList(), TypeKind.NONE);
+            } else {
+                return TypeMirrorFactory.create(universe, ts.superClass, this, asAnnotationSource(),
+                        new AnnotationTargetPath(TypeReference.newSuperTypeReference(-1)), obtained(pkg.getModule()));
+            }
+        });
 
         interfaces = signature.map(ts -> {
             List<TypeMirrorImpl> ret = new ArrayList<>(ts.interfaces.size());

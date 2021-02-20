@@ -19,10 +19,11 @@ package org.revapi.classland.impl;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -54,7 +55,6 @@ abstract class BaseElementsImpl implements Elements {
     protected final Universe universe;
     protected final MemoizedFunction<CharSequence, Map<ModuleElementImpl, PackageElement>> crossModulePackagesByName;
     protected final MemoizedFunction<CharSequence, Map<ModuleElementImpl, TypeElement>> crossModuleTypesByFqn;
-    protected final MemoizedFunction<TypeElement, List<TypeElement>> allSuperTypes;
 
     protected BaseElementsImpl(Universe universe) {
         this.universe = universe;
@@ -91,27 +91,6 @@ abstract class BaseElementsImpl implements Elements {
 
             return ret;
         });
-
-        this.allSuperTypes = MemoizedFunction.memoize(type -> {
-            if (type instanceof MissingTypeImpl) {
-                return Collections.singletonList(universe.getJavaLangObject());
-            } else {
-                TypeMirror superClassType = type.getSuperclass();
-                TypeElement superClass = superClassType == null ? null : TypeUtils.asTypeElement(superClassType);
-                List<TypeElement> ret = new ArrayList<>(4);
-                if (superClass != null) {
-                    ret.add(superClass);
-                }
-
-                for (TypeMirror t : type.getInterfaces()) {
-                    TypeElement te = TypeUtils.asTypeElement(t);
-                    if (te != null) {
-                        ret.add(te);
-                    }
-                }
-                return ret;
-            }
-        });
     }
 
     @Override
@@ -123,7 +102,7 @@ abstract class BaseElementsImpl implements Elements {
     @Override
     public TypeElement getTypeElement(CharSequence name) {
         Map<ModuleElementImpl, TypeElement> allTypes = crossModuleTypesByFqn.apply(name);
-        return allTypes.isEmpty() ? null : allTypes.values().iterator().next();
+        return allTypes.size() != 1 ? null : allTypes.values().iterator().next();
     }
 
     @Override
@@ -164,10 +143,11 @@ abstract class BaseElementsImpl implements Elements {
 
     @Override
     public List<? extends Element> getAllMembers(TypeElement type) {
-        // TODO does this filter properly according to the spec?
         List<Element> ret = new ArrayList<>(type.getEnclosedElements());
-        for (TypeElement superType : allSuperTypes.apply(type)) {
-            superType.getEnclosedElements().stream().filter(e -> !e.getModifiers().contains(Modifier.PRIVATE))
+        for (TypeElement superType : getAllSuperTypes(type)) {
+            superType.getEnclosedElements().stream()
+                    .filter(e -> !e.getModifiers().contains(Modifier.PRIVATE))
+                    .filter(e -> e.getKind() != ElementKind.CONSTRUCTOR)
                     .forEach(ret::add);
         }
 
@@ -183,14 +163,14 @@ abstract class BaseElementsImpl implements Elements {
                 break;
             }
 
-            TypeElement superClass = TypeUtils.asTypeElement(superClassType);
+            e = TypeUtils.asTypeElement(superClassType);
 
-            if (superClass == universe.getJavaLangObject()) {
+            if (e == universe.getJavaLangObject()) {
                 break;
             }
 
-            List<? extends AnnotationMirror> superAnnos = superClass.getAnnotationMirrors();
-            for (AnnotationMirror a : superAnnos) {
+            List<? extends AnnotationMirror> annos = e.getAnnotationMirrors();
+            for (AnnotationMirror a : annos) {
                 if (isInherited(a.getAnnotationType().asElement()) && !containsAnnotationOfType(ret, a)) {
                     ret.add(a);
                 }
@@ -236,11 +216,7 @@ abstract class BaseElementsImpl implements Elements {
         }
 
         // hidden must be accessible in the hider's class
-        if (!TypeUtils.isAccessibleIn(hidden, hiderType)) {
-            return false;
-        }
-
-        return true;
+        return TypeUtils.isAccessibleIn(hidden, hiderType);
     }
 
     @Override
@@ -308,5 +284,32 @@ abstract class BaseElementsImpl implements Elements {
         }
 
         return false;
+    }
+
+    private Set<TypeElement> getAllSuperTypes(TypeElement type) {
+        HashSet<TypeElement> ret = new HashSet<>(4);
+        fillAllSuperTypes(type, ret);
+        return ret;
+    }
+
+    private void fillAllSuperTypes(TypeElement type, Set<TypeElement> superTypes) {
+        if (type instanceof MissingTypeImpl) {
+            superTypes.add(universe.getJavaLangObject());
+        } else {
+            TypeMirror superClassType = type.getSuperclass();
+            TypeElement superClass = superClassType == null ? null : TypeUtils.asTypeElement(superClassType);
+            if (superClass != null) {
+                superTypes.add(superClass);
+                fillAllSuperTypes(superClass, superTypes);
+            }
+
+            for (TypeMirror t : type.getInterfaces()) {
+                TypeElement te = TypeUtils.asTypeElement(t);
+                if (te != null) {
+                    superTypes.add(te);
+                    fillAllSuperTypes(te, superTypes);
+                }
+            }
+        }
     }
 }
