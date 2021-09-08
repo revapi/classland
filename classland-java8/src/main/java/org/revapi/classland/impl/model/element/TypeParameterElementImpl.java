@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,7 +51,6 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
     private final TypeVariableResolutionContext owner;
     private final MemoizedValue<List<TypeMirrorImpl>> bounds;
     private final TypeParameterBound rawBound;
-    private final int index;
 
     protected TypeParameterElementImpl(Universe universe, String name, TypeVariableResolutionContext owner,
             TypeParameterBound bound, int index) {
@@ -61,7 +60,6 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
         this.name = NameImpl.of(name);
         this.owner = owner;
         this.rawBound = bound;
-        this.index = index;
         this.bounds = memoize(() -> {
             switch (bound.boundType) {
             case UNBOUNDED:
@@ -101,10 +99,6 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
 
     public TypeParameterBound getRawBound() {
         return rawBound;
-    }
-
-    public int getIndex() {
-        return index;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +65,6 @@ import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
 public final class TypeElementImpl extends TypeElementBase {
-    private final String internalName;
     private final MemoizedValue<ClassNode> node;
     private final MemoizedValue<NameImpl> qualifiedName;
     private final MemoizedValue<NameImpl> simpleName;
@@ -87,7 +86,6 @@ public final class TypeElementImpl extends TypeElementBase {
     public TypeElementImpl(Universe universe, String internalName, MemoizedValue<ClassNode> node,
             PackageElementImpl pkg) {
         super(universe, internalName, obtained(pkg), node.map(AnnotationSource::fromType));
-        this.internalName = internalName;
         this.node = node;
 
         this.scan = node.map(cls -> {
@@ -381,21 +379,6 @@ public final class TypeElementImpl extends TypeElementBase {
     @Override
     public <R, P> R accept(ElementVisitor<R, P> v, P p) {
         return v.visitType(this, p);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        TypeElementImpl that = (TypeElementImpl) o;
-        return internalName.equals(that.internalName);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(internalName);
     }
 
     private static final class ScanningResult {

@@ -14,8 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package types;
+package overrides;
 
-public class B {
+public class OverrideTest {
 
+    public class Base {
+        public void method() {}
+        public Object covariantMethod() { return null; }
+        public void nonOverridingMethod(int i) {}
+        public void interfaceMethod() {}
+    }
+
+    public interface Iface {
+        void interfaceMethod();
+    }
+
+    public class Overrider extends Base implements Iface {
+        public void method() {}
+        public String covariantMethod() { return null; }
+        public void nonOverridingMethod(float i) {}
+    }
 }

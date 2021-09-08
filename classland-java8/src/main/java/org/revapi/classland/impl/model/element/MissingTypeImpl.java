@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -138,11 +138,6 @@ public class MissingTypeImpl extends TypeElementBase {
     @Override
     public List<AnnotationMirrorImpl> getAnnotationMirrors() {
         return emptyList();
-    }
-
-    @Override
-    public String toString() {
-        return "MissingTypeImpl{" + "qualifiedName=" + qualifiedName.asString() + '}';
     }
 
     @Override

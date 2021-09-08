@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,9 @@ package org.revapi.classland.impl.model.element;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
-import static java.util.stream.Collectors.toList;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -53,9 +54,12 @@ public class MissingExecutableElementImpl extends ExecutableElementBase {
         this.name = NameImpl.of(name);
         this.returnType = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(returnTypeDescriptor), this,
                 AnnotationTargetPath.ROOT);
-        this.paramTypes = parameterDescriptors.stream()
-                .map(t -> new VariableElementImpl.Missing(universe, parent, "", t, ElementKind.PARAMETER))
-                .collect(toList());
+        List<VariableElementImpl> params = new ArrayList<>(parameterDescriptors.size());
+        for (int i = 0; i < parameterDescriptors.size(); ++i) {
+            params.add(new VariableElementImpl.Missing(universe, parent.lookupModule(), this, "arg" + i,
+                    parameterDescriptors.get(i), ElementKind.PARAMETER));
+        }
+        this.paramTypes = Collections.unmodifiableList(params);
         this.type = new ExecutableTypeImpl(this);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,5 +36,32 @@ public abstract class TypeMirrorImpl extends AnnotatedConstructImpl implements T
 
     protected TypeMirrorImpl(Universe universe, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
         super(universe, annos);
+    }
+
+    // type mirrors are generated on demand and can exist in multiple copies
+    // we therefore need to have a semantic equals&hashcode as opposed
+    // to the quick identity checks in elements
+
+    @Override
+    public int hashCode() {
+        return 31 * universe.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null) {
+            return false;
+        }
+
+        if (!getClass().equals(obj.getClass())) {
+            return false;
+        }
+
+        TypeMirrorImpl that = (TypeMirrorImpl) obj;
+        return universe.equals(that.universe);
     }
 }

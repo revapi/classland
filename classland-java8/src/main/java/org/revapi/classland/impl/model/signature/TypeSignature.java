@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ public abstract class TypeSignature {
 
         @Override
         public int hashCode() {
-            return Objects.hash(arrayDimension);
+            return arrayDimension;
         }
 
         @Override
@@ -85,19 +85,15 @@ public abstract class TypeSignature {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
             if (!super.equals(o))
                 return false;
             PrimitiveType that = (PrimitiveType) o;
-            return type.equals(that.type);
+            return type == that.type;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(super.hashCode(), type);
+            return 31 * super.hashCode() + type.hashCode();
         }
 
         @Override
@@ -121,10 +117,6 @@ public abstract class TypeSignature {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
             if (!super.equals(o))
                 return false;
             Variable variable = (Variable) o;
@@ -133,7 +125,7 @@ public abstract class TypeSignature {
 
         @Override
         public int hashCode() {
-            return Objects.hash(super.hashCode(), name);
+            return 31 * super.hashCode() + name.hashCode();
         }
 
         @Override
@@ -162,10 +154,6 @@ public abstract class TypeSignature {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
             if (!super.equals(o))
                 return false;
             Reference reference = (Reference) o;
@@ -182,7 +170,7 @@ public abstract class TypeSignature {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             if (outerClass != null) {
-                sb.append(outerClass.toString());
+                sb.append(outerClass);
                 sb.append(".");
             }
             sb.append(internalTypeName);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.LogManager;
-
 public class MemoizedValue<T> implements Supplier<T> {
-    private static final boolean DEBUG = LogManager.getLogger(MemoizedValue.class).isDebugEnabled();
+    static final boolean DEBUG = "true".equals(System.getenv("CLASSLAND_MEMOIZATION_DEBUG"));
     private static final MemoizedValue<?> NULL = obtained(null);
     private static final MemoizedValue<?> EMPTY_LIST = obtained(Collections.emptyList());
 

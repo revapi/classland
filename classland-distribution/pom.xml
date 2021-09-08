@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2020 Lukas Krejci
+    Copyright 2020-2021 Lukas Krejci
     and other contributors as indicated by the @author tags.
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,10 +37,10 @@
     </properties>
 
     <dependencies>
-        <!-- replace this dependency with the latest version of java classland supports. Currently it's 15. -->
+        <!-- replace this dependency with the latest version of java classland supports. Currently it's 16. -->
         <dependency>
             <groupId>org.revapi.classland</groupId>
-            <artifactId>classland-java15</artifactId>
+            <artifactId>classland-java16</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
@@ -107,6 +107,19 @@
                             <includeGroupIds>org.revapi.classland</includeGroupIds>
                             <includeArtifactIds>classland-java15</includeArtifactIds>
                             <outputDirectory>${project.build.outputDirectory}/META-INF/versions/15</outputDirectory>
+                            <excludes>/META-INF/**</excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>16</id>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <includeGroupIds>org.revapi.classland</includeGroupIds>
+                            <includeArtifactIds>classland-java16</includeArtifactIds>
+                            <outputDirectory>${project.build.outputDirectory}/META-INF/versions/16</outputDirectory>
                             <excludes>/META-INF/**</excludes>
                         </configuration>
                     </execution>

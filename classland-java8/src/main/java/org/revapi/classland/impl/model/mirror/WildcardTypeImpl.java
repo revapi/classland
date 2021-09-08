@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 package org.revapi.classland.impl.model.mirror;
+
+import java.util.Objects;
 
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
@@ -59,5 +61,34 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitWildcard(this, p);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof WildcardTypeImpl)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        WildcardTypeImpl that = (WildcardTypeImpl) o;
+
+        if (!Objects.equals(extendsBound, that.extendsBound)) {
+            return false;
+        }
+
+        return Objects.equals(superBound, that.superBound);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (extendsBound != null ? extendsBound.hashCode() : 0);
+        result = 31 * result + (superBound != null ? superBound.hashCode() : 0);
+        return result;
     }
 }

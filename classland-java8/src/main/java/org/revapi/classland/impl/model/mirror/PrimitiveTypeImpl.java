@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,8 @@ public final class PrimitiveTypeImpl extends TypeMirrorImpl implements Primitive
     private final TypeKind typeKind;
 
     public PrimitiveTypeImpl(Universe universe, TypeKind typeKind) {
-        this(universe, typeKind, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, MemoizedValue.obtainedNull());
+        this(universe, typeKind, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT,
+                MemoizedValue.obtainedNull());
     }
 
     public PrimitiveTypeImpl(Universe universe, TypeKind typeKind, MemoizedValue<AnnotationSource> annotationSource,
@@ -48,5 +49,26 @@ public final class PrimitiveTypeImpl extends TypeMirrorImpl implements Primitive
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitPrimitive(this, p);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        PrimitiveTypeImpl that = (PrimitiveTypeImpl) o;
+
+        return typeKind == that.typeKind;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + typeKind.hashCode();
+        return result;
     }
 }

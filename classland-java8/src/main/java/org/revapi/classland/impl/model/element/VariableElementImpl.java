@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import javax.lang.model.element.VariableElement;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.NameImpl;
@@ -44,19 +45,26 @@ import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeSignature;
+import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class VariableElementImpl extends ElementImpl implements VariableElement {
+    protected final NameImpl name;
+    protected final ElementImpl parent;
+
     private VariableElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
-            MemoizedValue<@Nullable ModuleElementImpl> module) {
-        this(universe, annotationSource, AnnotationTargetPath.ROOT, module);
+            MemoizedValue<@Nullable ModuleElementImpl> module, @Nullable String name, ElementImpl parent) {
+        this(universe, annotationSource, AnnotationTargetPath.ROOT, module, name, parent);
     }
 
     private VariableElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
-            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> module) {
+            AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> module, @Nullable String name,
+            ElementImpl parent) {
         super(universe, annotationSource, path, module);
+        this.name = NameImpl.of(name);
+        this.parent = parent;
     }
 
     @Override
@@ -64,16 +72,23 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         return v.visitVariable(this, p);
     }
 
+    @Override
+    public NameImpl getSimpleName() {
+        return name;
+    }
+
+    @Override
+    public ElementImpl getEnclosingElement() {
+        return parent;
+    }
+
     public static final class Missing extends VariableElementImpl {
-        private final TypeElementBase parent;
-        private final NameImpl name;
         private final ElementKind kind;
         private final TypeMirrorImpl type;
 
-        public Missing(Universe universe, TypeElementBase parent, String name, String descriptor, ElementKind kind) {
-            super(universe, AnnotationSource.MEMOIZED_EMPTY, parent.lookupModule());
-            this.parent = parent;
-            this.name = NameImpl.of(name);
+        public <T extends ElementImpl & TypeVariableResolutionContext> Missing(Universe universe,
+                MemoizedValue<ModuleElementImpl> module, T parent, String name, String descriptor, ElementKind kind) {
+            super(universe, AnnotationSource.MEMOIZED_EMPTY, module, name, parent);
             this.kind = kind;
             this.type = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(descriptor), parent,
                     AnnotationTargetPath.ROOT);
@@ -100,16 +115,6 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         }
 
         @Override
-        public NameImpl getSimpleName() {
-            return name;
-        }
-
-        @Override
-        public ElementImpl getEnclosingElement() {
-            return parent;
-        }
-
-        @Override
         public List<ElementImpl> getEnclosedElements() {
             return emptyList();
         }
@@ -118,16 +123,12 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
     public static final class Field extends VariableElementImpl {
         private final FieldNode field;
         private final Set<Modifier> modifiers;
-        private final NameImpl name;
-        private final TypeElementImpl parent;
         private final MemoizedValue<TypeMirrorImpl> type;
 
         public Field(Universe universe, TypeElementImpl parent, FieldNode field) {
-            super(universe, obtained(AnnotationSource.fromField(field)), parent.lookupModule());
+            super(universe, obtained(AnnotationSource.fromField(field)), parent.lookupModule(), field.name, parent);
             this.field = field;
             this.modifiers = Modifiers.toFieldModifiers(field.access);
-            this.name = NameImpl.of(field.name);
-            this.parent = parent;
             this.type = memoize(() -> {
                 String sig = field.signature == null ? field.desc : field.signature;
                 return TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(sig), parent,
@@ -162,34 +163,21 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         }
 
         @Override
-        public NameImpl getSimpleName() {
-            return name;
-        }
-
-        @Override
-        public ElementImpl getEnclosingElement() {
-            return parent;
-        }
-
-        @Override
         public List<? extends ElementImpl> getEnclosedElements() {
             return emptyList();
         }
     }
 
     public static final class Parameter extends VariableElementImpl {
-        private final ExecutableElementImpl method;
-        private final NameImpl name;
         private final Set<Modifier> modifiers;
         private final MemoizedValue<TypeMirrorImpl> type;
 
         public Parameter(Universe universe, ExecutableElementImpl method, int index) {
             super(universe, obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
-                    new AnnotationTargetPath(newFormalParameterReference(index)), method.getType().lookupModule());
-            this.method = method;
+                    new AnnotationTargetPath(newFormalParameterReference(index)), method.getType().lookupModule(),
+                    getParamName(method.getNode(), index), method);
             List<ParameterNode> paramsInfo = method.getNode().parameters;
             ParameterNode node = paramsInfo == null ? null : paramsInfo.get(index);
-            this.name = NameImpl.of(node == null ? null : node.name);
             this.modifiers = node == null ? emptySet() : Modifiers.toParameterModifiers(node.access);
 
             this.type = method.getSignature().map(ms -> {
@@ -198,6 +186,15 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
                         obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
                         new AnnotationTargetPath(newFormalParameterReference(index)), method.getType().lookupModule());
             });
+        }
+
+        private static @Nullable String getParamName(MethodNode method, int index) {
+            List<ParameterNode> paramsInfo = method.parameters;
+            if (paramsInfo == null) {
+                return null;
+            }
+            ParameterNode node = paramsInfo.get(index);
+            return node == null ? null : node.name;
         }
 
         @Override
@@ -223,16 +220,6 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         @Override
         public Set<Modifier> getModifiers() {
             return modifiers;
-        }
-
-        @Override
-        public NameImpl getSimpleName() {
-            return name;
-        }
-
-        @Override
-        public ElementImpl getEnclosingElement() {
-            return method;
         }
 
         @Override

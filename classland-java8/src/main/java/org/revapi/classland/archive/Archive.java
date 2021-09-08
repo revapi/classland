@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,9 @@ import java.util.jar.Manifest;
 public interface Archive extends Iterable<ClassData>, AutoCloseable {
     /**
      * Returns the manifest contained in the archive, if any.
-     * @throws IOException on error reading the manifest file.
+     * 
+     * @throws IOException
+     *             on error reading the manifest file.
      */
     Optional<Manifest> getManifest() throws IOException;
 }

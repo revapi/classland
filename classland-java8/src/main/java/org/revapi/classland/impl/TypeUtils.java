@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,16 +21,21 @@ import static java.util.stream.Collectors.toList;
 
 import static org.revapi.classland.impl.util.MemoizedValue.obtainedNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ErrorType;
@@ -53,6 +58,7 @@ import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.mirror.ArrayTypeImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.ExecutableTypeImpl;
+import org.revapi.classland.impl.model.mirror.NullTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.Nullable;
@@ -74,11 +80,6 @@ final class TypeUtils {
         @Override
         public PackageElementImpl visitUnknown(Element e, Void aVoid) {
             return null;
-        }
-
-        @Override
-        public PackageElementImpl visitTypeParameter(TypeParameterElement e, Void aVoid) {
-            return visit(AS_TYPE_ELEMENT.visit(e.getBounds().get(0)));
         }
     };
 
@@ -108,8 +109,14 @@ final class TypeUtils {
 
     private static final TypeVisitor<Boolean, TypeMirror> IS_SAME_TYPE = new TypePairVisitor<Boolean>(false) {
         @Override
+        protected Boolean unmatchedAction(TypeMirror a, TypeMirror b) {
+            // TODO there are some situations where javac considers different types of mirrors the same
+            return super.unmatchedAction(a, b);
+        }
+
+        @Override
         public Boolean visitIntersection(IntersectionType t, IntersectionType b) {
-            return visitAll(t.getBounds(), b.getBounds());
+            return visitKeyed(this, t.getBounds(), b.getBounds(), TypeMirror::toString);
         }
 
         @Override
@@ -153,8 +160,9 @@ final class TypeUtils {
         public Boolean visitExecutable(ExecutableType t, ExecutableType b) {
             return visit(t.getReturnType(), b.getReturnType()) && visit(t.getReceiverType(), b.getReceiverType())
                     && visitAll(t.getTypeVariables(), t.getTypeVariables())
-                    && visitAll(t.getParameterTypes(), b.getParameterTypes())
-                    && visitAll(t.getThrownTypes(), b.getThrownTypes());
+                    && visitAll(t.getParameterTypes(), b.getParameterTypes());
+            // thrown exceptions not taken into account
+            // && visitAll(t.getThrownTypes(), b.getThrownTypes());
         }
 
         @Override
@@ -248,6 +256,77 @@ final class TypeUtils {
         }
     };
 
+    private static final TypeVisitor<TypeMirror, Universe> CAPTURE = new SimpleTypeVisitor8<TypeMirror, Universe>() {
+        @Override
+        protected TypeMirror defaultAction(TypeMirror e, Universe universe) {
+            return e;
+        }
+
+        @Override
+        public TypeMirror visitDeclared(DeclaredType t, Universe universe) {
+            if (t.getEnclosingType() != null) {
+                TypeMirror capturedEnclosing = capture(t.getEnclosingType(), universe);
+
+            }
+            return super.visitDeclared(t, universe);
+        }
+        // TODO implement
+    };
+
+    private static final ElementVisitor<TypeMirror, TypeMirror> AS_MEMBER = new SimpleElementVisitor8<TypeMirror, TypeMirror>() {
+        @Override
+        protected TypeMirror defaultAction(Element e, TypeMirror typeMirror) {
+            return e.asType();
+        }
+
+        @Override
+        public TypeMirror visitVariable(VariableElement e, TypeMirror typeMirror) {
+            // TODO implement
+            return null;
+        }
+
+        @Override
+        public TypeMirror visitType(TypeElement e, TypeMirror typeMirror) {
+            return super.visitType(e, typeMirror);
+        }
+
+        @Override
+        public TypeMirror visitExecutable(ExecutableElement e, TypeMirror typeMirror) {
+            return super.visitExecutable(e, typeMirror);
+        }
+
+        @Override
+        public TypeMirror visitTypeParameter(TypeParameterElement e, TypeMirror typeMirror) {
+            return super.visitTypeParameter(e, typeMirror);
+        }
+    };
+
+    private static final TypeVisitor<TypeMirror, Universe> WILDCARD_UPPER_BOUND = new SimpleTypeVisitor8<TypeMirror, Universe>() {
+        @Override
+        protected TypeMirror defaultAction(TypeMirror e, Universe universe) {
+            return e;
+        }
+
+        @Override
+        public TypeMirror visitWildcard(WildcardType t, Universe universe) {
+            TypeMirror upper = t.getExtendsBound();
+            return upper == null ? universe.getJavaLangObject().asType() : visit(upper, universe);
+        }
+    };
+
+    private static final TypeVisitor<TypeMirror, Void> WILDCARD_LOWER_BOUND = new SimpleTypeVisitor8<TypeMirror, Void>() {
+        @Override
+        protected TypeMirror defaultAction(TypeMirror e, Void ignored) {
+            return e;
+        }
+
+        @Override
+        public TypeMirror visitWildcard(WildcardType t, Void ignored) {
+            TypeMirror upper = t.getExtendsBound();
+            return upper != null ? new NullTypeImpl(null) : visit(t.getSuperBound());
+        }
+    };
+
     private TypeUtils() {
     }
 
@@ -260,12 +339,22 @@ final class TypeUtils {
     }
 
     @SuppressWarnings("unchecked")
-    static <T extends TypeMirror> T erasure(T type) {
-        return (T) ERASER.visit(type);
+    static <T extends TypeMirror> T erasure(T type, Universe universe) {
+        return (T) ERASER.visit(type, universe);
     }
 
-    static boolean isSubSignature(ExecutableType subSignature, ExecutableType signature) {
-        return HAS_SAME_ARGS.visit(subSignature, signature) || HAS_SAME_ARGS.visit(subSignature, erasure(signature));
+    @SuppressWarnings("unchecked")
+    static <T extends TypeMirror> T capture(T type, Universe universe) {
+        return (T) CAPTURE.visit(type, universe);
+    }
+
+    static boolean isSubSignature(ExecutableType subSignature, ExecutableType signature, Universe universe) {
+        return HAS_SAME_ARGS.visit(subSignature, signature)
+                || HAS_SAME_ARGS.visit(subSignature, erasure(signature, universe));
+    }
+
+    static boolean hasSameArgs(ExecutableType subSignature, ExecutableType signature) {
+        return HAS_SAME_ARGS.visit(subSignature, signature);
     }
 
     static TypeElement getNearestType(Element el) {
@@ -276,12 +365,56 @@ final class TypeUtils {
         return (TypeElement) el;
     }
 
+    /**
+     * Checks whether {@code superClass} is a super class of the {@code subClass}. This only takes into account class
+     * inheritance, not interfaces.
+     * 
+     * @param subClass
+     *            the sub-class
+     * @param superClass
+     *            the super-class
+     * 
+     * @return true if subClass is sub-class of the superClass, false otherwise
+     */
     static boolean isSubclass(TypeElement subClass, TypeElement superClass) {
         while (subClass != null) {
             if (subClass == superClass) {
                 return true;
             } else {
                 subClass = asTypeElement(subClass.getSuperclass());
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Similar to {@link #isSubclass(TypeElement, TypeElement)} but takes into account the whole inheritance hierarchy
+     * including the implemented interfaces.
+     * 
+     * @param subClass
+     *            the sub-class
+     * @param superClass
+     *            the super-class
+     * 
+     * @return true if the subClass is a sub-type of the superClass, false otherwise
+     */
+    static boolean isSubType(TypeElement subClass, TypeElement superClass) {
+        if (subClass == null) {
+            return false;
+        }
+
+        if (subClass == superClass) {
+            return true;
+        }
+
+        if (isSubType(asTypeElement(subClass.getSuperclass()), superClass)) {
+            return true;
+        }
+
+        for (TypeMirror t : subClass.getInterfaces()) {
+            if (isSubType(asTypeElement(t), superClass)) {
+                return true;
             }
         }
 
@@ -305,17 +438,62 @@ final class TypeUtils {
         }
     }
 
+    static boolean isConstructor(ExecutableElement m) {
+        return m.getSimpleName().contentEquals("<init>");
+    }
+
     static boolean isMemberOf(ExecutableElement method, TypeElement type) {
+        TypeElement owner = getNearestType(method.getEnclosingElement());
+
+        if (owner.equals(type)) {
+            return true;
+        }
+
+        return isSubType(type, owner) && isAccessibleIn(method, type) && !isHiddenIn(method, type);
+    }
+
+    static TypeMirror asMemberOf(TypeMirror owner, Element decl) {
+        switch (decl.getKind()) {
+        case CLASS:
+        case METHOD:
+        case CONSTRUCTOR:
+        case FIELD:
+        case EXCEPTION_PARAMETER:
+        case PARAMETER:
+            return AS_MEMBER.visit(decl, owner);
+        default:
+            return decl.asType();
+        }
+    }
+
+    static boolean isHiddenIn(Element element, TypeElement owner) {
         // TODO implement
         return false;
     }
 
-    static boolean overrides(ExecutableElement overrider, ExecutableElement overridden, TypeElement type) {
-        // TODO implement
-        return false;
+    static boolean hasSameBounds(List<? extends TypeVariable> as, List<? extends TypeVariable> bs) {
+        int len = as.size();
+        if (bs.size() != len) {
+            return false;
+        }
+
+        for (int i = 0; i < len; ++i) {
+            TypeVariable a = as.get(i);
+            TypeVariable b = bs.get(i);
+
+            if (!IS_SAME_TYPE.visit(a, b)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    private static Boolean visitAllWith(TypeVisitor<Boolean, TypeMirror> visitor, List<? extends TypeMirror> as,
+    static boolean isSameType(TypeMirrorImpl t1, TypeMirrorImpl t2) {
+        return IS_SAME_TYPE.visit(t1, t2);
+    }
+
+    private static boolean visitAllWith(TypeVisitor<Boolean, TypeMirror> visitor, List<? extends TypeMirror> as,
             List<? extends TypeMirror> bs) {
         if (as.size() != bs.size()) {
             return false;
@@ -331,5 +509,53 @@ final class TypeUtils {
         }
 
         return true;
+    }
+
+    private static <K> boolean visitKeyed(TypeVisitor<Boolean, TypeMirror> visitor, List<? extends TypeMirror> as,
+            List<? extends TypeMirror> bs, Function<TypeMirror, K> keyExtractor) {
+        if (as.size() != bs.size()) {
+            return false;
+        }
+
+        Map<K, TypeMirror> mappedAs = new HashMap<>(as.size());
+        for (TypeMirror t : as) {
+            mappedAs.put(keyExtractor.apply(t), t);
+        }
+
+        for (TypeMirror b : bs) {
+            TypeMirror a = mappedAs.remove(keyExtractor.apply(b));
+            if (a == null) {
+                return false;
+            }
+
+            if (!visitor.visit(a, b)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    enum ElementNamespace {
+        FIELDS, METHODS, TYPES, PACKAGES, MODULES, OTHER;
+
+        static ElementNamespace of(ElementKind kind) {
+            if (kind.isClass() || kind.isInterface()) {
+                return TYPES;
+            } else if (kind.isField()) {
+                return FIELDS;
+            } else if (kind.ordinal() == 17) {
+                // we need to keep this java 8 compat, but also support later features.
+                // let's go the dangerous way and rely on the enum constant order to
+                // figure out what kind this is
+                return MODULES;
+            } else if (kind == ElementKind.PACKAGE) {
+                return PACKAGES;
+            } else if (kind == ElementKind.METHOD) {
+                return METHODS;
+            } else {
+                return OTHER;
+            }
+        }
     }
 }

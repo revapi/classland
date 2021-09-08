@@ -14,8 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package types;
+package annoinherited;
 
-public class B {
+import java.lang.annotation.Inherited;
 
+public class Tested {
+
+    @Inherited
+    public @interface Inheritable {
+        int a() default 0;
+    }
+
+    public @interface NonInheritable {
+        int a() default 0;
+    }
+
+    @Inheritable
+    @NonInheritable
+    public class Base {}
+
+    public class InheritFromBase extends Base {}
+
+    @NonInheritable(a = 1)
+    public class InheritFromBaseAndOwnAnno extends Base {}
+
+    @Inheritable(a = 1)
+    public class OverrideFromBase extends Base {}
+
+    @Inheritable(a = 1)
+    @NonInheritable(a = 1)
+    public class OverrideFromBaseAndOwnAnno extends Base {}
 }

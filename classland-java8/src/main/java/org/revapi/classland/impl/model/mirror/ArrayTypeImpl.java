@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,5 +59,26 @@ public class ArrayTypeImpl extends TypeMirrorImpl implements ArrayType {
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitArray(this, p);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        ArrayTypeImpl arrayType = (ArrayTypeImpl) o;
+
+        return componentType.equals(arrayType.componentType);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + componentType.hashCode();
+        return result;
     }
 }

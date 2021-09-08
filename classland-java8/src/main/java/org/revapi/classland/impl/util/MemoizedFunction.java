@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,13 @@
  */
 package org.revapi.classland.impl.util;
 
+import static org.revapi.classland.impl.util.MemoizedValue.DEBUG;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-
 public class MemoizedFunction<T, R> implements Function<T, R> {
-    private static final boolean DEBUG = LogManager.getLogger(MemoizedFunction.class).isDebugEnabled();
-
     private final @Nullable Function<T, R> action;
     protected Map<T, R> values;
 

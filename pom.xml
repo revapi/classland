@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2020 Lukas Krejci
+    Copyright 2020-2021 Lukas Krejci
     and other contributors as indicated by the @author tags.
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@
         <version.net.revelc.code>1.4.1</version.net.revelc.code>
         <version.com.mycila>3.0</version.com.mycila>
         <version.org.apache.logging.log4j>2.13.3</version.org.apache.logging.log4j>
-        <version.org.revapi.testjars>0.2.0</version.org.revapi.testjars>
+        <version.org.revapi.testjars>0.3.0</version.org.revapi.testjars>
     </properties>
 
     <modules>
@@ -57,6 +57,7 @@
         <module>classland-java9</module>
         <module>classland-java15</module>
         <module>classland-module</module>
+        <module>classland-java16</module>
         <module>integration-tests</module>
         <module>classland-distribution</module>
     </modules>
@@ -183,7 +184,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>15</version>
+                                    <version>16</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>

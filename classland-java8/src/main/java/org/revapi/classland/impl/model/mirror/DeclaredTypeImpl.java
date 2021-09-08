@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,5 +86,34 @@ public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
     @Override
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitDeclared(this, p);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        DeclaredTypeImpl that = (DeclaredTypeImpl) o;
+
+        if (!source.equals(that.source)) {
+            return false;
+        }
+        if (!enclosingType.equals(that.enclosingType)) {
+            return false;
+        }
+        return typeArguments.equals(that.typeArguments);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + source.hashCode();
+        result = 31 * result + enclosingType.hashCode();
+        result = 31 * result + typeArguments.hashCode();
+        return result;
     }
 }

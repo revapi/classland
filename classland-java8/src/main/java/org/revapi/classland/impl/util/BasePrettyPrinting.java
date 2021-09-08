@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -320,6 +320,31 @@ public class BasePrettyPrinting {
             return null;
         }
 
+        @Override
+        protected Void doVisitNull(NullType t, StringBuilderAndState st) {
+            st.bld.append("Null");
+            return null;
+        }
+
+        @Override
+        protected Void doVisitUnion(UnionType t, StringBuilderAndState st) {
+            Iterator<? extends TypeMirror> it = t.getAlternatives().iterator();
+            if (it.hasNext()) {
+                visit(it.next(), st);
+            }
+            while (it.hasNext()) {
+                st.bld.append(" | ");
+                visit(it.next(), st);
+            }
+            return null;
+        }
+
+        @Override
+        protected Void doVisitUnknown(TypeMirror t, StringBuilderAndState st) {
+            st.bld.append("???");
+            return null;
+        }
+
         private boolean visitTypeVars(List<? extends TypeMirror> vars, StringBuilderAndState state) {
             if (!vars.isEmpty()) {
                 Set<Name> names = vars.stream().map(v -> TYPE_VARIABLE_NAME.visit(v)).collect(Collectors.toSet());
@@ -497,11 +522,27 @@ public class BasePrettyPrinting {
                 return wrt;
             }
 
-            for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e : vals.entrySet()) {
+            wrt.append("(");
+
+            Iterator<? extends Map.Entry<? extends ExecutableElement, ? extends AnnotationValue>> it = vals.entrySet()
+                    .iterator();
+            if (it.hasNext()) {
+                Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e = it.next();
                 wrt.append(e.getKey().getSimpleName());
                 wrt.append("=");
                 print(wrt, e.getValue());
             }
+
+            while (it.hasNext()) {
+                Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e = it.next();
+                wrt.append(", ");
+                wrt.append(e.getKey().getSimpleName());
+                wrt.append("=");
+                print(wrt, e.getValue());
+            }
+
+            wrt.append(")");
+
             return wrt;
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to pretty print the element.", e);
@@ -590,7 +631,6 @@ public class BasePrettyPrinting {
 
     private static class StringBuilderAndState {
         final StringBuilder bld = new StringBuilder();
-        final Set<TypeMirror> visitedObjects = new HashSet<>(4);
         final Set<Name> forwardTypeVarDecls = new HashSet<>(2);
         Function<StringBuilderAndState, Runnable> methodInitAndNameOutput;
         boolean visitingMethod;

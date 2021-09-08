@@ -14,8 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package types;
+package org.revapi.classland.impl;
 
-public class B {
+import org.junit.jupiter.api.Test;
+
+class TypeUtilsTest {
+
+    @Test
+    void testAsTypeElement() throws Exception {
+
+    }
+
+    @Test
+    void testGetPackageOf() throws Exception {
+
+    }
 
 }

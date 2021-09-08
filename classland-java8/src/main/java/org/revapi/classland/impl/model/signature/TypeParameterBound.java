@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,5 +27,23 @@ public class TypeParameterBound {
         this.boundType = boundType;
         this.classBound = classBound;
         this.interfaceBounds = interfaceBounds;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        TypeParameterBound that = (TypeParameterBound) o;
+        return boundType == that.boundType && classBound.equals(that.classBound)
+                && interfaceBounds.equals(that.interfaceBounds);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * (boundType.hashCode() + classBound.hashCode() + interfaceBounds.hashCode());
     }
 }

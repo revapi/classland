@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,4 +42,6 @@ public class NoTypeImpl extends TypeMirrorImpl implements NoType {
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitNoType(this, p);
     }
+
+    // no need to override equals & hashcode... all no-types from the same universe are equal
 }

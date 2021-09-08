@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Objects;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -71,7 +72,7 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
 
             value = enumType.getField(enumConstantName);
             if (value == null) {
-                value = new VariableElementImpl.Missing(universe, enumType, enumConstantName,
+                value = new VariableElementImpl.Missing(universe, enumType.lookupModule(), enumType, enumConstantName,
                         "L" + enumType.getInternalName() + ";", ElementKind.ENUM_CONSTANT);
             }
         } else if (value instanceof AnnotationNode) {
@@ -92,6 +93,20 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
     @Override
     public Object getValue() {
         return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!super.equals(o)) {
+            return false;
+        }
+        AnnotationValueImpl that = (AnnotationValueImpl) o;
+        return Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + (value == null ? 0 : value.hashCode());
     }
 
     @Override

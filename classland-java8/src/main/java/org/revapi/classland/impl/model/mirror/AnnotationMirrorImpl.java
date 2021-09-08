@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@ package org.revapi.classland.impl.model.mirror;
 
 import static java.util.Collections.emptyList;
 
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import javax.lang.model.element.AnnotationMirror;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.revapi.classland.PrettyPrinting;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.BaseModelImpl;
 import org.revapi.classland.impl.model.element.ExecutableElementBase;
@@ -79,6 +81,36 @@ public final class AnnotationMirrorImpl extends BaseModelImpl implements Annotat
         return values;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        AnnotationMirrorImpl that = (AnnotationMirrorImpl) o;
+
+        if (!annotationType.equals(that.annotationType)) {
+            return false;
+        }
+        return values.equals(that.values);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + annotationType.hashCode();
+        result = 31 * result + values.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return PrettyPrinting.print(new StringWriter(), this).toString();
+    }
+
     private static String deduceTypeFromAnnotationValue(AnnotationValueImpl value) {
         AnnotationValueImpl.Kind kind = AnnotationValueImpl.Kind.of(value.getValue());
         switch (kind) {
@@ -101,10 +133,10 @@ public final class AnnotationMirrorImpl extends BaseModelImpl implements Annotat
         case STRING:
             return "Ljava/lang/String;";
         case TYPE:
-            t = (TypeElementBase) ((DeclaredTypeImpl) value.getValue()).asElement();
+            t = ((DeclaredTypeImpl) value.getValue()).asElement();
             return Type.getObjectType(t.getInternalName()).getDescriptor();
         case ANNO:
-            t = (TypeElementBase) ((AnnotationMirrorImpl) value.getValue()).annotationType.asElement();
+            t = ((AnnotationMirrorImpl) value.getValue()).annotationType.asElement();
             return Type.getObjectType(t.getInternalName()).getDescriptor();
         case BYTE:
             return Type.BYTE_TYPE.getDescriptor();

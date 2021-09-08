@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,23 +41,5 @@ public class NullTypeImpl extends TypeMirrorImpl implements NullType {
         return v.visitNull(this, p);
     }
 
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this)
-            return true;
-        if (!(obj instanceof NullTypeImpl))
-            return false;
-
-        return universe.equals(((NullTypeImpl) obj).universe);
-    }
-
-    @Override
-    public String toString() {
-        return "Null";
-    }
+    // no need to override equals & hashcode... all null-types from the same universe are equal
 }

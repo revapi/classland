@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,12 +33,14 @@ import org.revapi.classland.impl.util.Nullable;
 public abstract class TypeElementBase extends ElementImpl implements TypeElement, TypeVariableResolutionContext {
     protected final String internalName;
     protected final MemoizedValue<PackageElementImpl> pkg;
+    protected final MemoizedValue<ModuleElementImpl> module;
 
     protected TypeElementBase(Universe universe, String internalName, MemoizedValue<@Nullable PackageElementImpl> pkg,
             MemoizedValue<AnnotationSource> annos) {
         super(universe, annos, AnnotationTargetPath.ROOT, pkg.map(p -> p == null ? null : p.getModule()));
         this.internalName = internalName;
         this.pkg = pkg;
+        this.module = pkg.map(p -> p == null ? null : p.getModule());
     }
 
     public String getInternalName() {
@@ -50,9 +52,7 @@ public abstract class TypeElementBase extends ElementImpl implements TypeElement
     }
 
     public MemoizedValue<ModuleElementImpl> lookupModule() {
-        // TODO this is returning a new value instance each time, effectively
-        // making it NOT lazy. Is this what we want here?
-        return pkg.map(p -> p == null ? null : p.getModule());
+        return module;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@ package org.revapi.classland.impl.model;
 
 import javax.lang.model.element.Name;
 
+import org.revapi.classland.impl.util.Nullable;
+
 public final class NameImpl implements Name {
     public static final NameImpl EMPTY = new NameImpl("");
 
@@ -27,7 +29,7 @@ public final class NameImpl implements Name {
         this.value = value;
     }
 
-    public static NameImpl of(String value) {
+    public static NameImpl of(@Nullable String value) {
         if (value == null || value.isEmpty()) {
             return EMPTY;
         }
@@ -62,5 +64,22 @@ public final class NameImpl implements Name {
     @Override
     public String toString() {
         return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        NameImpl name = (NameImpl) o;
+        return value.equals(name.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
     }
 }

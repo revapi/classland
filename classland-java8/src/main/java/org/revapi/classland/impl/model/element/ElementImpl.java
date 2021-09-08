@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@ package org.revapi.classland.impl.model.element;
 
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Objects;
 
 import javax.lang.model.element.Element;
 
@@ -59,10 +60,6 @@ public abstract class ElementImpl extends AnnotatedConstructImpl implements Elem
     @Override
     public abstract List<? extends ElementImpl> getEnclosedElements();
 
-    @Override
-    public String toString() {
-        StringWriter wrt = new StringWriter();
-        PrettyPrinting.print(wrt, this);
-        return wrt.toString();
-    }
+    // The elements are unique in the universe, so we can use
+    // quick identity checks for equality
 }

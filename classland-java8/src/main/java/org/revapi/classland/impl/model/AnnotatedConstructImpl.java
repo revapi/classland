@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2021 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@ package org.revapi.classland.impl.model;
 
 import static java.util.stream.Collectors.toList;
 
+import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
@@ -25,6 +26,7 @@ import javax.lang.model.AnnotatedConstruct;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import org.revapi.classland.PrettyPrinting;
 import org.revapi.classland.impl.Universe;
 import org.revapi.classland.impl.model.anno.AnnotationFinder;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
@@ -74,6 +76,11 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
     @Override
     public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationType) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+        return PrettyPrinting.print(new StringWriter(), this).toString();
     }
 
     protected final List<AnnotationMirrorImpl> parseAnnotations(ClassNode cls, ModuleElementImpl typeLookupSeed) {
