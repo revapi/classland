@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,10 +24,12 @@ import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 import static org.revapi.classland.impl.util.MemoizedValue.obtainedNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import javax.lang.model.element.ElementKind;
@@ -37,7 +39,8 @@ import javax.lang.model.type.TypeKind;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.ModuleNode;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.archive.Archive;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -48,21 +51,25 @@ import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class BaseModuleElementImpl extends ElementImpl {
+    protected final @Nullable Archive archive;
     protected final @Nullable ModuleNode module;
     protected final NameImpl name;
     protected final MemoizedValue<List<AnnotationMirrorImpl>> annos;
     protected final MemoizedValue<NoTypeImpl> type;
     protected final MemoizedValue<List<PackageElementImpl>> packages;
 
+    private final List<Consumer<Map<String, PackageElementImpl>>> packageGatherers;
+    private final MemoizedValue<Map<String, PackageElementImpl>> gatheredPackages;
     private final Map<String, PackageElementImpl> mutablePackages = new ConcurrentHashMap<>();
 
-    protected BaseModuleElementImpl(Universe universe, @Nullable ClassNode moduleType, TypeKind actualKind) {
-        super(universe, obtained(moduleType == null ? AnnotationSource.EMPTY : AnnotationSource.fromType(moduleType)),
+    protected BaseModuleElementImpl(TypeLookup lookup, @Nullable Archive archive, @Nullable ClassNode moduleType,
+            TypeKind actualKind) {
+        super(lookup, obtained(moduleType == null ? AnnotationSource.EMPTY : AnnotationSource.fromType(moduleType)),
                 AnnotationTargetPath.ROOT,
                 // a roundabout way to "this" before we initialize it
-                memoize(() -> moduleType == null ? universe.getUnnamedModule()
-                        : universe.getModule(moduleType.module.name).get()));
-
+                memoize(() -> moduleType == null ? lookup.getUnnamedModule()
+                        : lookup.getModule(moduleType.module.name)));
+        this.archive = archive;
         this.module = moduleType == null ? null : moduleType.module;
         this.name = NameImpl.of(module == null ? null : module.name);
 
@@ -72,18 +79,45 @@ public abstract class BaseModuleElementImpl extends ElementImpl {
 
         this.annos = moduleType == null ? obtained(emptyList()) : memoize(() -> parseAnnotations(moduleType, castThis));
 
-        this.type = memoize(() -> new NoTypeImpl(universe, annos, actualKind));
+        this.type = memoize(() -> new NoTypeImpl(lookup, annos, actualKind));
 
-        this.packages = memoize(() -> new ArrayList<>(mutablePackages.values()));
+        this.packageGatherers = new ArrayList<>();
+        this.gatheredPackages = initGatheredPackages(packageGatherers);
+        this.packages = gatheredPackages.map(m -> new ArrayList<>(m.values()));
     }
 
-    protected BaseModuleElementImpl(Universe universe, String moduleName, TypeKind actualKind) {
-        super(universe, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtainedNull());
+    protected BaseModuleElementImpl(TypeLookup lookup, @Nullable Archive archive, String moduleName,
+            TypeKind actualKind) {
+        super(lookup, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtainedNull());
+        this.archive = archive;
         this.module = null;
         this.name = NameImpl.of(moduleName);
         this.annos = obtained(emptyList());
-        this.type = memoize(() -> new NoTypeImpl(universe, annos, actualKind));
-        this.packages = memoize(() -> new ArrayList<>(mutablePackages.values()));
+        this.type = memoize(() -> new NoTypeImpl(lookup, annos, actualKind));
+        this.packageGatherers = new ArrayList<>();
+        this.gatheredPackages = initGatheredPackages(packageGatherers);
+        this.packages = gatheredPackages.map(m -> new ArrayList<>(m.values()));
+    }
+
+    private static MemoizedValue<Map<String, PackageElementImpl>> initGatheredPackages(
+            List<Consumer<Map<String, PackageElementImpl>>> gatherers) {
+        return memoize(() -> {
+            Map<String, PackageElementImpl> packages = new HashMap<>();
+            gatherers.forEach(c -> c.accept(packages));
+            return packages;
+        });
+    }
+
+    public @Nullable Archive getArchive() {
+        return archive;
+    }
+
+    public void addPackageGatherer(Consumer<Map<String, PackageElementImpl>> gatherer) {
+        this.packageGatherers.add(gatherer);
+    }
+
+    public MemoizedValue<Map<String, PackageElementImpl>> computePackages() {
+        return gatheredPackages;
     }
 
     public Map<String, PackageElementImpl> getMutablePackages() {

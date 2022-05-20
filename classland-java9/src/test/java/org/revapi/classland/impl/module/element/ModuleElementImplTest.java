@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,19 +33,19 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.revapi.classland.archive.jar.JarFileArchive;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypePool;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 
 @TestInstance(PER_CLASS)
 class ModuleElementImplTest {
 
-    private Universe universe;
+    private TypePool universe;
     private ModuleElementImpl module;
 
     @BeforeAll
     void setup() throws Exception {
         JarFile jar = new JarFile(getClass().getClassLoader().getResource("asm-8.0.1.jar").getPath());
-        universe = new Universe(true);
+        universe = new TypePool(true);
         universe.registerArchive(new JarFileArchive(jar));
         assertEquals(2, universe.getModules().size());
         module = universe.getModules().stream().filter(m -> m.getQualifiedName().length() != 0).findFirst().get();

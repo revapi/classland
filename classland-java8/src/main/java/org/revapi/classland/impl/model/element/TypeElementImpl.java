@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,7 +47,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.archive.Archive;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -56,10 +56,7 @@ import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
-import org.revapi.classland.impl.model.signature.GenericTypeParameters;
-import org.revapi.classland.impl.model.signature.SignatureParser;
-import org.revapi.classland.impl.model.signature.TypeParameterBound;
-import org.revapi.classland.impl.model.signature.TypeSignature;
+import org.revapi.classland.impl.model.signature.*;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Modifiers;
 import org.revapi.classland.impl.util.Nullable;
@@ -83,9 +80,9 @@ public final class TypeElementImpl extends TypeElementBase {
     private final MemoizedValue<Map<String, VariableElementImpl.Field>> fields;
     private final MemoizedValue<GenericTypeParameters> signature;
 
-    public TypeElementImpl(Universe universe, String internalName, MemoizedValue<ClassNode> node,
+    public TypeElementImpl(TypeLookup lookup, Archive archive, String internalName, MemoizedValue<ClassNode> node,
             PackageElementImpl pkg) {
-        super(universe, internalName, obtained(pkg), node.map(AnnotationSource::fromType));
+        super(lookup, archive, internalName, obtained(pkg), node.map(AnnotationSource::fromType));
         this.node = node;
 
         this.scan = node.map(cls -> {
@@ -93,6 +90,8 @@ public final class TypeElementImpl extends TypeElementBase {
             ret.classNode = cls;
             ret.nestingKind = NestingKind.TOP_LEVEL;
             ret.effectiveAccess = cls.access;
+
+            ret.outerClass = cls.outerClass;
 
             if (cls.innerClasses.isEmpty()) {
                 ret.simpleName = cls.name.replace('/', '.');
@@ -102,9 +101,11 @@ public final class TypeElementImpl extends TypeElementBase {
                 ret.innerClasses = new ArrayList<>();
                 for (InnerClassNode icn : cls.innerClasses) {
                     // The list of the inner classes recorded on a type seems to contain all the containing classes +
-                    // all the directly contained classes + the type itself. Therefore we can rely simply on the length
+                    // all the directly contained classes + the type itself. Therefore, we can rely simply on the length
                     // of the name to distinguish between them.
-                    if (icn.name.length() <= classNameLength) {
+                    // Note that the list of inner classes also contains inner classes that are not defined in this
+                    // class (possibly they are just used in the class code), so we need to guard for that, too.
+                    if (icn.name.length() <= classNameLength && cls.name.startsWith(icn.name)) {
                         ret.qualifiedNameParts.put(icn.name, icn);
 
                         if (icn.name.length() == classNameLength) {
@@ -186,9 +187,14 @@ public final class TypeElementImpl extends TypeElementBase {
                 return pkg;
             case MEMBER:
             case ANONYMOUS:
-                return universe.getTypeByInternalNameFromPackage(r.outerClass, pkg);
+                if (r.classNode.outerMethod == null) {
+                    return lookup.getTypeByInternalNameFromPackage(r.outerClass, pkg);
+                } else {
+                    return lookup.getTypeByInternalNameFromPackage(r.classNode.outerClass, pkg)
+                            .getMethod(r.classNode.outerMethod, r.classNode.outerMethodDesc);
+                }
             case LOCAL:
-                return universe.getTypeByInternalNameFromPackage(r.classNode.outerClass, pkg)
+                return lookup.getTypeByInternalNameFromPackage(r.classNode.outerClass, pkg)
                         .getMethod(r.classNode.outerMethod, r.classNode.outerMethodDesc);
             default:
                 throw new IllegalStateException("Unhandled nesting kind, " + r.nestingKind
@@ -199,7 +205,7 @@ public final class TypeElementImpl extends TypeElementBase {
 
         signature = scan.map(s -> {
             TypeElementBase outerClass = s.outerClass == null ? null
-                    : universe.getTypeByInternalNameFromPackage(s.outerClass, pkg);
+                    : lookup.getTypeByInternalNameFromPackage(s.outerClass, pkg);
 
             ClassNode n = s.classNode;
 
@@ -217,14 +223,14 @@ public final class TypeElementImpl extends TypeElementBase {
             }
         });
 
-        type = memoize(() -> TypeMirrorFactory.create(universe, this));
+        type = memoize(() -> TypeMirrorFactory.create(lookup, this));
 
         superClass = signature.map(ts -> {
             if (ts.superClass == null) {
                 // java.lang.Object or interfaces
-                return new NoTypeImpl(universe, obtainedEmptyList(), TypeKind.NONE);
+                return new NoTypeImpl(lookup, obtainedEmptyList(), TypeKind.NONE);
             } else {
-                return TypeMirrorFactory.create(universe, ts.superClass, this, asAnnotationSource(),
+                return TypeMirrorFactory.create(lookup, ts.superClass, this, asAnnotationSource(),
                         new AnnotationTargetPath(TypeReference.newSuperTypeReference(-1)), obtained(pkg.getModule()));
             }
         });
@@ -234,7 +240,7 @@ public final class TypeElementImpl extends TypeElementBase {
 
             int i = 0;
             for (TypeSignature iface : ts.interfaces) {
-                ret.add(TypeMirrorFactory.create(universe, iface, this, asAnnotationSource(),
+                ret.add(TypeMirrorFactory.create(lookup, iface, this, asAnnotationSource(),
                         new AnnotationTargetPath(TypeReference.newSuperTypeReference(i++)), obtained(pkg.getModule())));
             }
 
@@ -245,7 +251,7 @@ public final class TypeElementImpl extends TypeElementBase {
             int i = 0;
             LinkedHashMap<String, TypeParameterElementImpl> typeParams = new LinkedHashMap<>();
             for (Map.Entry<String, TypeParameterBound> e : ts.typeParameters.entrySet()) {
-                typeParams.put(e.getKey(), new TypeParameterElementImpl(universe, e.getKey(), this, e.getValue(), i++));
+                typeParams.put(e.getKey(), new TypeParameterElementImpl(lookup, e.getKey(), this, e.getValue(), i++));
             }
             return typeParams;
         });
@@ -253,19 +259,24 @@ public final class TypeElementImpl extends TypeElementBase {
         typeParameters = typeParametersMap.map(m -> new ArrayList<>(m.values()));
 
         methods = node.map(n -> n.methods.stream().filter(m -> !Modifiers.isSynthetic(m.access))
-                .collect(toMap(m -> m.name + "#" + m.desc, m -> new ExecutableElementImpl(universe, this, m))));
+                .collect(toMap(m -> m.name + "#" + m.desc, m -> new ExecutableElementImpl(lookup, this, m))));
 
         fields = node.map(n -> n.fields.stream().filter(f -> !Modifiers.isSynthetic(f.access))
-                .map(f -> new VariableElementImpl.Field(universe, this, f))
+                .map(f -> new VariableElementImpl.Field(lookup, this, f))
                 .collect(Collectors.toMap(v -> v.getSimpleName().asString(), identity())));
 
         enclosedElements = scan.map(r -> {
             Stream<TypeElementBase> innerClasses = r.innerClasses == null ? Stream.empty()
-                    : r.innerClasses.stream().map(c -> universe.getTypeByInternalNameFromPackage(c, pkg));
+                    : r.innerClasses.stream().map(c -> lookup.getTypeByInternalNameFromPackage(c, pkg));
 
             return concat(concat(fields.get().values().stream(), methods.get().values().stream()), innerClasses)
                     .collect(toList());
         });
+    }
+
+    @Override
+    public Archive getArchive() {
+        return super.getArchive();
     }
 
     @Override
@@ -313,11 +324,15 @@ public final class TypeElementImpl extends TypeElementBase {
     @Override
     public Optional<TypeParameterElementImpl> resolveTypeVariable(String name) {
         TypeParameterElementImpl p = typeParametersMap.get().get(name);
-        if (p == null && scan.get().outerClass != null) {
-            TypeElementImpl outerClass = (TypeElementImpl) getEnclosingElement();
-            return outerClass.resolveTypeVariable(name);
+        if (p == null) {
+            ElementImpl outer = getEnclosingElement();
+            if (outer instanceof TypeVariableResolutionContext) {
+                return ((TypeVariableResolutionContext) outer).resolveTypeVariable(name);
+            } else {
+                return Optional.empty();
+            }
         } else {
-            return Optional.ofNullable(p);
+            return Optional.of(p);
         }
     }
 

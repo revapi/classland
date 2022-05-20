@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,15 +22,13 @@ import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.List;
 
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
-import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
@@ -40,27 +38,32 @@ public class DeclaredTypeImpl extends TypeMirrorImpl implements DeclaredType {
     private final TypeMirrorImpl enclosingType;
     private final List<TypeMirrorImpl> typeArguments;
 
-    public DeclaredTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
+    public DeclaredTypeImpl(TypeLookup lookup, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
             List<TypeMirrorImpl> typeArguments, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path) {
-        super(universe, annotationSource, path, source.lookupModule());
+        super(lookup, annotationSource, path, source.lookupModule());
         this.source = source;
-        this.enclosingType = enclosingType == null ? new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE)
+        this.enclosingType = enclosingType == null ? new NoTypeImpl(lookup, obtained(emptyList()), TypeKind.NONE)
                 : enclosingType;
         this.typeArguments = typeArguments;
     }
 
-    public DeclaredTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
+    public DeclaredTypeImpl(TypeLookup lookup, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
             List<TypeMirrorImpl> typeArguments, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
-        super(universe, annos);
+        super(lookup, annos);
         this.source = source;
-        this.enclosingType = enclosingType == null ? new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE)
+        this.enclosingType = enclosingType == null ? new NoTypeImpl(lookup, obtained(emptyList()), TypeKind.NONE)
                 : enclosingType;
         this.typeArguments = typeArguments;
     }
 
-    public DeclaredTypeImpl rebind(TypeMirrorImpl enclosingType, List<TypeMirrorImpl> newTypeArguments) {
-        return new DeclaredTypeImpl(getUniverse(), source, enclosingType, newTypeArguments, annos);
+    public DeclaredTypeImpl rebind(@Nullable TypeMirrorImpl enclosingType, List<TypeMirrorImpl> newTypeArguments) {
+        return new DeclaredTypeImpl(getLookup(), source, enclosingType, newTypeArguments, annos);
+    }
+
+    @Override
+    public TypeElementBase getSource() {
+        return source;
     }
 
     @Override

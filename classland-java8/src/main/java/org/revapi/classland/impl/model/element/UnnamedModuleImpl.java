@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,16 +18,16 @@ package org.revapi.classland.impl.model.element;
 
 import java.util.stream.Stream;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 
 public class UnnamedModuleImpl extends ModuleElementImpl {
-    public UnnamedModuleImpl(Universe universe) {
-        super(universe, (String) null);
+    public UnnamedModuleImpl(TypeLookup lookup) {
+        super(lookup, null, "", false);
     }
 
     @Override
     public Stream<ReachableModule> getReachableModules() {
-        return universe.getModules().stream().filter(m -> m != this).map(m -> new ReachableModule() {
+        return lookup.getModules().stream().filter(m -> m != this).map(m -> new ReachableModule() {
             @Override
             public boolean isTransitive() {
                 // we're returning all modules, so no need to be transitive...

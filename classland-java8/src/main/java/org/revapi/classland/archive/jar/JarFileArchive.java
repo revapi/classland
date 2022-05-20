@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ public class JarFileArchive implements Archive {
     @Override
     public Iterator<ClassData> iterator() {
         return jarFile.stream().filter(e -> e.getName().endsWith(".class"))
+                .filter(e -> !"module-info.class".equals(e.getName()))
                 .map(e -> (ClassData) new ZipEntryClassData(jarFile, e)).iterator();
     }
 
@@ -50,6 +51,16 @@ public class JarFileArchive implements Archive {
             try (InputStream in = jarFile.getInputStream(entry)) {
                 return Optional.of(new Manifest(in));
             }
+        }
+    }
+
+    @Override
+    public Optional<ClassData> getModuleInfo() throws IOException {
+        ZipEntry entry = jarFile.getEntry("module-info.class");
+        if (entry == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new ZipEntryClassData(jarFile, entry));
         }
     }
 

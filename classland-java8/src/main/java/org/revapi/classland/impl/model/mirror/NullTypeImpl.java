@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,11 +24,11 @@ import javax.lang.model.type.NullType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 
 public class NullTypeImpl extends TypeMirrorImpl implements NullType {
-    public NullTypeImpl(Universe universe) {
-        super(universe, obtained(emptyList()));
+    public NullTypeImpl(TypeLookup lookup) {
+        super(lookup, obtained(emptyList()));
     }
 
     @Override

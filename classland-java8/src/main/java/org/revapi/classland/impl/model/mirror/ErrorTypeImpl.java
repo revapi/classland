@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.TypeElementBase;
@@ -30,15 +30,15 @@ import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public class ErrorTypeImpl extends DeclaredTypeImpl implements ErrorType {
-    public ErrorTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
+    public ErrorTypeImpl(TypeLookup lookup, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
             List<TypeMirrorImpl> typeArguments, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path) {
-        super(universe, source, enclosingType, typeArguments, annotationSource, path);
+        super(lookup, source, enclosingType, typeArguments, annotationSource, path);
     }
 
-    public ErrorTypeImpl(Universe universe, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
+    public ErrorTypeImpl(TypeLookup lookup, TypeElementBase source, @Nullable TypeMirrorImpl enclosingType,
             List<TypeMirrorImpl> typeArguments, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
-        super(universe, source, enclosingType, typeArguments, annos);
+        super(lookup, source, enclosingType, typeArguments, annos);
     }
 
     @Override

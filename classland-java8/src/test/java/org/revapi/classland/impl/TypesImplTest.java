@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.NoType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
@@ -46,6 +47,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.revapi.classland.archive.BaseModule;
+import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.CompilerManager;
 
@@ -55,16 +57,21 @@ public class TypesImplTest {
 
     static {
         try {
-            Universe u = new Universe(false);
+            TypePool u = new TypePool(false);
             u.registerArchive(BaseModule.forCurrentJvm());
 
-            classLandElementsAndTypes = Arguments.of(new ElementsImpl(u), new TypesImpl(u));
+            // load the types eagerly to have a fair speed comparison with javac. Both javac and classland then read
+            // the contents of the classfiles lazily so let's leave that part out...
+            // The comparison is still not completely fair, because javac seems to unzip the classfiles eagerly while
+            // classland does so lazily...
+            u.getModules().forEach(m -> m.computePackages().get().values().forEach(p -> p.computeTypes().get()));
+
+            classLandElementsAndTypes = Arguments.of(new ElementsImpl(u.getLookup()), new TypesImpl(u.getLookup()));
 
             CompiledJar jar = new CompilerManager().createJar()
                     // we need any kind of source file
                     .classPathSources("/src/impl/types/orig/", "types/A.java").build();
             CompiledJar.Environment env = jar.analyze();
-
             javacElementsAndTypes = Arguments.of(env.elements(), env.types());
         } catch (IOException e) {
             throw new IllegalStateException(e);
@@ -268,7 +275,7 @@ public class TypesImplTest {
     @MethodSource("elementsAndTypes")
     void testGetArrayType(Elements els, Types ts) {
         ArrayType at = ts.getArrayType(ts.getPrimitiveType(TypeKind.INT));
-        assertEquals(ts.getPrimitiveType(TypeKind.INT), at.getComponentType());
+        assertTrue(ts.isSameType(ts.getPrimitiveType(TypeKind.INT), at.getComponentType()));
 
         // TODO implement
     }
@@ -283,8 +290,38 @@ public class TypesImplTest {
         // TODO implement
     }
 
-    @Test
-    void testAsMemberOf() {
-        // TODO implement
+    @ParameterizedTest
+    @MethodSource("elementsAndTypes")
+    void testAsMemberOf(Elements els, Types ts) {
+        TypeElement Set = els.getTypeElement("java.util.Set");
+        ExecutableElement add = ElementFilter.methodsIn(Set.getEnclosedElements()).stream()
+                .filter(m -> "add".contentEquals(m.getSimpleName())).findFirst().get();
+
+        TypeMirror StringType = els.getTypeElement("java.lang.String").asType();
+
+        DeclaredType targetType = ts.getDeclaredType(Set, StringType);
+
+        TypeMirror converted = ts.asMemberOf(targetType, add);
+        assertSame(TypeKind.EXECUTABLE, converted.getKind());
+
+        ExecutableType addString = (ExecutableType) converted;
+        assertEquals(StringType, addString.getParameterTypes().get(0));
+    }
+
+    @ParameterizedTest
+    @MethodSource("elementsAndTypes")
+    void testAsMemberOf_inherited(Elements els, Types ts) {
+        TypeElement Enum = els.getTypeElement("java.lang.Enum");
+        TypeElement TextStyle = els.getTypeElement("java.time.format.TextStyle");
+        ExecutableElement compareTo = ElementFilter.methodsIn(Enum.getEnclosedElements()).stream()
+                .filter(m -> "compareTo".contentEquals(m.getSimpleName())).findFirst().get();
+
+        DeclaredType targetType = ts.getDeclaredType(TextStyle);
+
+        TypeMirror converted = ts.asMemberOf(targetType, compareTo);
+        assertSame(TypeKind.EXECUTABLE, converted.getKind());
+
+        ExecutableType convertedCompareTo = (ExecutableType) converted;
+        assertEquals(targetType, convertedCompareTo.getParameterTypes().get(0));
     }
 }

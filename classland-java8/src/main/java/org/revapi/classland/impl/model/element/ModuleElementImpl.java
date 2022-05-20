@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,15 +19,20 @@ package org.revapi.classland.impl.model.element;
 import javax.lang.model.type.TypeKind;
 
 import org.objectweb.asm.tree.ClassNode;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.archive.Archive;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.util.Nullable;
 
 public class ModuleElementImpl extends BaseModuleElementImpl {
-    public ModuleElementImpl(Universe universe, @Nullable ClassNode moduleType) {
-        super(universe, moduleType, TypeKind.OTHER);
+    public ModuleElementImpl(TypeLookup lookup, Archive archive, @Nullable ClassNode moduleType) {
+        super(lookup, archive, moduleType, TypeKind.OTHER);
     }
 
-    public ModuleElementImpl(Universe universe, String moduleName) {
-        super(universe, moduleName, TypeKind.OTHER);
+    public ModuleElementImpl(TypeLookup lookup, Archive archive, String moduleName) {
+        this(lookup, archive, moduleName, false);
+    }
+
+    protected ModuleElementImpl(TypeLookup lookup, @Nullable Archive archive, String moduleName, boolean unused) {
+        super(lookup, archive, moduleName, TypeKind.OTHER);
     }
 }

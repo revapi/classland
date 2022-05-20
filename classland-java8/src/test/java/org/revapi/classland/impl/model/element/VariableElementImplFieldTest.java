@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.archive.jar.JarFileArchive;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypePool;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
 import org.revapi.testjars.junit5.JarSources;
@@ -49,10 +49,10 @@ public class VariableElementImplFieldTest {
 
     @Test
     void constantValue() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(fields.jarFile())));
 
-        TypeElementBase Fields = u.getTypeByInternalNameFromModule("pkg/Fields", null);
+        TypeElementBase Fields = u.getLookup().getTypeByInternalNameFromModule("pkg/Fields", null);
         assertNotNull(Fields);
 
         List<VariableElement> fields = ElementFilter.fieldsIn(Fields.getEnclosedElements());
@@ -71,10 +71,10 @@ public class VariableElementImplFieldTest {
 
     @Test
     void enumConstant() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(fields.jarFile())));
 
-        TypeElementBase Enum = u.getTypeByInternalNameFromModule("pkg/Fields$Enum", null);
+        TypeElementBase Enum = u.getLookup().getTypeByInternalNameFromModule("pkg/Fields$Enum", null);
         assertNotNull(Enum);
 
         List<VariableElement> fields = ElementFilter.fieldsIn(Enum.getEnclosedElements());

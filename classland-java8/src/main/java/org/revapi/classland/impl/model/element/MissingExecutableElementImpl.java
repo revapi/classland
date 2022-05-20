@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -47,16 +47,16 @@ public class MissingExecutableElementImpl extends ExecutableElementBase {
     private final List<VariableElementImpl> paramTypes;
     private final ExecutableTypeImpl type;
 
-    public MissingExecutableElementImpl(Universe universe, TypeElementBase parent, String name,
+    public MissingExecutableElementImpl(TypeLookup lookup, TypeElementBase parent, String name,
             String returnTypeDescriptor, List<String> parameterDescriptors) {
-        super(universe, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, parent.lookupModule());
+        super(lookup, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, parent.lookupModule());
         this.parent = parent;
         this.name = NameImpl.of(name);
-        this.returnType = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(returnTypeDescriptor), this,
+        this.returnType = TypeMirrorFactory.create(lookup, SignatureParser.parseTypeRef(returnTypeDescriptor), this,
                 AnnotationTargetPath.ROOT);
         List<VariableElementImpl> params = new ArrayList<>(parameterDescriptors.size());
         for (int i = 0; i < parameterDescriptors.size(); ++i) {
-            params.add(new VariableElementImpl.Missing(universe, parent.lookupModule(), this, "arg" + i,
+            params.add(new VariableElementImpl.Missing(lookup, parent.lookupModule(), this, "arg" + i,
                     parameterDescriptors.get(i), ElementKind.PARAMETER));
         }
         this.paramTypes = Collections.unmodifiableList(params);

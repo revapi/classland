@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,11 @@
  */
 package org.revapi.classland.impl.model.mirror;
 
+import java.util.List;
+
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVisitor;
 
 import org.revapi.classland.impl.model.anno.AnnotationSource;
@@ -33,7 +36,12 @@ public class ArrayTypeImpl extends TypeMirrorImpl implements ArrayType {
     public ArrayTypeImpl(TypeMirrorImpl componentType, int currentDimension,
             MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath typepath,
             MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(componentType.getUniverse(), annotationSource, arrayize(typepath, currentDimension), typeLookupSeed);
+        super(componentType.getLookup(), annotationSource, arrayize(typepath, currentDimension), typeLookupSeed);
+        this.componentType = componentType;
+    }
+
+    private ArrayTypeImpl(TypeMirrorImpl componentType, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
+        super(componentType.getLookup(), annos);
         this.componentType = componentType;
     }
 
@@ -44,6 +52,21 @@ public class ArrayTypeImpl extends TypeMirrorImpl implements ArrayType {
         }
 
         return ret;
+    }
+
+    /**
+     * Returns a copy of this array with the provided type as its component.
+     *
+     * Be careful with this if this is a multidimensional array. The supplied component type must then be of the same
+     * array dimension as the original component type of this array, otherwise annotation mapping will break.
+     *
+     * @param componentType
+     *            the new component type
+     * 
+     * @return the copied array type
+     */
+    public ArrayTypeImpl withComponentType(TypeMirrorImpl componentType) {
+        return new ArrayTypeImpl(componentType, annos);
     }
 
     @Override

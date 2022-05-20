@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,14 +22,14 @@ import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.util.MemoizedValue;
 
 public class NoTypeImpl extends TypeMirrorImpl implements NoType {
     private final TypeKind kind;
 
-    public NoTypeImpl(Universe universe, MemoizedValue<List<AnnotationMirrorImpl>> annos, TypeKind kind) {
-        super(universe, annos);
+    public NoTypeImpl(TypeLookup lookup, MemoizedValue<List<AnnotationMirrorImpl>> annos, TypeKind kind) {
+        super(lookup, annos);
         this.kind = kind;
     }
 

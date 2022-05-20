@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,14 +35,15 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Elements;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.archive.jar.JarFileArchive;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
+import org.revapi.classland.impl.TypePool;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.mirror.TypeVariableImpl;
@@ -70,13 +71,18 @@ class TypeElementImplTest {
 
     @Test
     void qualifiedNames() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
-        TypeElementBase top = u.getTypeByInternalNameFromModule("pkg/names/Dollars", null);
-        TypeElementBase member = u.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$1", null);
-        TypeElementBase anon = u.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2", null);
-        TypeElementBase local = u
+        Elements javacElements = names.analyze().elements();
+        TypeElement jDollars = javacElements.getTypeElement("pkg.names.Dollars");
+
+        TypeLookup l = u.getLookup();
+
+        TypeElementBase top = l.getTypeByInternalNameFromModule("pkg/names/Dollars", null);
+        TypeElementBase member = l.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$1", null);
+        TypeElementBase anon = l.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2", null);
+        TypeElementBase local = l
                 .getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2$1LocalInInitializer$InnerInLocal", null);
 
         assertNotNull(top);
@@ -92,13 +98,15 @@ class TypeElementImplTest {
 
     @Test
     void simpleNames() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
-        TypeElementBase top = u.getTypeByInternalNameFromModule("pkg/names/Dollars", null);
-        TypeElementBase member = u.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$1", null);
-        TypeElementBase anon = u.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2", null);
-        TypeElementBase local = u
+        TypeLookup l = u.getLookup();
+
+        TypeElementBase top = l.getTypeByInternalNameFromModule("pkg/names/Dollars", null);
+        TypeElementBase member = l.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$1", null);
+        TypeElementBase anon = l.getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2", null);
+        TypeElementBase local = l
                 .getTypeByInternalNameFromModule("pkg/names/Dollars$Member$2$1LocalInInitializer$InnerInLocal", null);
 
         assertNotNull(top);
@@ -114,13 +122,15 @@ class TypeElementImplTest {
 
     @Test
     void elementKind() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(kinds.jarFile())));
 
-        TypeElementBase Class = u.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Class", null);
-        TypeElementBase Interface = u.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Interface", null);
-        TypeElementBase Enum = u.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Enum", null);
-        TypeElementBase Annotation = u.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Annotation", null);
+        TypeLookup l = u.getLookup();
+
+        TypeElementBase Class = l.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Class", null);
+        TypeElementBase Interface = l.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Interface", null);
+        TypeElementBase Enum = l.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Enum", null);
+        TypeElementBase Annotation = l.getTypeByInternalNameFromModule("pkg/Kinds$Classes$Annotation", null);
 
         assertNotNull(Class);
         assertNotNull(Interface);
@@ -135,17 +145,19 @@ class TypeElementImplTest {
 
     @Test
     void modifiers() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(modifiers.jarFile())));
 
-        TypeElementBase Modifiers = u.getTypeByInternalNameFromModule("pkg/Modifiers", null);
-        TypeElementBase Public = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Public", null);
-        TypeElementBase Protected = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Protected", null);
-        TypeElementBase Private = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Private", null);
-        TypeElementBase Static = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Static", null);
-        TypeElementBase Final = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Final", null);
-        TypeElementBase StrictFp = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$StrictFp", null);
-        TypeElementBase Abstract = u.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Abstract", null);
+        TypeLookup l = u.getLookup();
+
+        TypeElementBase Modifiers = l.getTypeByInternalNameFromModule("pkg/Modifiers", null);
+        TypeElementBase Public = l.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Public", null);
+        TypeElementBase Protected = l.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Protected", null);
+        TypeElementBase Private = l.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Private", null);
+        TypeElementBase Static = l.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Static", null);
+        TypeElementBase Final = l.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Final", null);
+        TypeElementBase StrictFp = l.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$StrictFp", null);
+        TypeElementBase Abstract = l.getTypeByInternalNameFromModule("pkg/Modifiers$Classes$Abstract", null);
 
         assertNotNull(Modifiers);
         assertNotNull(Public);
@@ -168,10 +180,10 @@ class TypeElementImplTest {
 
     @Test
     void innerClassDollarNames() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(names.jarFile())));
 
-        TypeElementBase top = u.getTypeByInternalNameFromModule("pkg/names/Dollars", null);
+        TypeElementBase top = u.getLookup().getTypeByInternalNameFromModule("pkg/names/Dollars", null);
 
         assertNotNull(top);
 
@@ -185,13 +197,14 @@ class TypeElementImplTest {
 
     @Test
     void superClass() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(generics.jarFile())));
+        TypeLookup lookup = u.getLookup();
 
-        TypeElementBase base = u.getTypeByInternalNameFromModule("pkg/Generics$Base", null);
-        TypeElementBase genericSuperClass = u
+        TypeElementBase base = lookup.getTypeByInternalNameFromModule("pkg/Generics$Base", null);
+        TypeElementBase genericSuperClass = lookup
                 .getTypeByInternalNameFromModule("pkg/Generics$ConcreteWithGenericSuperClass", null);
-        TypeElementBase genericWithGenericSuperclass = u
+        TypeElementBase genericWithGenericSuperclass = lookup
                 .getTypeByInternalNameFromModule("pkg/Generics$GenericWithParamUsedInSuperClass", null);
 
         assertNotNull(base);
@@ -238,10 +251,10 @@ class TypeElementImplTest {
 
     @Test
     void interfaces() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(generics.jarFile())));
 
-        TypeElementBase genericWithGenericInterface = u
+        TypeElementBase genericWithGenericInterface = u.getLookup()
                 .getTypeByInternalNameFromModule("pkg/Generics$GenericWithParamUsedInInterface", null);
 
         List<TypeMirrorImpl> ifaces = genericWithGenericInterface.getInterfaces();
@@ -261,19 +274,21 @@ class TypeElementImplTest {
 
     @Test
     void enclosingElement() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(innerClasses.jarFile())));
+        TypeLookup lookup = u.getLookup();
 
-        TypeElementImpl InnerClasses = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/InnerClasses", null);
-        TypeElementImpl StaticMember = (TypeElementImpl) u
+        TypeElementImpl InnerClasses = (TypeElementImpl) lookup.getTypeByInternalNameFromModule("pkg/InnerClasses",
+                null);
+        TypeElementImpl StaticMember = (TypeElementImpl) lookup
                 .getTypeByInternalNameFromModule("pkg/InnerClasses$StaticMember", null);
-        TypeElementImpl StaticAnonymous = (TypeElementImpl) u
+        TypeElementImpl StaticAnonymous = (TypeElementImpl) lookup
                 .getTypeByInternalNameFromModule("pkg/InnerClasses$StaticMember$1", null);
-        TypeElementImpl StaticLocal = (TypeElementImpl) u
+        TypeElementImpl StaticLocal = (TypeElementImpl) lookup
                 .getTypeByInternalNameFromModule("pkg/InnerClasses$StaticMember$1Local", null);
         ExecutableElementImpl method = StaticMember.getMethod("method", "()V");
 
-        assertEquals(u.getPackageInModule("pkg", u.getUnnamedModule()), InnerClasses.getEnclosingElement());
+        assertEquals(lookup.getPackageInModule("pkg", lookup.getUnnamedModule()), InnerClasses.getEnclosingElement());
 
         assertSame(InnerClasses, StaticMember.getEnclosingElement());
 
@@ -284,10 +299,11 @@ class TypeElementImplTest {
 
     @Test
     void testCRTP() throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(new JarFileArchive(new JarFile(generics.jarFile())));
 
-        TypeElementImpl CRTP = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Generics$CRTP", null);
+        TypeElementImpl CRTP = (TypeElementImpl) u.getLookup().getTypeByInternalNameFromModule("pkg/Generics$CRTP",
+                null);
 
         List<TypeParameterElementImpl> typeParams = CRTP.getTypeParameters();
         assertEquals(1, typeParams.size());

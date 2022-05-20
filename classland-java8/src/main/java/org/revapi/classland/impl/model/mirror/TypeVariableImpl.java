@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.TypeVisitor;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
 import org.revapi.classland.impl.model.element.ElementImpl;
@@ -41,26 +41,26 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     private final TypeMirrorImpl lowerBound;
 
     // used to construct a wildcard capture
-    public TypeVariableImpl(Universe universe, @Nullable TypeMirrorImpl upperBound, @Nullable TypeMirrorImpl lowerBound,
+    public TypeVariableImpl(TypeLookup lookup, @Nullable TypeMirrorImpl upperBound, @Nullable TypeMirrorImpl lowerBound,
             MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path,
             MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(universe, annotationSource, path, typeLookupSeed);
-        this.owner = new NoElementImpl(universe);
-        this.lowerBound = lowerBound == null ? new NullTypeImpl(universe) : lowerBound;
-        this.upperBound = obtained(upperBound == null ? TypeMirrorFactory.createJavaLangObject(universe) : upperBound);
+        super(lookup, annotationSource, path, typeLookupSeed);
+        this.owner = new NoElementImpl(lookup);
+        this.lowerBound = lowerBound == null ? lookup.nullType : lowerBound;
+        this.upperBound = obtained(upperBound == null ? TypeMirrorFactory.createJavaLangObject(lookup) : upperBound);
     }
 
     // used to construct a typevar based on the type parameter
     public TypeVariableImpl(TypeParameterElementImpl owner) {
-        super(owner.getUniverse(), memoize(owner::getAnnotationMirrors));
+        super(owner.getLookup(), memoize(owner::getAnnotationMirrors));
         this.owner = owner;
-        this.lowerBound = new NullTypeImpl(universe);
+        this.lowerBound = getLookup().nullType;
         // this needs to be lazily evaluated to avoid infinite loop in case of CRTP type params (Cls<T extends Cls<T>>)
         this.upperBound = owner.getLazyBounds().map(bounds -> {
             if (bounds.size() == 1) {
                 return bounds.get(0);
             } else {
-                return new IntersectionTypeImpl(owner.getUniverse(), bounds);
+                return new IntersectionTypeImpl(owner.getLookup(), bounds);
             }
         });
     }
@@ -68,17 +68,29 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     // used to construct typevar referencing a type parameter in a type-use position
     public TypeVariableImpl(TypeParameterElementImpl owner, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(owner.getUniverse(), annotationSource, path, typeLookupSeed);
+        super(owner.getLookup(), annotationSource, path, typeLookupSeed);
         this.owner = owner;
-        this.lowerBound = new NullTypeImpl(universe);
+        this.lowerBound = getLookup().nullType;
         // this needs to be lazily evaluated to avoid infinite loop in case of CRTP type params (Cls<T extends Cls<T>>)
         this.upperBound = owner.getLazyBounds().map(bounds -> {
             if (bounds.size() == 1) {
                 return bounds.get(0);
             } else {
-                return new IntersectionTypeImpl(owner.getUniverse(), bounds);
+                return new IntersectionTypeImpl(owner.getLookup(), bounds);
             }
         });
+    }
+
+    private TypeVariableImpl(ElementImpl owner, MemoizedValue<List<AnnotationMirrorImpl>> annos,
+            TypeMirrorImpl lowerBound, TypeMirrorImpl upperBound) {
+        super(owner.getLookup(), annos);
+        this.owner = owner;
+        this.upperBound = obtained(upperBound);
+        this.lowerBound = lowerBound;
+    }
+
+    public TypeVariableImpl rebind(TypeMirrorImpl lowerBound, TypeMirrorImpl upperBound) {
+        return new TypeVariableImpl(owner, annos, lowerBound, upperBound);
     }
 
     @Override
@@ -89,6 +101,10 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     @Override
     public TypeMirrorImpl getUpperBound() {
         return upperBound.get();
+    }
+
+    public MemoizedValue<TypeMirrorImpl> getUpperBoundValue() {
+        return upperBound;
     }
 
     @Override
@@ -105,33 +121,33 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitTypeVariable(this, p);
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
-
-        TypeVariableImpl that = (TypeVariableImpl) o;
-
-        if (!owner.equals(that.owner)) {
-            return false;
-        }
-        if (!upperBound.get().equals(that.upperBound.get())) {
-            return false;
-        }
-        return lowerBound.equals(that.lowerBound);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + owner.hashCode();
-        result = 31 * result + upperBound.get().hashCode();
-        result = 31 * result + lowerBound.hashCode();
-        return result;
-    }
+    //
+    // @Override
+    // public boolean equals(Object o) {
+    // if (this == o) {
+    // return true;
+    // }
+    // if (!super.equals(o)) {
+    // return false;
+    // }
+    //
+    // TypeVariableImpl that = (TypeVariableImpl) o;
+    //
+    // if (!owner.equals(that.owner)) {
+    // return false;
+    // }
+    // if (!upperBound.get().equals(that.upperBound.get())) {
+    // return false;
+    // }
+    // return lowerBound.equals(that.lowerBound);
+    // }
+    //
+    // @Override
+    // public int hashCode() {
+    // int result = super.hashCode();
+    // result = 31 * result + owner.hashCode();
+    // result = 31 * result + upperBound.get().hashCode();
+    // result = 31 * result + lowerBound.hashCode();
+    // return result;
+    // }
 }

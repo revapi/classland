@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,11 +91,14 @@ public final class SignatureParser {
                     : interfaceBounds.stream().map(TypeSig::get).collect(toList());
 
             TypeParameterBound bound = new TypeParameterBound(
-                    classBound == null ? Bound.Type.UNBOUNDED : Bound.Type.EXTENDS, clsBnd, ifaces);
+                    (classBound == null && interfaceBounds == null) ? Bound.Type.UNBOUNDED : Bound.Type.EXTENDS, clsBnd,
+                    ifaces);
 
             typeParams.put(currentTypeParameter, bound);
 
             currentTypeParameter = null;
+            classBound = null;
+            interfaceBounds = null;
         }
 
         @Override

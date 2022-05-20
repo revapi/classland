@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,9 +48,10 @@ public class JrtArchive implements Archive {
             try (Stream<Path> str = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
                 // we need to be eager here so that we can correctly close the stream. The iterator interface offers
                 // no bulletproof way of doing that.
-                return str.filter(p -> Files.isRegularFile(p))
-                        .filter(p -> p.getFileName().toString().endsWith(".class"))
-                        .map(p -> (ClassData) new JrtClassData(p)).collect(toList()).iterator();
+                return str.filter(Files::isRegularFile).filter(p -> {
+                    String name = p.getFileName().toString();
+                    return !"module-info.class".equals(name) && name.endsWith(".class");
+                }).map(p -> (ClassData) new JrtClassData(p)).collect(toList()).iterator();
             }
         } catch (IOException e) {
             throw new IllegalStateException("Failed to scan the JRT archive for class files.", e);
@@ -61,5 +62,15 @@ public class JrtArchive implements Archive {
     public Optional<Manifest> getManifest() throws IOException {
         // we only need manifests for the automatic module name, which the standard modules in JRT don't have.
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<ClassData> getModuleInfo() throws IOException {
+        Path moduleInfoPath = path.resolve("module-info.class");
+        if (Files.exists(path)) {
+            return Optional.of(new JrtClassData(moduleInfoPath));
+        } else {
+            return Optional.empty();
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ import javax.lang.model.element.AnnotationMirror;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.revapi.classland.PrettyPrinting;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.BaseModelImpl;
 import org.revapi.classland.impl.model.element.ExecutableElementBase;
 import org.revapi.classland.impl.model.element.ExecutableElementImpl;
@@ -41,8 +41,8 @@ public final class AnnotationMirrorImpl extends BaseModelImpl implements Annotat
     private final DeclaredTypeImpl annotationType;
     private final Map<ExecutableElementBase, AnnotationValueImpl> values;
 
-    public AnnotationMirrorImpl(AnnotationNode node, Universe universe, TypeElementBase annotationType) {
-        super(universe);
+    public AnnotationMirrorImpl(AnnotationNode node, TypeLookup lookup, TypeElementBase annotationType) {
+        super(lookup);
         this.annotationType = annotationType.asType();
 
         if (node.values == null) {
@@ -56,16 +56,17 @@ public final class AnnotationMirrorImpl extends BaseModelImpl implements Annotat
                     name = (String) v;
                     processingName = false;
                 } else {
-                    AnnotationValueImpl av = AnnotationValueImpl.fromAsmValue(universe, v, annotationType,
+                    AnnotationValueImpl av = AnnotationValueImpl.fromAsmValue(lookup, v, annotationType,
                             annotationType.lookupModule());
                     List<ExecutableElementImpl> m = annotationType.getMethod(name);
                     if (m.isEmpty()) {
-                        MissingExecutableElementImpl mm = new MissingExecutableElementImpl(universe, annotationType,
-                                name, deduceTypeFromAnnotationValue(av), emptyList());
+                        MissingExecutableElementImpl mm = new MissingExecutableElementImpl(lookup, annotationType, name,
+                                deduceTypeFromAnnotationValue(av), emptyList());
                         values.put(mm, av);
                     } else {
                         values.put(m.get(0), av);
                     }
+                    processingName = true;
                 }
             }
         }

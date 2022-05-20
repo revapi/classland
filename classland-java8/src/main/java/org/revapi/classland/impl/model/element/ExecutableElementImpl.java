@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,15 +46,11 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.MethodNode;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
-import org.revapi.classland.impl.model.mirror.AnnotationValueImpl;
-import org.revapi.classland.impl.model.mirror.ExecutableTypeImpl;
-import org.revapi.classland.impl.model.mirror.NoTypeImpl;
-import org.revapi.classland.impl.model.mirror.TypeMirrorFactory;
-import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.model.mirror.*;
 import org.revapi.classland.impl.model.signature.GenericMethodParameters;
 import org.revapi.classland.impl.model.signature.SignatureParser;
 import org.revapi.classland.impl.model.signature.TypeParameterBound;
@@ -79,9 +75,8 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
     private final MemoizedValue<TypeMirrorImpl> type;
     private final @Nullable MemoizedValue<AnnotationValueImpl> defaultValue;
 
-    public ExecutableElementImpl(Universe universe, TypeElementImpl parent, MethodNode method) {
-        super(universe, obtained(AnnotationSource.fromMethod(method)), AnnotationTargetPath.ROOT,
-                parent.lookupModule());
+    public ExecutableElementImpl(TypeLookup lookup, TypeElementImpl parent, MethodNode method) {
+        super(lookup, obtained(AnnotationSource.fromMethod(method)), AnnotationTargetPath.ROOT, parent.lookupModule());
         this.parent = parent;
         this.method = method;
         this.name = NameImpl.of(method.name);
@@ -103,26 +98,26 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
         AnnotationSource annotationSource = AnnotationSource.fromMethod(method);
 
         this.returnType = signature
-                .map(s -> TypeMirrorFactory.create(universe, s.returnType, this, obtained(annotationSource),
+                .map(s -> TypeMirrorFactory.create(lookup, s.returnType, this, obtained(annotationSource),
                         new AnnotationTargetPath(newTypeReference(METHOD_RETURN)), parent.lookupModule()));
 
         this.receiverType = parent.getNode().map(cls -> {
             boolean isStaticMethod = hasFlag(method.access, Opcodes.ACC_STATIC);
 
             if (isStaticMethod) {
-                return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+                return new NoTypeImpl(lookup, obtained(emptyList()), TypeKind.NONE);
             }
 
             boolean isStaticClass = parent.getModifiers().contains(Modifier.STATIC);
 
             if ("<init>".equals(method.name)) {
                 if (isStaticClass) {
-                    return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+                    return new NoTypeImpl(lookup, obtained(emptyList()), TypeKind.NONE);
                 } else {
                     return parent.getEnclosingElement().accept(new SimpleElementVisitor8<TypeMirrorImpl, Void>() {
                         @Override
                         protected TypeMirrorImpl defaultAction(Element e, Void aVoid) {
-                            return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+                            return new NoTypeImpl(lookup, obtained(emptyList()), TypeKind.NONE);
                         }
 
                         @Override
@@ -130,12 +125,12 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
                             String parentInternalName = ((TypeElementBase) e).getInternalName();
                             if (parameterTypes.length == 0
                                     || parameterTypes[0].getInternalName().equals(parentInternalName)) {
-                                return TypeMirrorFactory.create(universe, parseInternalName(parentInternalName),
+                                return TypeMirrorFactory.create(lookup, parseInternalName(parentInternalName),
                                         ExecutableElementImpl.this, obtained(annotationSource),
                                         new AnnotationTargetPath(TypeReference.newFormalParameterReference(0)),
                                         parent.lookupModule());
                             } else {
-                                return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+                                return new NoTypeImpl(lookup, obtained(emptyList()), TypeKind.NONE);
                             }
                         }
                     }, null);
@@ -148,12 +143,12 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
                                 && method.visibleAnnotableParameterCount < method.invisibleTypeAnnotations.size());
 
                 if (hasAnnotatedReceiverParam) {
-                    return TypeMirrorFactory.create(universe, parseInternalName(parent.getInternalName()), this,
+                    return TypeMirrorFactory.create(lookup, parseInternalName(parent.getInternalName()), this,
                             obtained(annotationSource),
                             new AnnotationTargetPath(TypeReference.newFormalParameterReference(0)),
                             parent.lookupModule());
                 } else {
-                    return TypeMirrorFactory.create(universe, parent, emptyList(), emptyList());
+                    return TypeMirrorFactory.create(lookup, parent, emptyList(), emptyList());
                 }
             }
         });
@@ -173,7 +168,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
             int size = signature.get().parameterTypes.size();
             List<VariableElementImpl> ret = new ArrayList<>(size);
             for (int i = paramShift; i < size; ++i) {
-                ret.add(new VariableElementImpl.Parameter(universe, this, i));
+                ret.add(new VariableElementImpl.Parameter(lookup, this, i));
             }
             return ret;
         });
@@ -200,7 +195,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
             int i = 0;
             LinkedHashMap<String, TypeParameterElementImpl> typeParams = new LinkedHashMap<>();
             for (Map.Entry<String, TypeParameterBound> e : mp.typeParameters.entrySet()) {
-                typeParams.put(e.getKey(), new TypeParameterElementImpl(universe, e.getKey(), this, e.getValue(), i++));
+                typeParams.put(e.getKey(), new TypeParameterElementImpl(lookup, e.getKey(), this, e.getValue(), i++));
             }
             return typeParams;
         });
@@ -212,7 +207,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
             List<TypeMirrorImpl> ret = new ArrayList<>(sig.exceptionTypes.size());
 
             for (TypeSignature ex : sig.exceptionTypes) {
-                ret.add(TypeMirrorFactory.create(universe, ex, this, obtained(annotationSource),
+                ret.add(TypeMirrorFactory.create(lookup, ex, this, obtained(annotationSource),
                         new AnnotationTargetPath(TypeReference.newExceptionReference(i++)), parent.lookupModule()));
             }
 
@@ -222,7 +217,7 @@ public final class ExecutableElementImpl extends ExecutableElementBase {
         this.type = memoize(() -> new ExecutableTypeImpl(this));
 
         this.defaultValue = method.annotationDefault == null ? null
-                : memoize(() -> fromAsmValue(universe, method.annotationDefault, this, parent.lookupModule()));
+                : memoize(() -> fromAsmValue(lookup, method.annotationDefault, this, parent.lookupModule()));
     }
 
     MethodNode getNode() {

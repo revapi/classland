@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ public class ByteCode {
 
     public static ClassNode parseClass(ClassReader rdr) {
         ClassNode ret = new ClassNode();
-        rdr.accept(ret, ClassReader.SKIP_CODE & ClassReader.SKIP_FRAMES & ClassReader.SKIP_DEBUG);
+        rdr.accept(ret, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
         return ret;
     }
 }

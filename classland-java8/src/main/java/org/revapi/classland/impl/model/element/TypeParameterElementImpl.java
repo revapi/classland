@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeParameterElement;
 
 import org.objectweb.asm.TypeReference;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -52,9 +52,9 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
     private final MemoizedValue<List<TypeMirrorImpl>> bounds;
     private final TypeParameterBound rawBound;
 
-    protected TypeParameterElementImpl(Universe universe, String name, TypeVariableResolutionContext owner,
+    protected TypeParameterElementImpl(TypeLookup lookup, String name, TypeVariableResolutionContext owner,
             TypeParameterBound bound, int index) {
-        super(universe, owner.asAnnotationSource(),
+        super(lookup, owner.asAnnotationSource(),
                 new AnnotationTargetPath(newTypeParameterReference(CLASS_TYPE_PARAMETER, index)), owner.lookupModule());
 
         this.name = NameImpl.of(name);
@@ -63,26 +63,26 @@ public final class TypeParameterElementImpl extends ElementImpl implements TypeP
         this.bounds = memoize(() -> {
             switch (bound.boundType) {
             case UNBOUNDED:
-                return singletonList(TypeMirrorFactory.create(universe, Universe.JAVA_LANG_OBJECT_SIG, owner,
+                return singletonList(TypeMirrorFactory.create(lookup, TypeLookup.JAVA_LANG_OBJECT_SIG, owner,
                         AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, owner.lookupModule()));
             case EXACT:
                 return singletonList(
-                        TypeMirrorFactory.create(universe, bound.classBound, owner, owner.asAnnotationSource(),
+                        TypeMirrorFactory.create(lookup, bound.classBound, owner, owner.asAnnotationSource(),
                                 new AnnotationTargetPath(newTypeParameterReference(CLASS_TYPE_PARAMETER, index)),
                                 owner.lookupModule()));
             case EXTENDS:
                 List<TypeMirrorImpl> ret = new ArrayList<>(bound.interfaceBounds.size() + 1);
                 if (bound.classBound == null) {
-                    ret.add(TypeMirrorFactory.createJavaLangObject(universe));
+                    ret.add(TypeMirrorFactory.createJavaLangObject(lookup));
                 } else {
-                    ret.add(TypeMirrorFactory.create(universe, bound.classBound, owner, owner.asAnnotationSource(),
+                    ret.add(TypeMirrorFactory.create(lookup, bound.classBound, owner, owner.asAnnotationSource(),
                             new AnnotationTargetPath(
                                     TypeReference.newTypeParameterBoundReference(CLASS_TYPE_PARAMETER, index, 0)),
                             owner.lookupModule()));
                 }
                 int i = 1;
                 for (TypeSignature b : bound.interfaceBounds) {
-                    ret.add(TypeMirrorFactory.create(universe, b, owner, owner.asAnnotationSource(),
+                    ret.add(TypeMirrorFactory.create(lookup, b, owner, owner.asAnnotationSource(),
                             new AnnotationTargetPath(
                                     TypeReference.newTypeParameterBoundReference(CLASS_TYPE_PARAMETER, index, i++)),
                             owner.lookupModule()));

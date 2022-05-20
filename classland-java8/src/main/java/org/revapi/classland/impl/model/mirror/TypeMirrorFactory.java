@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,11 +31,9 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.util.SimpleElementVisitor8;
 
-import org.revapi.classland.impl.Universe;
-import org.revapi.classland.impl.model.AnnotatedConstructImpl;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
-import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
@@ -55,12 +53,12 @@ public final class TypeMirrorFactory {
         @Override
         public TypeMirrorImpl visitPrimitiveType(TypeSignature.PrimitiveType type, ResolutionContext ctx) {
             return type.type == TypeKind.VOID
-                    ? new NoTypeImpl(ctx.universe,
-                            memoize(() -> parseAnnotations(ctx.universe, ctx.annotationSource.get(), ctx.path,
+                    ? new NoTypeImpl(ctx.lookup,
+                            memoize(() -> parseAnnotations(ctx.lookup, ctx.annotationSource.get(), ctx.path,
                                     ctx.typeLookupSeed.get(), true)),
                             TypeKind.VOID)
                     : asArray(
-                            new PrimitiveTypeImpl(ctx.universe, type.type, ctx.annotationSource,
+                            new PrimitiveTypeImpl(ctx.lookup, type.type, ctx.annotationSource,
                                     targetArrayDimension(ctx.path, type), ctx.typeLookupSeed),
                             type.arrayDimension, ctx);
         }
@@ -76,7 +74,7 @@ public final class TypeMirrorFactory {
 
         @Override
         public TypeMirrorImpl visitType(TypeSignature.Reference typeReference, ResolutionContext ctx) {
-            TypeElementBase t = ctx.universe.getTypeByInternalNameFromModule(typeReference.internalTypeName,
+            TypeElementBase t = ctx.lookup.getTypeByInternalNameFromModule(typeReference.internalTypeName,
                     ctx.typeLookupSeed.get());
 
             List<TypeMirrorImpl> args = new ArrayList<>(typeReference.typeArguments.size());
@@ -87,7 +85,7 @@ public final class TypeMirrorFactory {
                 ctx.path = newPath;
                 switch (b.boundType) {
                 case UNBOUNDED:
-                    args.add(new WildcardTypeImpl(ctx.universe, null, null, ctx.annotationSource, ctx.path,
+                    args.add(new WildcardTypeImpl(ctx.lookup, null, null, ctx.annotationSource, ctx.path,
                             ctx.typeLookupSeed));
                     break;
                 case EXACT:
@@ -95,12 +93,12 @@ public final class TypeMirrorFactory {
                     break;
                 case SUPER:
                     newPath.wildcardBound();
-                    args.add(new WildcardTypeImpl(ctx.universe, null, b.type.accept(this, ctx), ctx.annotationSource,
+                    args.add(new WildcardTypeImpl(ctx.lookup, null, b.type.accept(this, ctx), ctx.annotationSource,
                             ctx.path, ctx.typeLookupSeed));
                     break;
                 case EXTENDS:
                     newPath.wildcardBound();
-                    args.add(new WildcardTypeImpl(ctx.universe, b.type.accept(this, ctx), null, ctx.annotationSource,
+                    args.add(new WildcardTypeImpl(ctx.lookup, b.type.accept(this, ctx), null, ctx.annotationSource,
                             ctx.path, ctx.typeLookupSeed));
                     break;
                 default:
@@ -114,10 +112,10 @@ public final class TypeMirrorFactory {
 
             TypeMirrorImpl ret;
             if (t instanceof MissingTypeImpl) {
-                ret = new ErrorTypeImpl(ctx.universe, t, enclosing, args, ctx.annotationSource,
+                ret = new ErrorTypeImpl(ctx.lookup, t, enclosing, args, ctx.annotationSource,
                         targetArrayDimension(ctx.path, typeReference));
             } else {
-                ret = new DeclaredTypeImpl(ctx.universe, t, enclosing, args, ctx.annotationSource,
+                ret = new DeclaredTypeImpl(ctx.lookup, t, enclosing, args, ctx.annotationSource,
                         targetArrayDimension(ctx.path, typeReference));
             }
 
@@ -152,38 +150,38 @@ public final class TypeMirrorFactory {
         }
     };
 
-    public static DeclaredTypeImpl create(Universe universe, TypeElementImpl element) {
-        return new DeclaredTypeImpl(universe, element, MIRROR_OF_TYPE.visit(element.getEnclosingElement()),
+    public static DeclaredTypeImpl create(TypeLookup lookup, TypeElementImpl element) {
+        return new DeclaredTypeImpl(lookup, element, MIRROR_OF_TYPE.visit(element.getEnclosingElement()),
                 element.getTypeParameters().stream().map(TypeVariableImpl::new).collect(toList()),
                 memoize(element::getAnnotationMirrors));
     }
 
-    public static DeclaredTypeImpl create(Universe universe, TypeElementImpl element,
+    public static DeclaredTypeImpl create(TypeLookup lookup, TypeElementImpl element,
             List<TypeMirrorImpl> typeArguments, List<AnnotationMirrorImpl> annos) {
-        return new DeclaredTypeImpl(universe, element, MIRROR_OF_TYPE.visit(element.getEnclosingElement()),
-                typeArguments, obtained(annos));
+        return new DeclaredTypeImpl(lookup, element, MIRROR_OF_TYPE.visit(element.getEnclosingElement()), typeArguments,
+                obtained(annos));
     }
 
-    public static DeclaredTypeImpl createJavaLangObject(Universe universe) {
-        return (DeclaredTypeImpl) create(universe, Universe.JAVA_LANG_OBJECT_SIG, universe.noTypeVariables,
+    public static DeclaredTypeImpl createJavaLangObject(TypeLookup lookup) {
+        return (DeclaredTypeImpl) create(lookup, TypeLookup.JAVA_LANG_OBJECT_SIG, lookup.noTypeVariables,
                 AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtainedNull());
     }
 
-    public static TypeMirrorImpl create(Universe universe, TypeSignature type,
+    public static TypeMirrorImpl create(TypeLookup lookup, TypeSignature type,
             TypeVariableResolutionContext resolutionContext, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath startPath, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
         return create(type,
-                new ResolutionContext(universe, resolutionContext, annotationSource, startPath, typeLookupSeed));
+                new ResolutionContext(lookup, resolutionContext, annotationSource, startPath, typeLookupSeed));
     }
 
-    public static TypeMirrorImpl create(Universe universe, TypeSignature type,
+    public static TypeMirrorImpl create(TypeLookup lookup, TypeSignature type,
             TypeVariableResolutionContext resolutionContext, AnnotationTargetPath startPath) {
-        return create(type, new ResolutionContext(universe, resolutionContext, resolutionContext.asAnnotationSource(),
+        return create(type, new ResolutionContext(lookup, resolutionContext, resolutionContext.asAnnotationSource(),
                 startPath, resolutionContext.lookupModule()));
     }
 
-    public static PrimitiveTypeImpl createPrimitive(Universe universe, TypeKind kind) {
-        return new PrimitiveTypeImpl(universe, kind, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT,
+    public static PrimitiveTypeImpl createPrimitive(TypeLookup lookup, TypeKind kind) {
+        return new PrimitiveTypeImpl(lookup, kind, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT,
                 obtainedNull());
     }
 
@@ -192,16 +190,16 @@ public final class TypeMirrorFactory {
     }
 
     private static final class ResolutionContext {
-        final Universe universe;
+        final TypeLookup lookup;
         final TypeVariableResolutionContext variables;
         final MemoizedValue<AnnotationSource> annotationSource;
         final MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed;
         AnnotationTargetPath path;
 
-        ResolutionContext(Universe universe, TypeVariableResolutionContext variables,
+        ResolutionContext(TypeLookup lookup, TypeVariableResolutionContext variables,
                 MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path,
                 MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-            this.universe = universe;
+            this.lookup = lookup;
             this.variables = variables;
             this.annotationSource = annotationSource;
             this.path = path;

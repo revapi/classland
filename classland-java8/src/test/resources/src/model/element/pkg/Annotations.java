@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,12 @@ public class Annotations {
     public @interface InvisibleAnno {
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface AttributesAnno {
+        int a();
+        int b();
+    }
+
     @VisibleAnno @InvisibleTypeAnno
     public class AnnotatedClass {}
 
@@ -91,4 +97,7 @@ public class Annotations {
         @InvisibleTypeAnno
         int @VisibleTypeAnno [] arrayField;
     }
+
+    @AttributesAnno(b = 2, a = 1)
+    public class AnnotatedWithAttributes{}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package org.revapi.classland;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
+import org.revapi.classland.archive.Archive;
 import org.revapi.classland.impl.util.Nullable;
 
 /**
@@ -52,4 +53,27 @@ public interface ClasslandElements extends Elements {
      */
     @Nullable
     TypeElement getTypeElementByBinaryName(String moduleName, String binaryName);
+
+    /**
+     * Finds the archive from which a type was loaded.
+     * 
+     * @param type
+     *            the type to look up the archive of
+     * 
+     * @return the archive or null if the type doesn't come from any known archive (this can happen for type instances
+     *         that represent missing types).
+     */
+    @Nullable
+    Archive getArchive(TypeElement type);
+
+    /**
+     * Returns the archive from which the module was loaded.
+     * 
+     * @param moduleName
+     *            the name of the module
+     * 
+     * @return null if the moduleName is unknown or if it is empty (corresponding to the unnamed module)
+     */
+    @Nullable
+    Archive getModuleArchive(String moduleName);
 }

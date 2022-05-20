@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.type.TypeKind;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
@@ -48,12 +48,12 @@ public class MissingTypeImpl extends TypeElementBase {
     private final NameImpl qualifiedName;
     private final NameImpl simpleName;
 
-    public MissingTypeImpl(Universe universe, String internalName, @Nullable ModuleElementImpl module) {
-        super(universe, internalName, MemoizedValue.memoize(() -> {
+    public MissingTypeImpl(TypeLookup lookup, String internalName, @Nullable ModuleElementImpl module) {
+        super(lookup, null, internalName, MemoizedValue.memoize(() -> {
             String packageName = Packages.getPackageNameFromInternalName(internalName);
-            return universe.getPackageInModule(packageName, module);
+            return lookup.getPackageInModule(packageName, module);
         }), AnnotationSource.MEMOIZED_EMPTY);
-        type = new ErrorTypeImpl(universe, this, null, emptyList(), this.annos);
+        type = new ErrorTypeImpl(lookup, this, null, emptyList(), this.annos);
 
         qualifiedName = NameImpl.of(internalName.replace('/', '.'));
         int lastSlash = internalName.lastIndexOf('/');
@@ -97,7 +97,7 @@ public class MissingTypeImpl extends TypeElementBase {
 
     @Override
     public TypeMirrorImpl getSuperclass() {
-        return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+        return new NoTypeImpl(lookup, obtained(emptyList()), TypeKind.NONE);
     }
 
     @Override

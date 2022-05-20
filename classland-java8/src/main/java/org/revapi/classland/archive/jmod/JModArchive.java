@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ public class JModArchive implements Archive {
     @Override
     public Iterator<ClassData> iterator() {
         return jmodFile.stream().filter(e -> e.getName().startsWith("classes"))
+                .filter(e -> !e.getName().equals("classes/module-info.class"))
                 .filter(e -> e.getName().endsWith(".class")).map(e -> (ClassData) new JModEntryClassData(jmodFile, e))
                 .iterator();
     }
@@ -59,6 +60,16 @@ public class JModArchive implements Archive {
             try (InputStream in = jmodFile.getInputStream(entry)) {
                 return Optional.of(new Manifest(in));
             }
+        }
+    }
+
+    @Override
+    public Optional<ClassData> getModuleInfo() {
+        ZipEntry entry = jmodFile.getEntry("classes/module-info.class");
+        if (entry == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new JModEntryClassData(jmodFile, entry));
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,10 +22,13 @@ import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
@@ -34,7 +37,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.type.TypeKind;
 
 import org.objectweb.asm.tree.ClassNode;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -50,19 +53,30 @@ public final class PackageElementImpl extends ElementImpl implements PackageElem
     private final MemoizedValue<List<TypeElementImpl>> types;
 
     private final Map<String, TypeElementImpl> mutableTypes = new ConcurrentHashMap<>();
+    private final List<Supplier<Collection<TypeElementImpl>>> typeGatherers;
 
-    public PackageElementImpl(Universe universe, String name, MemoizedValue<@Nullable ClassNode> node,
+    public PackageElementImpl(TypeLookup lookup, String name, MemoizedValue<@Nullable ClassNode> node,
             @Nullable ModuleElementImpl module) {
-        super(universe, node.map(n -> n == null ? AnnotationSource.EMPTY : AnnotationSource.fromType(n)),
+        super(lookup, node.map(n -> n == null ? AnnotationSource.EMPTY : AnnotationSource.fromType(n)),
                 AnnotationTargetPath.ROOT, obtained(module));
         this.name = NameImpl.of(name);
         this.module = module;
-        this.type = new NoTypeImpl(universe, this.annos, TypeKind.PACKAGE);
-        this.types = memoize(() -> new ArrayList<>(mutableTypes.values()));
+        this.type = new NoTypeImpl(lookup, this.annos, TypeKind.PACKAGE);
+        this.typeGatherers = new ArrayList<>();
+        this.types = memoize(() -> typeGatherers.stream().map(Supplier::get).flatMap(Collection::stream)
+                .collect(Collectors.toList()));
     }
 
     public @Nullable ModuleElementImpl getModule() {
         return module;
+    }
+
+    public void addTypeGatherer(Supplier<Collection<TypeElementImpl>> gatherer) {
+        this.typeGatherers.add(gatherer);
+    }
+
+    public MemoizedValue<List<TypeElementImpl>> computeTypes() {
+        return types;
     }
 
     public Map<String, TypeElementImpl> getMutableTypes() {

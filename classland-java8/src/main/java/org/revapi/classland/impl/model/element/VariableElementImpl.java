@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,7 @@ import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -54,15 +54,15 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
     protected final NameImpl name;
     protected final ElementImpl parent;
 
-    private VariableElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+    private VariableElementImpl(TypeLookup lookup, MemoizedValue<AnnotationSource> annotationSource,
             MemoizedValue<@Nullable ModuleElementImpl> module, @Nullable String name, ElementImpl parent) {
-        this(universe, annotationSource, AnnotationTargetPath.ROOT, module, name, parent);
+        this(lookup, annotationSource, AnnotationTargetPath.ROOT, module, name, parent);
     }
 
-    private VariableElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+    private VariableElementImpl(TypeLookup lookup, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> module, @Nullable String name,
             ElementImpl parent) {
-        super(universe, annotationSource, path, module);
+        super(lookup, annotationSource, path, module);
         this.name = NameImpl.of(name);
         this.parent = parent;
     }
@@ -86,11 +86,11 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         private final ElementKind kind;
         private final TypeMirrorImpl type;
 
-        public <T extends ElementImpl & TypeVariableResolutionContext> Missing(Universe universe,
+        public <T extends ElementImpl & TypeVariableResolutionContext> Missing(TypeLookup lookup,
                 MemoizedValue<ModuleElementImpl> module, T parent, String name, String descriptor, ElementKind kind) {
-            super(universe, AnnotationSource.MEMOIZED_EMPTY, module, name, parent);
+            super(lookup, AnnotationSource.MEMOIZED_EMPTY, module, name, parent);
             this.kind = kind;
-            this.type = TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(descriptor), parent,
+            this.type = TypeMirrorFactory.create(lookup, SignatureParser.parseTypeRef(descriptor), parent,
                     AnnotationTargetPath.ROOT);
         }
 
@@ -125,13 +125,13 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         private final Set<Modifier> modifiers;
         private final MemoizedValue<TypeMirrorImpl> type;
 
-        public Field(Universe universe, TypeElementImpl parent, FieldNode field) {
-            super(universe, obtained(AnnotationSource.fromField(field)), parent.lookupModule(), field.name, parent);
+        public Field(TypeLookup lookup, TypeElementImpl parent, FieldNode field) {
+            super(lookup, obtained(AnnotationSource.fromField(field)), parent.lookupModule(), field.name, parent);
             this.field = field;
             this.modifiers = Modifiers.toFieldModifiers(field.access);
             this.type = memoize(() -> {
                 String sig = field.signature == null ? field.desc : field.signature;
-                return TypeMirrorFactory.create(universe, SignatureParser.parseTypeRef(sig), parent,
+                return TypeMirrorFactory.create(lookup, SignatureParser.parseTypeRef(sig), parent,
                         obtained(AnnotationSource.fromField(field)), new AnnotationTargetPath(TypeReference.FIELD),
                         parent.lookupModule());
             });
@@ -172,8 +172,8 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
         private final Set<Modifier> modifiers;
         private final MemoizedValue<TypeMirrorImpl> type;
 
-        public Parameter(Universe universe, ExecutableElementImpl method, int index) {
-            super(universe, obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
+        public Parameter(TypeLookup lookup, ExecutableElementImpl method, int index) {
+            super(lookup, obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
                     new AnnotationTargetPath(newFormalParameterReference(index)), method.getType().lookupModule(),
                     getParamName(method.getNode(), index), method);
             List<ParameterNode> paramsInfo = method.getNode().parameters;
@@ -182,7 +182,7 @@ public abstract class VariableElementImpl extends ElementImpl implements Variabl
 
             this.type = method.getSignature().map(ms -> {
                 TypeSignature paramType = ms.parameterTypes.get(index);
-                return TypeMirrorFactory.create(universe, paramType, method,
+                return TypeMirrorFactory.create(lookup, paramType, method,
                         obtained(AnnotationSource.fromMethodParameter(method.getNode(), index)),
                         new AnnotationTargetPath(newFormalParameterReference(index)), method.getType().lookupModule());
             });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 package org.revapi.classland.impl;
 
 public class ElementsImpl extends BaseElementsImpl {
-    public ElementsImpl(Universe universe) {
-        super(universe);
+    public ElementsImpl(TypeLookup lookup) {
+        super(lookup);
     }
 }

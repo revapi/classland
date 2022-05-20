@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,27 +16,28 @@
  */
 package org.revapi.classland.impl.model.element;
 
-import java.io.StringWriter;
 import java.util.List;
-import java.util.Objects;
 
 import javax.lang.model.element.Element;
 
-import org.revapi.classland.PrettyPrinting;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class ElementImpl extends AnnotatedConstructImpl implements Element {
-
-    protected ElementImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+    protected ElementImpl(TypeLookup lookup, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(universe, annotationSource, path, typeLookupSeed, false);
+        super(lookup, annotationSource, path, typeLookupSeed, false);
+    }
+
+    protected ElementImpl(TypeLookup lookup, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
+        super(lookup, annos);
     }
 
     public boolean isDeprecated() {

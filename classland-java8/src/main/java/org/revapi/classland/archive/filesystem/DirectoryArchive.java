@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,8 +42,10 @@ public class DirectoryArchive implements Archive {
 
     @Override
     public Iterator<ClassData> iterator() {
-        try (Stream<Path> str = Files.find(rootDir, Integer.MAX_VALUE,
-                (p, attrs) -> p.getFileName().toString().endsWith(".class"), FileVisitOption.FOLLOW_LINKS)) {
+        try (Stream<Path> str = Files.find(rootDir, Integer.MAX_VALUE, (p, attrs) -> {
+            String filename = p.getFileName().toString();
+            return !"module-info.class".equals(filename) && filename.endsWith(".class");
+        }, FileVisitOption.FOLLOW_LINKS)) {
             List<ClassData> paths = str.map(FileClassData::new).collect(Collectors.toList());
             return paths.iterator();
         } catch (IOException e) {
@@ -83,6 +85,16 @@ public class DirectoryArchive implements Archive {
             try (InputStream in = Files.newInputStream(manifestPath)) {
                 return Optional.of(new Manifest(in));
             }
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<ClassData> getModuleInfo() throws IOException {
+        Path path = rootDir.resolve(Paths.get("module-info.class"));
+        if (Files.exists(path)) {
+            return Optional.of(new FileClassData(path));
         } else {
             return Optional.empty();
         }

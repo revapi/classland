@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ import javax.lang.model.type.TypeKind;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypePool;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 
 public class JModArchiveTest {
@@ -34,13 +34,13 @@ public class JModArchiveTest {
     @ValueSource(strings = { "java9.mod", "java10.mod", "java11.mod", "java12.mod", "java14.mod" })
     void loadTest(String jmodFile) throws Exception {
         Path jmod = new File(getClass().getClassLoader().getResource(jmodFile).getPath()).toPath();
-        Universe universe = new Universe(false);
+        TypePool universe = new TypePool(false);
         universe.registerArchive(new JModArchive(jmod));
 
-        TypeElementBase obj = universe.getTypeByInternalNameFromModule("jdk/internal/editor/external/ExternalEditor",
-                null);
+        TypeElementBase obj = universe.getLookup()
+                .getTypeByInternalNameFromModule("jdk/internal/editor/external/ExternalEditor", null);
         assertEquals(TypeKind.DECLARED, obj.asType().getKind());
-        obj = universe.getTypeByInternalNameFromModule("not/there/like", null);
+        obj = universe.getLookup().getTypeByInternalNameFromModule("not/there/like", null);
         assertEquals(TypeKind.ERROR, obj.asType().getKind());
     }
 }

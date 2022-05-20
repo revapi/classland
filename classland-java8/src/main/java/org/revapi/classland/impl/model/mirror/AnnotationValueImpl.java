@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import javax.lang.model.type.TypeMirror;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.revapi.classland.PrettyPrinting;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.BaseModelImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -48,17 +48,17 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
 
     private final Object value;
 
-    public AnnotationValueImpl(Universe universe, Object value) {
-        super(universe);
+    public AnnotationValueImpl(TypeLookup lookup, Object value) {
+        super(lookup);
         this.value = value;
     }
 
-    public static AnnotationValueImpl fromAsmValue(Universe universe, Object value,
+    public static AnnotationValueImpl fromAsmValue(TypeLookup lookup, Object value,
             TypeVariableResolutionContext resolutionContext,
             MemoizedValue<@Nullable ModuleElementImpl> typeLookupSource) {
         if (value instanceof Type) {
             // class value
-            value = TypeMirrorFactory.create(universe,
+            value = TypeMirrorFactory.create(lookup,
                     SignatureParser.parseInternalName(((Type) value).getInternalName()), resolutionContext,
                     AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, typeLookupSource);
         } else if (value instanceof String[]) {
@@ -67,27 +67,27 @@ public class AnnotationValueImpl extends BaseModelImpl implements AnnotationValu
             String enumTypeDescriptor = ((String[]) value)[0];
             String enumConstantName = ((String[]) value)[1];
 
-            TypeElementBase enumType = universe.getTypeByInternalNameFromModule(
+            TypeElementBase enumType = lookup.getTypeByInternalNameFromModule(
                     Type.getType(enumTypeDescriptor).getInternalName(), typeLookupSource.get());
 
             value = enumType.getField(enumConstantName);
             if (value == null) {
-                value = new VariableElementImpl.Missing(universe, enumType.lookupModule(), enumType, enumConstantName,
+                value = new VariableElementImpl.Missing(lookup, enumType.lookupModule(), enumType, enumConstantName,
                         "L" + enumType.getInternalName() + ";", ElementKind.ENUM_CONSTANT);
             }
         } else if (value instanceof AnnotationNode) {
             // annotation
-            value = new AnnotationMirrorImpl((AnnotationNode) value, universe, universe.getTypeByInternalNameFromModule(
+            value = new AnnotationMirrorImpl((AnnotationNode) value, lookup, lookup.getTypeByInternalNameFromModule(
                     Type.getType(((AnnotationNode) value).desc).getInternalName(), typeLookupSource.get()));
         } else if (value instanceof List) {
             // array of values
 
             // noinspection unchecked
             value = ((List<Object>) value).stream()
-                    .map(v -> fromAsmValue(universe, v, resolutionContext, typeLookupSource)).collect(toList());
+                    .map(v -> fromAsmValue(lookup, v, resolutionContext, typeLookupSource)).collect(toList());
         }
 
-        return new AnnotationValueImpl(universe, value);
+        return new AnnotationValueImpl(lookup, value);
     }
 
     @Override

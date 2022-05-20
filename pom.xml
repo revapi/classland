@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2020-2021 Lukas Krejci
+    Copyright 2020-2022 Lukas Krejci
     and other contributors as indicated by the @author tags.
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@
         <version.maven-failsafe-plugin>${version.maven-surefire-plugin}</version.maven-failsafe-plugin>
 
         <version.org.codehaus.plexus>3.0.3</version.org.codehaus.plexus>
-        <version.org.ow2.asm>9.0</version.org.ow2.asm>
+        <version.org.ow2.asm>9.2</version.org.ow2.asm>
         <version.org.openjdk.jmh>1.25</version.org.openjdk.jmh>
         <version.org.junit.jupiter>5.6.2</version.org.junit.jupiter>
         <version.net.revelc.code.formatter>2.12.1</version.net.revelc.code.formatter>

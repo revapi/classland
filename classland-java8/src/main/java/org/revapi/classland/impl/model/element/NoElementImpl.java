@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeKind;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -38,14 +38,13 @@ import org.revapi.classland.impl.model.mirror.NoTypeImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 
 public class NoElementImpl extends ElementImpl {
-    public NoElementImpl(Universe universe) {
-        super(universe, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT,
-                obtained(universe.getUnnamedModule()));
+    public NoElementImpl(TypeLookup lookup) {
+        super(lookup, AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtained(lookup.getUnnamedModule()));
     }
 
     @Override
     public TypeMirrorImpl asType() {
-        return new NoTypeImpl(universe, obtained(emptyList()), TypeKind.NONE);
+        return new NoTypeImpl(lookup, obtained(emptyList()), TypeKind.NONE);
     }
 
     @Override

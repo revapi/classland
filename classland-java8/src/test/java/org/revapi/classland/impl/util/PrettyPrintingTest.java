@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.PrettyPrinting;
 import org.revapi.classland.archive.jar.JarFileArchive;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypePool;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
@@ -53,10 +53,10 @@ class PrettyPrintingTest {
 
     @Test
     void printEnum() throws Exception {
-        Universe u = new Universe(true);
+        TypePool u = new TypePool(true);
         u.registerArchive(new JarFileArchive(new JarFile(enums.jarFile())));
 
-        TypeElementImpl Enums = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Enums", null);
+        TypeElementImpl Enums = (TypeElementImpl) u.getLookup().getTypeByInternalNameFromModule("pkg/Enums", null);
         ExecutableElement values = ElementFilter.methodsIn(Enums.getEnclosedElements()).stream()
                 .filter(m -> "values".contentEquals(m.getSimpleName())).findFirst().get();
 

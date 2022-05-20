@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,8 @@ package org.revapi.classland;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Supplier;
 
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 import org.revapi.classland.archive.Archive;
@@ -32,20 +28,19 @@ import org.revapi.classland.archive.BaseModule;
 import org.revapi.classland.archive.ModuleResolver;
 import org.revapi.classland.archive.jrt.JrtModuleResolver;
 import org.revapi.classland.impl.ElementsImpl;
+import org.revapi.classland.impl.TypeLookup;
+import org.revapi.classland.impl.TypePool;
 import org.revapi.classland.impl.TypesImpl;
-import org.revapi.classland.impl.Universe;
-import org.revapi.classland.impl.model.element.ModuleElementImpl;
-import org.revapi.classland.impl.util.Exceptions;
 
 public final class Classland implements AutoCloseable {
-    private final Universe universe;
+    private final TypeLookup lookup;
     private final ElementsImpl elements;
     private final TypesImpl types;
 
-    private Classland(Universe universe) {
-        this.universe = universe;
-        this.elements = new ElementsImpl(universe);
-        this.types = new TypesImpl(universe);
+    private Classland(TypeLookup lookup) {
+        this.lookup = lookup;
+        this.elements = new ElementsImpl(lookup);
+        this.types = new TypesImpl(lookup);
     }
 
     public static Builder builder() {
@@ -57,7 +52,7 @@ public final class Classland implements AutoCloseable {
         return !javaVersion.startsWith("1.");
     }
 
-    public Elements getElements() {
+    public ClasslandElements getElements() {
         return elements;
     }
 
@@ -67,7 +62,7 @@ public final class Classland implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        universe.close();
+        lookup.close();
     }
 
     public static final class Builder {
@@ -121,6 +116,14 @@ public final class Classland implements AutoCloseable {
             return this;
         }
 
+        public Builder withRuntimeForCurrentJvm() {
+            if (currentJvmSupportsModules()) {
+                return withStandardRuntime();
+            } else {
+                return withStandardJava8Runtime();
+            }
+        }
+
         /**
          * Adds the {@link JrtModuleResolver} and {@code java.base} module. This makes up the standard base runtime of
          * the modern JVMs. This uses the modules of the current JVM.
@@ -155,24 +158,24 @@ public final class Classland implements AutoCloseable {
         }
 
         public Classland build() {
-            Universe universe = new Universe(analyzeModules);
+            TypePool typePool = new TypePool(analyzeModules);
             for (Archive a : archives) {
-                universe.registerArchive(a);
+                typePool.registerArchive(a);
             }
 
             for (ModuleResolver r : moduleResolvers) {
-                universe.registerModuleResolver(r);
+                typePool.registerModuleResolver(r);
             }
 
             for (String m : modules) {
-                universe.addModule(m);
+                typePool.addModule(m);
             }
 
             if (computeModuleClosure) {
-                universe.addModulesClosure();
+                typePool.addModulesClosure();
             }
 
-            return new Classland(universe);
+            return new Classland(typePool.getLookup());
         }
     }
 }

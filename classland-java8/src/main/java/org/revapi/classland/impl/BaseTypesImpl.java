@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -98,7 +98,7 @@ abstract class BaseTypesImpl implements Types {
         VALID_PRIMITIVE_CONVERSIONS.put(DOUBLE, EnumSet.of(DOUBLE));
     }
 
-    private final Universe universe;
+    private final TypeLookup lookup;
     private final MemoizedValue<TypeElementBase> javaLangObject;
     private final MemoizedValue<TypeMirror> javaLangObjectType;
     private final MemoizedFunction<PrimitiveType, TypeElement> boxedClass;
@@ -375,32 +375,32 @@ abstract class BaseTypesImpl implements Types {
         }
     };
 
-    protected BaseTypesImpl(Universe universe) {
-        this.universe = universe;
-        this.javaLangObject = memoize(universe::getJavaLangObject);
+    protected BaseTypesImpl(TypeLookup lookup) {
+        this.lookup = lookup;
+        this.javaLangObject = memoize(lookup::getJavaLangObject);
         this.javaLangObjectType = javaLangObject.map(Element::asType);
-        this.noType = new NoTypeImpl(universe, obtained(emptyList()), NONE);
+        this.noType = new NoTypeImpl(lookup, obtained(emptyList()), NONE);
         this.boxedClass = MemoizedFunction.memoize(p -> {
-            ModuleElementImpl javaBase = universe.getJavaBase();
+            ModuleElementImpl javaBase = lookup.getJavaBase();
             switch (p.getKind()) {
             case BOOLEAN:
-                return universe.getTypeByInternalNameFromModule("java/lang/Boolean", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Boolean", javaBase);
             case CHAR:
-                return universe.getTypeByInternalNameFromModule("java/lang/Character", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Character", javaBase);
             case VOID:
-                return universe.getTypeByInternalNameFromModule("java/lang/Void", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Void", javaBase);
             case BYTE:
-                return universe.getTypeByInternalNameFromModule("java/lang/Byte", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Byte", javaBase);
             case INT:
-                return universe.getTypeByInternalNameFromModule("java/lang/Integer", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Integer", javaBase);
             case DOUBLE:
-                return universe.getTypeByInternalNameFromModule("java/lang/Double", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Double", javaBase);
             case FLOAT:
-                return universe.getTypeByInternalNameFromModule("java/lang/Float", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Float", javaBase);
             case LONG:
-                return universe.getTypeByInternalNameFromModule("java/lang/Long", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Long", javaBase);
             case SHORT:
-                return universe.getTypeByInternalNameFromModule("java/lang/Short", javaBase);
+                return lookup.getTypeByInternalNameFromModule("java/lang/Short", javaBase);
             default:
                 throw new IllegalArgumentException("Not a primitive type: " + p);
             }
@@ -473,7 +473,7 @@ abstract class BaseTypesImpl implements Types {
     // not used in revapi
     @Override
     public boolean isSubsignature(ExecutableType m1, ExecutableType m2) {
-        return TypeUtils.isSubSignature(m1, m2, universe);
+        return TypeUtils.isSubSignature(m1, m2, lookup);
     }
 
     @Override
@@ -488,7 +488,7 @@ abstract class BaseTypesImpl implements Types {
 
     @Override
     public TypeMirror erasure(TypeMirror t) {
-        return TypeUtils.erasure(t, universe);
+        return TypeUtils.erasure((TypeMirrorImpl) t, lookup);
     }
 
     @Override
@@ -515,12 +515,12 @@ abstract class BaseTypesImpl implements Types {
 
     @Override
     public PrimitiveType getPrimitiveType(TypeKind kind) {
-        return TypeMirrorFactory.createPrimitive(universe, kind);
+        return TypeMirrorFactory.createPrimitive(lookup, kind);
     }
 
     @Override
     public NullType getNullType() {
-        return new NullTypeImpl(universe);
+        return lookup.nullType;
     }
 
     @Override
@@ -528,7 +528,7 @@ abstract class BaseTypesImpl implements Types {
         if (kind != VOID && kind != NONE) {
             throw new IllegalArgumentException();
         }
-        return new NoTypeImpl(universe, memoize(Collections::emptyList), kind);
+        return new NoTypeImpl(lookup, memoize(Collections::emptyList), kind);
     }
 
     @Override
@@ -539,7 +539,7 @@ abstract class BaseTypesImpl implements Types {
 
     @Override
     public WildcardType getWildcardType(TypeMirror extendsBound, TypeMirror superBound) {
-        return new WildcardTypeImpl(universe, (TypeMirrorImpl) extendsBound, (TypeMirrorImpl) superBound,
+        return new WildcardTypeImpl(lookup, (TypeMirrorImpl) extendsBound, (TypeMirrorImpl) superBound,
                 AnnotationSource.MEMOIZED_EMPTY, AnnotationTargetPath.ROOT, obtainedNull());
     }
 
@@ -588,7 +588,7 @@ abstract class BaseTypesImpl implements Types {
             TypeMirror explicitLowerBound = w.getExtendsBound();
             TypeMirror explicitUpperBound = w.getSuperBound();
             if (explicitLowerBound != null) {
-                return new NullTypeImpl(universe);
+                return lookup.nullType;
             } else if (explicitUpperBound == null) {
                 return javaLangObject.get().asType();
             } else {
@@ -615,23 +615,23 @@ abstract class BaseTypesImpl implements Types {
         String internalName = ((DeclaredTypeImpl) t).asElement().getInternalName();
         switch (internalName) {
         case "java/lang/Boolean":
-            return new PrimitiveTypeImpl(universe, BOOLEAN);
+            return new PrimitiveTypeImpl(lookup, BOOLEAN);
         case "java/lang/Byte":
-            return new PrimitiveTypeImpl(universe, BYTE);
+            return new PrimitiveTypeImpl(lookup, BYTE);
         case "java/lang/Character":
-            return new PrimitiveTypeImpl(universe, CHAR);
+            return new PrimitiveTypeImpl(lookup, CHAR);
         case "java/lang/Short":
-            return new PrimitiveTypeImpl(universe, SHORT);
+            return new PrimitiveTypeImpl(lookup, SHORT);
         case "java/lang/Integer":
-            return new PrimitiveTypeImpl(universe, INT);
+            return new PrimitiveTypeImpl(lookup, INT);
         case "java/lang/Long":
-            return new PrimitiveTypeImpl(universe, LONG);
+            return new PrimitiveTypeImpl(lookup, LONG);
         case "java/lang/Float":
-            return new PrimitiveTypeImpl(universe, FLOAT);
+            return new PrimitiveTypeImpl(lookup, FLOAT);
         case "java/lang/Double":
-            return new PrimitiveTypeImpl(universe, DOUBLE);
+            return new PrimitiveTypeImpl(lookup, DOUBLE);
         case "java/lang/Void":
-            return new PrimitiveTypeImpl(universe, VOID);
+            return new PrimitiveTypeImpl(lookup, VOID);
         default:
             return INVALID_PRIMITIVE_TYPE;
         }

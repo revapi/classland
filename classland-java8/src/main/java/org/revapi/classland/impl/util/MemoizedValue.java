@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,6 +89,14 @@ public class MemoizedValue<T> implements Supplier<T> {
         }
     }
 
+    public T swap(T newValue) {
+        synchronized (this) {
+            T val = get();
+            this.value = newValue;
+            return val;
+        }
+    }
+
     public <U> MemoizedValue<U> map(Function<T, U> action) {
         return instantiate(() -> {
             T val = get();
@@ -118,15 +126,46 @@ public class MemoizedValue<T> implements Supplier<T> {
             }
         }
 
-        private String location() {
-            StackTraceElement el = instantiationLocation.getStackTrace()[4];
+        @Override
+        public T swap(T newValue) {
+            synchronized (this) {
+                instantiationLocation.addSuppressed(new Throwable(obtained ? "o" : ""));
+                return super.swap(newValue);
+            }
+        }
+
+        private static String location(Throwable t, int stackDepth) {
+            StackTraceElement el = t.getStackTrace()[stackDepth];
             return el.getClassName() + "." + el.getMethodName() + "(" + el.getFileName() + ":" + el.getLineNumber()
                     + ")";
         }
 
+        private String location() {
+            return location(instantiationLocation, 4);
+        }
+
         @Override
         public String toString() {
-            return "Memoized{" + (obtained ? ("value=" + value) : "<pending>") + " @ " + location() + "}";
+            StringBuilder sb = new StringBuilder("Memoized{");
+            if (obtained) {
+                sb.append("value=").append(value);
+            } else {
+                sb.append("<pending>");
+            }
+
+            sb.append(" @ ").append(location());
+
+            Throwable[] swaps = instantiationLocation.getSuppressed();
+            if (swaps.length > 0) {
+                if (!"o".equals(swaps[0].getMessage())) {
+                    sb.append(" <swapped-unevaluated>");
+                }
+                sb.append(", <swap> ").append(location(swaps[swaps.length - 1], 1));
+            }
+
+            sb.append("}");
+
+            return sb.toString();
         }
     }
 }

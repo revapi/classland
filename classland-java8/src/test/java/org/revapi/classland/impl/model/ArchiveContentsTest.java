@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collection;
 import java.util.jar.JarFile;
 
 import org.junit.jupiter.api.Test;
@@ -52,9 +53,9 @@ class ArchiveContentsTest {
             assertTrue(contents.getPackages().containsKey("org.objectweb.asm"));
             assertTrue(contents.getPackages().containsKey("org.objectweb.asm.signature"));
 
-            assertEquals(37, contents.getTypes().size());
-            assertTrue(
-                    contents.getTypes().stream().anyMatch(cd -> "org/objectweb/asm/ClassReader".equals(cd.getName())));
+            assertEquals(37, contents.getTypes().values().stream().mapToLong(Collection::size).sum());
+            assertTrue(contents.getTypes().values().stream().flatMap(Collection::stream)
+                    .anyMatch(cd -> "org/objectweb/asm/ClassReader".equals(cd.getName())));
         }
     }
 }

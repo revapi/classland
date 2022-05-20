@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,10 +47,6 @@ public class MemoizedFunction<T, R> implements Function<T, R> {
         }
     }
 
-    public MemoizedValue<R> curry(T param) {
-        return MemoizedValue.memoize(() -> apply(param));
-    }
-
     @Override
     public R apply(T param) {
         return values.computeIfAbsent(param, __ -> action.apply(param));
@@ -93,7 +89,7 @@ public class MemoizedFunction<T, R> implements Function<T, R> {
 
         @Override
         public String toString() {
-            return "Memoized1{size=" + values.size() + " @ " + location() + "}";
+            return "MemoizedFunction{size=" + values.size() + " @ " + location() + "}";
         }
     }
 }

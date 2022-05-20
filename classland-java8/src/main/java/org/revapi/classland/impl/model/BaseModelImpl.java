@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,16 @@
  */
 package org.revapi.classland.impl.model;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 
 public abstract class BaseModelImpl {
-    protected final Universe universe;
+    protected final TypeLookup lookup;
 
-    protected BaseModelImpl(Universe universe) {
-        this.universe = universe;
+    protected BaseModelImpl(TypeLookup lookup) {
+        this.lookup = lookup;
     }
 
-    public Universe getUniverse() {
-        return universe;
+    public TypeLookup getLookup() {
+        return lookup;
     }
 }

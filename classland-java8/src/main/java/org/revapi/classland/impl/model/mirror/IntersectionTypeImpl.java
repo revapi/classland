@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,13 +26,13 @@ import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVisitor;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 
 public class IntersectionTypeImpl extends TypeMirrorImpl implements IntersectionType {
     private final List<TypeMirrorImpl> bounds;
 
-    public IntersectionTypeImpl(Universe universe, List<TypeMirrorImpl> bounds) {
-        super(universe, obtained(emptyList()));
+    public IntersectionTypeImpl(TypeLookup lookup, List<TypeMirrorImpl> bounds) {
+        super(lookup, obtained(emptyList()));
         this.bounds = bounds;
     }
 
@@ -50,25 +50,25 @@ public class IntersectionTypeImpl extends TypeMirrorImpl implements Intersection
     public <R, P> R accept(TypeVisitor<R, P> v, P p) {
         return v.visitIntersection(this, p);
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
-
-        IntersectionTypeImpl that = (IntersectionTypeImpl) o;
-
-        return bounds.equals(that.bounds);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + bounds.hashCode();
-        return result;
-    }
+    //
+    // @Override
+    // public boolean equals(Object o) {
+    // if (this == o) {
+    // return true;
+    // }
+    // if (!super.equals(o)) {
+    // return false;
+    // }
+    //
+    // IntersectionTypeImpl that = (IntersectionTypeImpl) o;
+    //
+    // return bounds.equals(that.bounds);
+    // }
+    //
+    // @Override
+    // public int hashCode() {
+    // int result = super.hashCode();
+    // result = 31 * result + bounds.hashCode();
+    // return result;
+    // }
 }

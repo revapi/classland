@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +21,10 @@ import java.util.List;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.AnnotationValueImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
@@ -32,9 +33,13 @@ import org.revapi.classland.impl.util.Nullable;
 
 public abstract class ExecutableElementBase extends ElementImpl
         implements ExecutableElement, TypeVariableResolutionContext {
-    protected ExecutableElementBase(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+    protected ExecutableElementBase(TypeLookup lookup, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(universe, annotationSource, path, typeLookupSeed);
+        super(lookup, annotationSource, path, typeLookupSeed);
+    }
+
+    protected ExecutableElementBase(TypeLookup lookup, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
+        super(lookup, annos);
     }
 
     @Override

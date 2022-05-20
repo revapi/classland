@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarFile;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -34,12 +36,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.archive.jar.JarFileArchive;
-import org.revapi.classland.impl.Universe;
-import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
-import org.revapi.classland.impl.model.mirror.ArrayTypeImpl;
-import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
-import org.revapi.classland.impl.model.mirror.PrimitiveTypeImpl;
-import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
+import org.revapi.classland.impl.TypeLookup;
+import org.revapi.classland.impl.TypePool;
+import org.revapi.classland.impl.model.mirror.*;
 import org.revapi.testjars.CompiledJar;
 import org.revapi.testjars.junit5.CompiledJarExtension;
 import org.revapi.testjars.junit5.JarSources;
@@ -50,27 +49,29 @@ class AnnotationDeclarationsTest {
 
     @JarSources(root = "/src/model/element/", sources = "pkg/Annotations.java")
     CompiledJar annotations;
-
-    Universe u;
+    TypeLookup tl;
     TypeElementImpl VisibleAnno;
     TypeElementImpl InvisibleAnno;
     TypeElementImpl VisibleTypeAnno;
     TypeElementImpl InvisibleTypeAnno;
+    TypeElementImpl AttributesAnno;
 
     @BeforeEach
     void setupTypeUniverse() throws Exception {
-        u = new Universe(false);
-        u.registerArchive(new JarFileArchive(new JarFile(annotations.jarFile())));
-        VisibleAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$VisibleAnno", null);
-        InvisibleAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$InvisibleAnno", null);
-        VisibleTypeAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$VisibleTypeAnno", null);
-        InvisibleTypeAnno = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations$InvisibleTypeAnno",
+        TypePool universe = new TypePool(false);
+        universe.registerArchive(new JarFileArchive(new JarFile(annotations.jarFile())));
+        tl = universe.getLookup();
+        VisibleAnno = (TypeElementImpl) tl.getTypeByInternalNameFromModule("pkg/Annotations$VisibleAnno", null);
+        InvisibleAnno = (TypeElementImpl) tl.getTypeByInternalNameFromModule("pkg/Annotations$InvisibleAnno", null);
+        VisibleTypeAnno = (TypeElementImpl) tl.getTypeByInternalNameFromModule("pkg/Annotations$VisibleTypeAnno", null);
+        InvisibleTypeAnno = (TypeElementImpl) tl.getTypeByInternalNameFromModule("pkg/Annotations$InvisibleTypeAnno",
                 null);
+        AttributesAnno = (TypeElementImpl) tl.getTypeByInternalNameFromModule("pkg/Annotations$AttributesAnno", null);
     }
 
     @Test
     void onType() throws Exception {
-        TypeElementImpl AnnotatedClass = (TypeElementImpl) u
+        TypeElementImpl AnnotatedClass = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedClass", null);
 
         List<AnnotationMirrorImpl> annos = AnnotatedClass.getAnnotationMirrors();
@@ -81,7 +82,7 @@ class AnnotationDeclarationsTest {
 
     @Test
     void onTypeParameter() throws Exception {
-        TypeElementImpl AnnotatedTypeParameter = (TypeElementImpl) u
+        TypeElementImpl AnnotatedTypeParameter = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedTypeParameter", null);
 
         List<TypeParameterElementImpl> typeParams = AnnotatedTypeParameter.getTypeParameters();
@@ -97,7 +98,7 @@ class AnnotationDeclarationsTest {
 
     @Test
     void onMethod() throws Exception {
-        TypeElementImpl AnnotatedMethod = (TypeElementImpl) u
+        TypeElementImpl AnnotatedMethod = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethod", null);
 
         ExecutableElementImpl method = AnnotatedMethod.getMethod("method", "()V");
@@ -112,7 +113,7 @@ class AnnotationDeclarationsTest {
 
     @Test
     void onMethodParameter() throws Exception {
-        TypeElementImpl AnnotatedMethodParameter = (TypeElementImpl) u
+        TypeElementImpl AnnotatedMethodParameter = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethodParameter", null);
         ExecutableElementImpl method = AnnotatedMethodParameter.getMethod("method",
                 "(IDLjava/lang/String;Ljava/lang/Object;)V");
@@ -144,7 +145,7 @@ class AnnotationDeclarationsTest {
 
     @Test
     void onInnerClassConstructorParameter() throws Exception {
-        TypeElementImpl AnnotatedMethodParameter = (TypeElementImpl) u
+        TypeElementImpl AnnotatedMethodParameter = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethodParameter", null);
         ExecutableElementImpl ctor = AnnotatedMethodParameter.getMethod("<init>",
                 "(Lpkg/Annotations;Ljava/lang/Object;)V");
@@ -162,7 +163,7 @@ class AnnotationDeclarationsTest {
 
     @Test
     void onMethodParameterTypeVariable() throws Exception {
-        TypeElementImpl AnnotatedMethodParameterTypeVariable = (TypeElementImpl) u
+        TypeElementImpl AnnotatedMethodParameterTypeVariable = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedMethodParameterTypeVariable", null);
         ExecutableElementImpl method = AnnotatedMethodParameterTypeVariable.getMethod("method", "(Ljava/util/Set;)V");
 
@@ -188,7 +189,7 @@ class AnnotationDeclarationsTest {
 
     @Test
     void onField() throws Exception {
-        TypeElementImpl AnnotatedField = (TypeElementImpl) u
+        TypeElementImpl AnnotatedField = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedField", null);
         VariableElementImpl field = AnnotatedField.getField("simpleField");
 
@@ -207,7 +208,7 @@ class AnnotationDeclarationsTest {
 
     @Test
     void onFieldArray() throws Exception {
-        TypeElementImpl AnnotatedField = (TypeElementImpl) u
+        TypeElementImpl AnnotatedField = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedField", null);
         VariableElementImpl field = AnnotatedField.getField("arrayField");
 
@@ -272,10 +273,10 @@ class AnnotationDeclarationsTest {
 
     @Test
     void onMethodReceiverType() throws Exception {
-        TypeElementImpl Annotations = (TypeElementImpl) u.getTypeByInternalNameFromModule("pkg/Annotations", null);
+        TypeElementImpl Annotations = (TypeElementImpl) tl.getTypeByInternalNameFromModule("pkg/Annotations", null);
         assertNotNull(Annotations);
 
-        TypeElementImpl AnnotatedReceiverType = (TypeElementImpl) u
+        TypeElementImpl AnnotatedReceiverType = (TypeElementImpl) tl
                 .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedReceiverType", null);
         assertNotNull(AnnotatedReceiverType);
 
@@ -312,6 +313,30 @@ class AnnotationDeclarationsTest {
         annos = receiverType.getAnnotationMirrors();
         assertEquals(1, annos.size());
         assertSame(VisibleTypeAnno, annos.get(0).getAnnotationType().asElement());
+    }
+
+    @Test
+    void testAnnotationAttributeOrder() throws Exception {
+        TypeElementImpl AnnotatedWithAttributes = (TypeElementImpl) tl
+                .getTypeByInternalNameFromModule("pkg/Annotations$AnnotatedWithAttributes", null);
+
+        List<AnnotationMirrorImpl> annos = AnnotatedWithAttributes.getAnnotationMirrors();
+        assertEquals(1, annos.size());
+        AnnotationMirrorImpl anno = annos.get(0);
+
+        assertSame(AttributesAnno, anno.getAnnotationType().asElement());
+        Map<ExecutableElementBase, AnnotationValueImpl> attrs = anno.getElementValues();
+        assertEquals(2, attrs.size());
+
+        // the attributes should be in order they are defined in the source
+        Iterator<Map.Entry<ExecutableElementBase, AnnotationValueImpl>> it = attrs.entrySet().iterator();
+        Map.Entry<ExecutableElementBase, AnnotationValueImpl> bEntry = it.next();
+        Map.Entry<ExecutableElementBase, AnnotationValueImpl> aEntry = it.next();
+
+        assertEquals("a", aEntry.getKey().getSimpleName().toString());
+        assertEquals("b", bEntry.getKey().getSimpleName().toString());
+        assertEquals(1, aEntry.getValue().getValue());
+        assertEquals(2, bEntry.getValue().getValue());
     }
 
     // TODO shamelessly copy the comprehensive type annotation handling test from Jandex.

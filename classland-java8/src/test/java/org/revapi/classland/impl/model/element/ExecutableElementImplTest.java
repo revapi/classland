@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.revapi.classland.archive.jar.JarFileArchive;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
+import org.revapi.classland.impl.TypePool;
 import org.revapi.classland.impl.model.mirror.AnnotationMirrorImpl;
 import org.revapi.classland.impl.model.mirror.AnnotationValueImpl;
 import org.revapi.classland.impl.model.mirror.DeclaredTypeImpl;
@@ -54,22 +55,23 @@ public class ExecutableElementImplTest {
     @JarSources(root = "/src/model/element/", sources = { "pkg/Methods.java" })
     CompiledJar methods;
 
-    Universe universe;
+    TypeLookup lookup;
 
     @BeforeEach
     void setup() throws Exception {
-        universe = new Universe(false);
+        TypePool universe = new TypePool(false);
         universe.registerArchive(new JarFileArchive(new JarFile(methods.jarFile())));
+        lookup = universe.getLookup();
     }
 
     @AfterEach
     void teardown() throws Exception {
-        universe.close();
+        lookup.close();
     }
 
     @Test
     void defaultMethods() throws Exception {
-        TypeElementBase DefaultMethods = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultMethods", null);
+        TypeElementBase DefaultMethods = lookup.getTypeByInternalNameFromModule("pkg/Methods$DefaultMethods", null);
 
         Assertions.assertNotNull(DefaultMethods);
 
@@ -82,7 +84,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void elementKinds() throws Exception {
-        TypeElementBase ElementKinds = universe.getTypeByInternalNameFromModule("pkg/Methods$ElementKinds", null);
+        TypeElementBase ElementKinds = lookup.getTypeByInternalNameFromModule("pkg/Methods$ElementKinds", null);
 
         Assertions.assertNotNull(ElementKinds);
 
@@ -97,7 +99,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void noTypeParameters() {
-        TypeElementBase Methods = universe.getTypeByInternalNameFromModule("pkg/Methods$Generics", null);
+        TypeElementBase Methods = lookup.getTypeByInternalNameFromModule("pkg/Methods$Generics", null);
         assertNotNull(Methods);
 
         ExecutableElementImpl nonGeneric = findSingleMethodByName(Methods, "nonGeneric");
@@ -108,7 +110,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void declaredTypeParameters() {
-        TypeElementBase Methods = universe.getTypeByInternalNameFromModule("pkg/Methods$Generics", null);
+        TypeElementBase Methods = lookup.getTypeByInternalNameFromModule("pkg/Methods$Generics", null);
         assertNotNull(Methods);
 
         ExecutableElementImpl genericByMethodTypeParam = findSingleMethodByName(Methods, "genericByMethodTypeParam");
@@ -126,7 +128,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void typeParametersFromEnclosingType() {
-        TypeElementBase Methods = universe.getTypeByInternalNameFromModule("pkg/Methods$Generics", null);
+        TypeElementBase Methods = lookup.getTypeByInternalNameFromModule("pkg/Methods$Generics", null);
         assertNotNull(Methods);
 
         ExecutableElementImpl genericByTypeTypeParam = findSingleMethodByName(Methods, "genericByTypeTypeParam");
@@ -151,7 +153,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void declaredTypeParameterUsingTypeParameterFromEnclosingType() {
-        TypeElementBase Methods = universe.getTypeByInternalNameFromModule("pkg/Methods$Generics", null);
+        TypeElementBase Methods = lookup.getTypeByInternalNameFromModule("pkg/Methods$Generics", null);
         assertNotNull(Methods);
 
         ExecutableElementImpl methodTypeParamUsesTypeTypeParam = findSingleMethodByName(Methods,
@@ -171,7 +173,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void typeParametersInInnerClass() {
-        TypeElementBase Methods$Inner = universe.getTypeByInternalNameFromModule("pkg/Methods$Generics$Inner", null);
+        TypeElementBase Methods$Inner = lookup.getTypeByInternalNameFromModule("pkg/Methods$Generics$Inner", null);
         assertNotNull(Methods$Inner);
 
         ExecutableElementImpl methodGenericFromEnclosingType = findSingleMethodByName(Methods$Inner,
@@ -202,7 +204,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void emptyThrowsList() {
-        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        TypeElementBase Exceptions = lookup.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
         assertNotNull(Exceptions);
 
         ExecutableElementImpl noThrows = findSingleMethodByName(Exceptions, "noThrows");
@@ -213,7 +215,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void throwsChecked() {
-        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        TypeElementBase Exceptions = lookup.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
         assertNotNull(Exceptions);
 
         ExecutableElementImpl throwsChecked = findSingleMethodByName(Exceptions, "throwsChecked");
@@ -228,7 +230,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void throwsUnchecked() {
-        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        TypeElementBase Exceptions = lookup.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
         assertNotNull(Exceptions);
 
         ExecutableElementImpl throwsUnchecked = findSingleMethodByName(Exceptions, "throwsUnchecked");
@@ -244,7 +246,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void throwsTypeParam() {
-        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        TypeElementBase Exceptions = lookup.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
         assertNotNull(Exceptions);
 
         ExecutableElementImpl throwsTypeParam = findSingleMethodByName(Exceptions, "throwsTypeParam");
@@ -261,7 +263,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void throwsMany() {
-        TypeElementBase Exceptions = universe.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
+        TypeElementBase Exceptions = lookup.getTypeByInternalNameFromModule("pkg/Methods$Exceptions", null);
         assertNotNull(Exceptions);
 
         ExecutableElementImpl throwsMany = findSingleMethodByName(Exceptions, "throwsMany");
@@ -286,7 +288,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void primitiveDefaultValue() {
-        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        TypeElementBase DefaultValues = lookup.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
         assertNotNull(DefaultValues);
 
         ExecutableElementImpl defaultPrimitive = findSingleMethodByName(DefaultValues, "defaultPrimitive");
@@ -302,7 +304,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void stringDefaultValue() {
-        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        TypeElementBase DefaultValues = lookup.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
         assertNotNull(DefaultValues);
 
         ExecutableElementImpl defaultString = findSingleMethodByName(DefaultValues, "defaultString");
@@ -318,7 +320,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void typeDefaultValue() {
-        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        TypeElementBase DefaultValues = lookup.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
         assertNotNull(DefaultValues);
 
         ExecutableElementImpl defaultClass = findSingleMethodByName(DefaultValues, "defaultClass");
@@ -335,7 +337,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void enumDefaultValue() {
-        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        TypeElementBase DefaultValues = lookup.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
         assertNotNull(DefaultValues);
 
         ExecutableElementImpl defaultEnum = findSingleMethodByName(DefaultValues, "defaultEnum");
@@ -354,7 +356,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void arrayDefaultValue() {
-        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        TypeElementBase DefaultValues = lookup.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
         assertNotNull(DefaultValues);
 
         ExecutableElementImpl defaultArray = findSingleMethodByName(DefaultValues, "defaultArray");
@@ -373,7 +375,7 @@ public class ExecutableElementImplTest {
 
     @Test
     void annotationDefaultValue() {
-        TypeElementBase DefaultValues = universe.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
+        TypeElementBase DefaultValues = lookup.getTypeByInternalNameFromModule("pkg/Methods$DefaultValues", null);
         assertNotNull(DefaultValues);
 
         ExecutableElementImpl defaultAnno = findSingleMethodByName(DefaultValues, "defaultAnno");

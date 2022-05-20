@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.jar.Attributes;
 
 import org.revapi.classland.archive.Archive;
 import org.revapi.classland.archive.ClassData;
@@ -32,8 +33,9 @@ public class ArchiveContents {
     private static final int PACKAGE_INFO_NAME_LENGTH = "package-info".length();
     private final Archive source;
     private volatile boolean scanned = false;
+    private volatile boolean moduleInfoInitialized = false;
     private final Map<String, @Nullable ClassData> packages = new HashMap<>();
-    private final Set<ClassData> classes = new HashSet<>();
+    private final Map<String, Set<ClassData>> classes = new HashMap<>();
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<ClassData> module;
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -43,24 +45,58 @@ public class ArchiveContents {
         this.source = source;
     }
 
+    public Archive getArchive() {
+        return source;
+    }
+
     public Map<String, @Nullable ClassData> getPackages() {
         scan();
         return packages;
     }
 
     public Optional<ClassData> getModule() {
-        scan();
+        initModuleInfo();
         return module;
     }
 
-    public Optional<String> getModuleName() {
-        scan();
+    public Optional<String> getAutomaticModuleName() {
+        initModuleInfo();
         return moduleName;
     }
 
-    public Set<ClassData> getTypes() {
+    /**
+     * The keys are package names, values are classes contained in a package.
+     */
+    public Map<String, Set<ClassData>> getTypes() {
         scan();
         return classes;
+    }
+
+    private void initModuleInfo() {
+        if (moduleInfoInitialized) {
+            return;
+        }
+
+        synchronized (classes) {
+            if (moduleInfoInitialized) {
+                return;
+            }
+
+            try {
+                this.module = source.getModuleInfo();
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to scan the module-info of the archive.", e);
+            }
+
+            try {
+                this.moduleName = this.module.isPresent() ? Optional.empty()
+                        : source.getManifest().map(manifest -> (String) manifest.getMainAttributes()
+                                .get(new Attributes.Name("Automatic-Module-Name")));
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to scan the manifest of the archive.", e);
+            }
+            moduleInfoInitialized = true;
+        }
     }
 
     private void scan() {
@@ -73,34 +109,20 @@ public class ArchiveContents {
                 return;
             }
 
-            ClassData foundModule = null;
             for (ClassData cd : source) {
                 String name = cd.getName();
-                if (name.equals("module-info")) {
-                    foundModule = cd;
-                } else if (name.endsWith("package-info")) {
-                    String pkgName = name.substring(0, name.length() - PACKAGE_INFO_NAME_LENGTH).replace('/', '.');
+                if (name.endsWith("package-info")) {
+                    String pkgName = name.substring(0, name.length() - PACKAGE_INFO_NAME_LENGTH - 1).replace('/', '.');
                     packages.put(pkgName, cd);
-                } else {
+                } else if (!name.equals("module-info")) {
                     int lastSlash = name.lastIndexOf('/');
                     String pkgName = lastSlash >= 0 ? name.substring(0, name.lastIndexOf('/')).replace('/', '.') : "";
                     if (!packages.containsKey(pkgName)) {
                         packages.put(pkgName, null);
                     }
-                    classes.add(cd);
+                    classes.computeIfAbsent(pkgName, __ -> new HashSet<>()).add(cd);
                 }
             }
-
-            if (foundModule == null) {
-                try {
-                    moduleName = source.getManifest()
-                            .map(manifest -> (String) manifest.getMainAttributes().get("Automatic-Module-Name"));
-                } catch (IOException e) {
-                    throw new IllegalArgumentException("Failed to scan the manifest of the archive.", e);
-                }
-            }
-
-            module = Optional.ofNullable(foundModule);
 
             scanned = true;
         }

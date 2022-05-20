@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,22 +20,27 @@ import java.util.List;
 
 import javax.lang.model.type.TypeMirror;
 
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.AnnotatedConstructImpl;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
+import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public abstract class TypeMirrorImpl extends AnnotatedConstructImpl implements TypeMirror {
-    protected TypeMirrorImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+    protected TypeMirrorImpl(TypeLookup lookup, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(universe, annotationSource, path, typeLookupSeed, true);
+        super(lookup, annotationSource, path, typeLookupSeed, true);
     }
 
-    protected TypeMirrorImpl(Universe universe, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
-        super(universe, annos);
+    protected TypeMirrorImpl(TypeLookup lookup, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
+        super(lookup, annos);
+    }
+
+    public @Nullable ElementImpl getSource() {
+        return null;
     }
 
     // type mirrors are generated on demand and can exist in multiple copies
@@ -44,11 +49,13 @@ public abstract class TypeMirrorImpl extends AnnotatedConstructImpl implements T
 
     @Override
     public int hashCode() {
-        return 31 * universe.hashCode();
+        // return super.hashCode();
+        return 31 * lookup.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
+        // return super.equals(obj);
         if (this == obj) {
             return true;
         }
@@ -62,6 +69,6 @@ public abstract class TypeMirrorImpl extends AnnotatedConstructImpl implements T
         }
 
         TypeMirrorImpl that = (TypeMirrorImpl) obj;
-        return universe.equals(that.universe);
+        return lookup.equals(that.lookup);
     }
 }

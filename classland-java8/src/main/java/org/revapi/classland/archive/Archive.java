@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,4 +32,12 @@ public interface Archive extends Iterable<ClassData>, AutoCloseable {
      *             on error reading the manifest file.
      */
     Optional<Manifest> getManifest() throws IOException;
+
+    /**
+     * Returns the module-info contained in the archive, if any.
+     *
+     * @throws IOException
+     *             on error reading the module-info
+     */
+    Optional<ClassData> getModuleInfo() throws IOException;
 }

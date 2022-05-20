@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -45,11 +46,11 @@ import javax.lang.model.util.Elements;
 
 import org.revapi.classland.ClasslandElements;
 import org.revapi.classland.PrettyPrinting;
+import org.revapi.classland.archive.Archive;
 import org.revapi.classland.impl.model.NameImpl;
 import org.revapi.classland.impl.model.element.ElementImpl;
 import org.revapi.classland.impl.model.element.MissingTypeImpl;
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
-import org.revapi.classland.impl.model.element.PackageElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.classland.impl.model.mirror.TypeMirrorImpl;
@@ -57,20 +58,20 @@ import org.revapi.classland.impl.util.MemoizedFunction;
 import org.revapi.classland.impl.util.Nullable;
 
 abstract class BaseElementsImpl implements Elements, ClasslandElements {
-    protected final Universe universe;
+    protected final TypeLookup lookup;
     protected final MemoizedFunction<CharSequence, Map<ModuleElementImpl, PackageElement>> crossModulePackagesByName;
     protected final MemoizedFunction<CharSequence, Map<ModuleElementImpl, TypeElement>> crossModuleTypesByFqn;
     protected final MemoizedFunction<TypeElement, Boolean> isFunctionalInterface;
 
-    protected BaseElementsImpl(Universe universe) {
-        this.universe = universe;
+    protected BaseElementsImpl(TypeLookup lookup) {
+        this.lookup = lookup;
 
         this.crossModulePackagesByName = memoize(name -> {
             Map<ModuleElementImpl, PackageElement> ret = new HashMap<>();
-            for (ModuleElementImpl m : universe.getModules()) {
-                for (Map.Entry<String, PackageElementImpl> e : m.getMutablePackages().entrySet()) {
-                    if (e.getKey().contentEquals(name)) {
-                        ret.put(m, e.getValue());
+            for (ModuleElementImpl m : this.lookup.getModules()) {
+                for (PackageElement pkg : ElementFilter.packagesIn(m.getEnclosedElements())) {
+                    if (pkg.getQualifiedName().contentEquals(name)) {
+                        ret.put(m, pkg);
                         break;
                     }
                 }
@@ -82,10 +83,10 @@ abstract class BaseElementsImpl implements Elements, ClasslandElements {
         this.crossModuleTypesByFqn = memoize(name -> {
             Map<ModuleElementImpl, TypeElement> ret = new HashMap<>();
             String typeName = name.toString();
-            for (ModuleElementImpl m : universe.getModules()) {
-                pkgs: for (Map.Entry<String, PackageElementImpl> e : m.getMutablePackages().entrySet()) {
-                    if (typeName.startsWith(e.getKey())) {
-                        for (TypeElement t : e.getValue().getMutableTypes().values()) {
+            for (ModuleElementImpl m : this.lookup.getModules()) {
+                pkgs: for (PackageElement pkg : ElementFilter.packagesIn(m.getEnclosedElements())) {
+                    if (typeName.startsWith(pkg.getQualifiedName().toString())) {
+                        for (TypeElement t : ElementFilter.typesIn(pkg.getEnclosedElements())) {
                             if (typeName.contentEquals(t.getQualifiedName())) {
                                 ret.put(m, t);
                                 break pkgs;
@@ -111,6 +112,17 @@ abstract class BaseElementsImpl implements Elements, ClasslandElements {
     }
 
     @Override
+    public Archive getArchive(TypeElement type) {
+        return ((TypeElementBase) type).getArchive();
+    }
+
+    @Override
+    public @Nullable Archive getModuleArchive(String moduleName) {
+        ModuleElementImpl m = lookup.getModule(moduleName);
+        return m == null ? null : m.getArchive();
+    }
+
+    @Override
     public PackageElement getPackageElement(CharSequence name) {
         Map<ModuleElementImpl, PackageElement> allPackages = crossModulePackagesByName.apply(name);
         return allPackages.isEmpty() ? null : allPackages.values().iterator().next();
@@ -125,17 +137,17 @@ abstract class BaseElementsImpl implements Elements, ClasslandElements {
     @Override
     public @Nullable TypeElement getTypeElementByBinaryName(String binaryName) {
         String internalName = binaryName.replace('.', '/');
-        return universe.getTypeByInternalNameFromModule(internalName, null);
+        return lookup.getTypeByInternalNameFromModule(internalName, null);
     }
 
     @Override
     public @Nullable TypeElement getTypeElementByBinaryName(String moduleName, String binaryName) {
         String internalName = binaryName.replace('.', '/');
-        ModuleElementImpl module = universe.getModule(moduleName).get();
+        ModuleElementImpl module = lookup.getModule(moduleName);
         if (module == null) {
             return null;
         }
-        return universe.getTypeByInternalNameFromModule(internalName, module);
+        return lookup.getTypeByInternalNameFromModule(internalName, module);
     }
 
     @Override
@@ -196,7 +208,7 @@ abstract class BaseElementsImpl implements Elements, ClasslandElements {
 
             e = TypeUtils.asTypeElement(superClassType);
 
-            if (e == universe.getJavaLangObject()) {
+            if (e == lookup.getJavaLangObject()) {
                 break;
             }
 
@@ -233,8 +245,7 @@ abstract class BaseElementsImpl implements Elements, ClasslandElements {
                 return false;
             }
 
-            if (!TypeUtils.isSubSignature((ExecutableType) hider.asType(), (ExecutableType) hidden.asType(),
-                    universe)) {
+            if (!TypeUtils.isSubSignature((ExecutableType) hider.asType(), (ExecutableType) hidden.asType(), lookup)) {
                 return false;
             }
         }
@@ -326,7 +337,7 @@ abstract class BaseElementsImpl implements Elements, ClasslandElements {
         }
 
         return TypeUtils.isSubSignature((ExecutableType) overrider.asType(),
-                (ExecutableType) TypeUtils.asMemberOf(type.asType(), overridden), universe);
+                (ExecutableType) TypeUtils.asMemberOf((DeclaredType) type.asType(), overridden), lookup);
     }
 
     @Override
@@ -385,7 +396,7 @@ abstract class BaseElementsImpl implements Elements, ClasslandElements {
 
     private void fillAllSuperTypes(TypeElement type, Set<TypeElement> superTypes) {
         if (type instanceof MissingTypeImpl) {
-            superTypes.add(universe.getJavaLangObject());
+            superTypes.add(lookup.getJavaLangObject());
         } else {
             TypeMirror superClassType = type.getSuperclass();
             TypeElement superClass = superClassType == null ? null : TypeUtils.asTypeElement(superClassType);

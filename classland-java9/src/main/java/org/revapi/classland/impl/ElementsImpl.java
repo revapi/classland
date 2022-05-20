@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,19 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 
 import org.revapi.classland.impl.model.element.ModuleElementImpl;
 
 public class ElementsImpl extends BaseElementsImpl implements Elements {
-    public ElementsImpl(Universe universe) {
-        super(universe);
+    public ElementsImpl(TypeLookup lookup) {
+        super(lookup);
     }
 
     @Override
     public PackageElement getPackageElement(ModuleElement module, CharSequence name) {
-        return ((ModuleElementImpl) module).getMutablePackages().get(name.toString());
+        return lookup.getPackageInModule(name.toString(), (ModuleElementImpl) module);
     }
 
     @Override
@@ -47,8 +48,8 @@ public class ElementsImpl extends BaseElementsImpl implements Elements {
 
     @Override
     public TypeElement getTypeElement(ModuleElement module, CharSequence name) {
-        return ((ModuleElementImpl) module).getMutablePackages().values().stream()
-                .flatMap(p -> p.getMutableTypes().values().stream())
+        return ((ModuleElementImpl) module).computePackages().get().values().stream()
+                .flatMap(p -> ElementFilter.typesIn(p.getEnclosedElements()).stream())
                 .filter(t -> t.getQualifiedName().contentEquals(name)).findFirst().orElse(null);
     }
 
@@ -59,12 +60,12 @@ public class ElementsImpl extends BaseElementsImpl implements Elements {
 
     @Override
     public ModuleElement getModuleElement(CharSequence name) {
-        return universe.getModule(name.toString()).get();
+        return lookup.getModule(name.toString());
     }
 
     @Override
     public Set<? extends ModuleElement> getAllModuleElements() {
-        return new HashSet<>(universe.getModules());
+        return new HashSet<>(lookup.getModules());
     }
 
     @Override

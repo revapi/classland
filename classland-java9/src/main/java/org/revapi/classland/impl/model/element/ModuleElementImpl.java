@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,7 @@ import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
 import static org.revapi.classland.impl.util.MemoizedValue.memoize;
 import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.lang.model.element.ElementKind;
@@ -42,15 +40,16 @@ import org.objectweb.asm.tree.ModuleExportNode;
 import org.objectweb.asm.tree.ModuleOpenNode;
 import org.objectweb.asm.tree.ModuleProvideNode;
 import org.objectweb.asm.tree.ModuleRequireNode;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.archive.Archive;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
 
 public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleElement {
     private final MemoizedValue<List<? extends Directive>> directives;
 
-    public ModuleElementImpl(Universe universe, @Nullable ClassNode moduleType) {
-        super(universe, moduleType, TypeKind.MODULE);
+    public ModuleElementImpl(TypeLookup lookup, Archive archive, @Nullable ClassNode moduleType) {
+        super(lookup, archive, moduleType, TypeKind.MODULE);
         this.directives = memoize(() -> {
             Stream<ExportsDirective> exports = module.exports == null ? Stream.empty()
                     : module.exports.stream().map(ExportsDirectiveImpl::new);
@@ -71,8 +70,12 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
         });
     }
 
-    public ModuleElementImpl(Universe universe, String moduleName) {
-        super(universe, moduleName, TypeKind.MODULE);
+    public ModuleElementImpl(TypeLookup lookup, Archive archive, String moduleName) {
+        this(lookup, archive, moduleName, false);
+    }
+
+    protected ModuleElementImpl(TypeLookup lookup, @Nullable Archive archive, String moduleName, boolean unused) {
+        super(lookup, archive, moduleName, TypeKind.MODULE);
         this.directives = obtained(emptyList());
     }
 
@@ -107,8 +110,8 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
         private final MemoizedValue<List<? extends ModuleElement>> targets;
 
         public ExportsDirectiveImpl(ModuleExportNode n) {
-            pkg = memoize(() -> getMutablePackages().get(n.packaze));
-            targets = memoize(() -> n.modules.stream().map(m -> universe.getModule(m).get()).collect(toList()));
+            pkg = computePackages().map(m -> m.get(n.packaze));
+            targets = memoize(() -> n.modules.stream().map(lookup::getModule).collect(toList()));
         }
 
         @Override
@@ -137,8 +140,8 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
         private final MemoizedValue<List<? extends ModuleElement>> targets;
 
         private OpensDirectiveImpl(ModuleOpenNode n) {
-            pkg = memoize(() -> getMutablePackages().get(n.packaze));
-            targets = memoize(() -> n.modules.stream().map(m -> universe.getModule(m).get()).collect(toList()));
+            pkg = computePackages().map(m -> m.get(n.packaze));
+            targets = memoize(() -> n.modules.stream().map(lookup::getModule).collect(toList()));
         }
 
         @Override
@@ -167,9 +170,9 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
         private final MemoizedValue<List<? extends TypeElement>> impls;
 
         public ProvidesDirectiveImpl(ModuleProvideNode n) {
-            service = memoize(() -> universe.getTypeByInternalNameFromModule(n.service, ModuleElementImpl.this));
+            service = memoize(() -> lookup.getTypeByInternalNameFromModule(n.service, ModuleElementImpl.this));
             impls = memoize(() -> n.providers.stream()
-                    .map(m -> universe.getTypeByInternalNameFromModule(m, ModuleElementImpl.this)).collect(toList()));
+                    .map(m -> lookup.getTypeByInternalNameFromModule(m, ModuleElementImpl.this)).collect(toList()));
         }
 
         @Override
@@ -194,12 +197,12 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
     }
 
     private class RequiresDirectiveImpl implements RequiresDirective, ReachableModule {
-        private final MemoizedValue<ModuleElementImpl> dep;
+        private final ModuleElementImpl dep;
         private final ModuleRequireNode n;
 
         public RequiresDirectiveImpl(ModuleRequireNode n) {
             this.n = n;
-            dep = universe.getModule(n.module);
+            dep = lookup.getModule(n.module);
         }
 
         @Override
@@ -219,7 +222,7 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
 
         @Override
         public ModuleElementImpl getDependency() {
-            return dep.get();
+            return dep;
         }
 
         @Override
@@ -237,7 +240,7 @@ public class ModuleElementImpl extends BaseModuleElementImpl implements ModuleEl
         private final MemoizedValue<TypeElement> service;
 
         public UsesDirectiveImpl(String n) {
-            service = memoize(() -> universe.getTypeByInternalNameFromModule(n, ModuleElementImpl.this));
+            service = memoize(() -> lookup.getTypeByInternalNameFromModule(n, ModuleElementImpl.this));
         }
 
         @Override

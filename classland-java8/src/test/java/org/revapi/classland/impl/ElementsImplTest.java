@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,6 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -118,10 +117,10 @@ class ElementsImplTest {
 
     @Test
     void testGetTypeElement_modules() throws Exception {
-        Universe u = new Universe(true);
+        TypePool u = new TypePool(true);
         u.registerArchive(new JarFileArchive(new JarFile(typesOrig.jarFile())));
 
-        Elements els = new ElementsImpl(u);
+        Elements els = new ElementsImpl(u.getLookup());
 
         TypeElement type = els.getTypeElement("types.A");
         assertNotNull(type);
@@ -137,11 +136,11 @@ class ElementsImplTest {
 
     @Test
     void testGetTypeElement_modulesWithDuplicates() throws Exception {
-        Universe u = new Universe(true);
+        TypePool u = new TypePool(true);
         u.registerArchive(new JarFileArchive(new JarFile(typesOrig.jarFile())));
         u.registerArchive(new JarFileArchive(new JarFile(typesCopy.jarFile())));
 
-        Elements els = new ElementsImpl(u);
+        Elements els = new ElementsImpl(u.getLookup());
 
         TypeElement type = els.getTypeElement("types.A");
         assertNull(type);
@@ -506,11 +505,11 @@ class ElementsImplTest {
     }
 
     private static void doTest(CompiledJar testJar, Consumer<Elements> test) throws Exception {
-        Universe u = new Universe(false);
+        TypePool u = new TypePool(false);
         u.registerArchive(BaseModule.forCurrentJvm());
         u.registerArchive(new JarFileArchive(new JarFile(testJar.jarFile())));
 
-        Elements classLand = new ElementsImpl(u);
+        Elements classLand = new ElementsImpl(u.getLookup());
         Elements javac = testJar.analyze().elements();
 
         test.accept(javac);

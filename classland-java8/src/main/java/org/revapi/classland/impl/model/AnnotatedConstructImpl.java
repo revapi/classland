@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ import javax.lang.model.AnnotatedConstruct;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.revapi.classland.PrettyPrinting;
-import org.revapi.classland.impl.Universe;
+import org.revapi.classland.impl.TypeLookup;
 import org.revapi.classland.impl.model.anno.AnnotationFinder;
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
@@ -39,27 +39,27 @@ import org.revapi.classland.impl.util.Nullable;
 public abstract class AnnotatedConstructImpl extends BaseModelImpl implements AnnotatedConstruct {
     protected final MemoizedValue<List<AnnotationMirrorImpl>> annos;
 
-    protected AnnotatedConstructImpl(Universe universe, MemoizedValue<AnnotationSource> annotationSource,
+    protected AnnotatedConstructImpl(TypeLookup lookup, MemoizedValue<AnnotationSource> annotationSource,
             AnnotationTargetPath path, MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed, boolean isTypeUse) {
-        this(universe, annotationSource.map(s -> parseAnnotations(universe, s, path, typeLookupSeed.get(), isTypeUse)));
+        this(lookup, annotationSource.map(s -> parseAnnotations(lookup, s, path, typeLookupSeed.get(), isTypeUse)));
     }
 
-    protected AnnotatedConstructImpl(Universe universe, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
-        super(universe);
+    protected AnnotatedConstructImpl(TypeLookup lookup, MemoizedValue<List<AnnotationMirrorImpl>> annos) {
+        super(lookup);
         this.annos = annos;
     }
 
-    public static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, AnnotationSource source,
+    public static List<AnnotationMirrorImpl> parseAnnotations(TypeLookup lookup, AnnotationSource source,
             AnnotationTargetPath path, @Nullable ModuleElementImpl typeLookupSeed, boolean isTypeUse) {
         return AnnotationFinder.find(path, source, isTypeUse).stream()
-                .map(a -> new AnnotationMirrorImpl(a, universe, universe
-                        .getTypeByInternalNameFromModule(Type.getType(a.desc).getInternalName(), typeLookupSeed)))
+                .map(a -> new AnnotationMirrorImpl(a, lookup,
+                        lookup.getTypeByInternalNameFromModule(Type.getType(a.desc).getInternalName(), typeLookupSeed)))
                 .collect(toList());
     }
 
-    private static List<AnnotationMirrorImpl> parseAnnotations(Universe universe, ClassNode cls,
+    private static List<AnnotationMirrorImpl> parseAnnotations(TypeLookup lookup, ClassNode cls,
             ModuleElementImpl typeLookupSeed) {
-        return parseAnnotations(universe, AnnotationSource.fromType(cls), AnnotationTargetPath.ROOT, typeLookupSeed,
+        return parseAnnotations(lookup, AnnotationSource.fromType(cls), AnnotationTargetPath.ROOT, typeLookupSeed,
                 false);
     }
 
@@ -84,6 +84,6 @@ public abstract class AnnotatedConstructImpl extends BaseModelImpl implements An
     }
 
     protected final List<AnnotationMirrorImpl> parseAnnotations(ClassNode cls, ModuleElementImpl typeLookupSeed) {
-        return parseAnnotations(universe, cls, typeLookupSeed);
+        return parseAnnotations(lookup, cls, typeLookupSeed);
     }
 }
