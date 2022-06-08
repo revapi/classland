@@ -35,7 +35,9 @@ import org.revapi.classland.impl.model.element.PackageElementImpl;
 import org.revapi.classland.impl.model.element.TypeElementBase;
 import org.revapi.classland.impl.model.element.TypeElementImpl;
 import org.revapi.classland.impl.model.element.TypeParameterElementImpl;
+import org.revapi.classland.impl.model.mirror.ErrorTypeImpl;
 import org.revapi.classland.impl.model.mirror.NullTypeImpl;
+import org.revapi.classland.impl.model.signature.Bound;
 import org.revapi.classland.impl.model.signature.TypeSignature;
 import org.revapi.classland.impl.model.signature.TypeVariableResolutionContext;
 import org.revapi.classland.impl.util.MemoizedBiFunction;
@@ -48,7 +50,6 @@ public final class TypeLookup implements AutoCloseable {
             "java/lang/Object", emptyList(), null);
 
     public final NullTypeImpl nullType = new NullTypeImpl(this);
-
     private final TypePool universe;
     private final MemoizedBiFunction<String, @Nullable ModuleElementImpl, TypeElementBase> getTypeByInternalNameFromModule;
     private final MemoizedFunction<String, ModuleElementImpl> getModule;

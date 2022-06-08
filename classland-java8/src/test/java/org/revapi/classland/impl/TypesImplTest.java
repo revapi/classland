@@ -30,18 +30,14 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.NoType;
-import javax.lang.model.type.PrimitiveType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.*;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -78,7 +74,7 @@ public class TypesImplTest {
         }
     }
 
-    static Stream<Arguments> elementsAndTypes() throws IOException {
+    static Stream<Arguments> elementsAndTypes() {
         return Stream.of(javacElementsAndTypes, classLandElementsAndTypes);
     }
 
@@ -193,6 +189,19 @@ public class TypesImplTest {
         // TODO implement
     }
 
+    @ParameterizedTest
+    @MethodSource("elementsAndTypes")
+    void testIsSubtype_typeIsItsOwnSubtype(Elements els, Types types) {
+        TypeMirror object = els.getTypeElement("java.lang.Object").asType();
+        assertTrue(types.isSubtype(object, object));
+    }
+
+    @Test
+    @Disabled
+    void testIsSubtype_intersectionIsSubtypeIfAllComponentsAre(Elements els, Types types) {
+        // TODO implement
+    }
+
     @Test
     void testIsSubtype() {
         // TODO implement
@@ -218,9 +227,68 @@ public class TypesImplTest {
         // TODO implement
     }
 
-    @Test
-    void testErasure() {
-        // TODO implement
+    @ParameterizedTest
+    @MethodSource("elementsAndTypes")
+    void testErasure_declared(Elements els, Types ts) {
+        TypeElement Comparable = els.getTypeElement("java.lang.Comparable");
+        TypeElement String = els.getTypeElement("java.lang.String");
+
+        DeclaredType ComparableString = ts.getDeclaredType(Comparable, String.asType());
+
+        TypeMirror erased = ts.erasure(ComparableString);
+        assertTrue(erased instanceof DeclaredType);
+        assertEquals(0, ((DeclaredType) erased).getTypeArguments().size());
+    }
+
+    @ParameterizedTest
+    @MethodSource("elementsAndTypes")
+    void testErasure_array(Elements els, Types ts) {
+        TypeElement Comparable = els.getTypeElement("java.lang.Comparable");
+        TypeElement String = els.getTypeElement("java.lang.String");
+
+        ArrayType ComparableStringArray = ts.getArrayType(ts.getDeclaredType(Comparable, String.asType()));
+
+        TypeMirror erased = ts.erasure(ComparableStringArray);
+        assertTrue(erased instanceof ArrayType);
+        assertEquals(0, ((DeclaredType) ((ArrayType) erased).getComponentType()).getTypeArguments().size());
+    }
+
+    @ParameterizedTest
+    @MethodSource("elementsAndTypes")
+    void testErasure_wildcard(Elements els, Types ts) {
+        TypeElement String = els.getTypeElement("java.lang.String");
+
+        WildcardType wildcard = ts.getWildcardType(String.asType(), null);
+
+        TypeMirror erased = ts.erasure(wildcard);
+        assertTrue(erased instanceof DeclaredType);
+        assertEquals("String", ((DeclaredType) erased).asElement().getSimpleName().toString());
+    }
+
+    @ParameterizedTest
+    @MethodSource("elementsAndTypes")
+    void testErasure_executable(Elements els, Types ts) {
+        TypeElement Comparable = els.getTypeElement("java.lang.Comparable");
+        TypeElement String = els.getTypeElement("java.lang.String");
+
+        DeclaredType ComparableString = ts.getDeclaredType(Comparable, String.asType());
+
+        TypeMirror erased = ts.erasure(ComparableString);
+        assertTrue(erased instanceof DeclaredType);
+        assertEquals(0, ((DeclaredType) erased).getTypeArguments().size());
+    }
+
+    @ParameterizedTest
+    @MethodSource("elementsAndTypes")
+    void testErasure_typeVariable(Elements els, Types ts) {
+        TypeElement Comparable = els.getTypeElement("java.lang.Comparable");
+        TypeElement String = els.getTypeElement("java.lang.String");
+
+        DeclaredType ComparableString = ts.getDeclaredType(Comparable, String.asType());
+
+        TypeMirror erased = ts.erasure(ComparableString);
+        assertTrue(erased instanceof DeclaredType);
+        assertEquals(0, ((DeclaredType) erased).getTypeArguments().size());
     }
 
     @Test

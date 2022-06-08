@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Lukas Krejci
+ * Copyright 2020-2022 Lukas Krejci
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ import javax.lang.model.element.Name;
 
 import org.revapi.classland.impl.util.Nullable;
 
-public final class NameImpl implements Name {
+public final class NameImpl implements Name, Comparable<NameImpl> {
     public static final NameImpl EMPTY = new NameImpl("");
 
     private final String value;
@@ -81,5 +81,10 @@ public final class NameImpl implements Name {
     @Override
     public int hashCode() {
         return value.hashCode();
+    }
+
+    @Override
+    public int compareTo(NameImpl that) {
+        return this.value.compareTo(that.value);
     }
 }

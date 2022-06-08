@@ -16,8 +16,7 @@
  */
 package org.revapi.classland.impl;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 import static java.util.stream.Collectors.toList;
 
 import static org.revapi.classland.impl.util.MemoizedValue.obtainedNull;
@@ -39,9 +38,7 @@ import javax.lang.model.util.SimpleTypeVisitor8;
 
 import org.revapi.classland.impl.model.anno.AnnotationSource;
 import org.revapi.classland.impl.model.anno.AnnotationTargetPath;
-import org.revapi.classland.impl.model.element.ElementImpl;
-import org.revapi.classland.impl.model.element.PackageElementImpl;
-import org.revapi.classland.impl.model.element.TypeElementBase;
+import org.revapi.classland.impl.model.element.*;
 import org.revapi.classland.impl.model.mirror.*;
 import org.revapi.classland.impl.util.MemoizedValue;
 import org.revapi.classland.impl.util.Nullable;
@@ -189,11 +186,6 @@ final class TypeUtils {
         }
 
         @Override
-        public TypeMirrorImpl visitPrimitive(PrimitiveType t, TypeLookup ignored) {
-            return (TypeMirrorImpl) t;
-        }
-
-        @Override
         public TypeMirrorImpl visitArray(ArrayType t, TypeLookup ignored) {
             return new ArrayTypeImpl(visit(t.getComponentType()), -1, AnnotationSource.MEMOIZED_EMPTY,
                     AnnotationTargetPath.ROOT, obtainedNull());
@@ -247,13 +239,64 @@ final class TypeUtils {
 
         @Override
         public TypeMirror visitDeclared(DeclaredType t, TypeLookup lookup) {
+            DeclaredTypeImpl tt = (DeclaredTypeImpl) t;
             if (t.getEnclosingType() != null) {
                 TypeMirror capturedEnclosing = visit(t.getEnclosingType(), lookup);
 
+                TypeMirror memberInEnclosing = asMemberOf((DeclaredType) capturedEnclosing, t.asElement());
+
+                tt = (DeclaredTypeImpl) substitute((TypeMirrorImpl) memberInEnclosing,
+                        ((TypeElementBase) t.asElement()).asType().getTypeArguments(),
+                        ((DeclaredTypeImpl) t).getTypeArguments());
             }
-            return super.visitDeclared(t, lookup);
+
+            if (tt.getTypeArguments().isEmpty() || isRawType(tt)) {
+                return tt;
+            }
+
+            DeclaredTypeImpl genericType = tt.asElement().asType();
+            List<TypeMirrorImpl> genericArgs = genericType.getTypeArguments();
+            List<TypeMirrorImpl> args = tt.getTypeArguments();
+            List<TypeMirrorImpl> capturedArgs = freshTypeVariables(args, lookup);
+
+            boolean captured = false;
+            for (int i = 0; i < genericArgs.size(); ++i) {
+                TypeMirrorImpl garg = genericArgs.get(i);
+                TypeMirrorImpl arg = args.get(i);
+                TypeMirrorImpl cap = capturedArgs.get(i);
+
+                if (arg != cap) {
+                    // the captured list contains either the same args or captured wildcards. Because the arg and cap
+                    // are not the same, we can be sure arg is a wildcard that will be captured into cap.
+                    captured = true;
+                    TypeMirrorImpl ub = ((TypeVariableImpl) garg).getUpperBound();
+                    WildcardTypeImpl ai = (WildcardTypeImpl) arg;
+                    TypeVariableImpl ci = (TypeVariableImpl) cap;
+
+                    TypeMirrorImpl substituted = substitute(ub, args, capturedArgs);
+
+                    if (ai.isUnbound()) {
+                        capturedArgs.set(i, ci.rebind(lookup.nullType, substituted));
+                    } else if (ai.getExtendsBound() != null) {
+                        TypeMirrorImpl upperBound = greatestLowerBound(lookup, ai.getExtendsBound(), substituted);
+                        capturedArgs.set(i, ci.rebind(lookup.nullType, upperBound));
+                    } else if (ai.getSuperBound() != null) {
+                        capturedArgs.set(i, ci.rebind(ai.getSuperBound(), substituted));
+                    }
+
+                    ci = (TypeVariableImpl) capturedArgs.get(i);
+                    if (isSameType(ci.getUpperBound(), ci.getLowerBound())) {
+                        capturedArgs.set(i, ci.getUpperBound());
+                    }
+                }
+            }
+
+            if (captured) {
+                return tt.rebind(tt.getEnclosingType(), capturedArgs);
+            }
+
+            return t;
         }
-        // TODO implement
     };
 
     private static final TypeVisitor<TypeMirrorImpl, ElementImpl> AS_MEMBER = new SimpleTypeVisitor8<TypeMirrorImpl, ElementImpl>() {
@@ -403,14 +446,14 @@ final class TypeUtils {
         }
     };
 
-    private static final TypeVisitor<TypeMirror, TypeLookup> GET_SUPER_TYPE = new SimpleTypeVisitor8<TypeMirror, TypeLookup>() {
+    private static final TypeVisitor<TypeMirrorImpl, TypeLookup> GET_SUPER_TYPE = new SimpleTypeVisitor8<TypeMirrorImpl, TypeLookup>() {
         @Override
-        protected TypeMirror defaultAction(TypeMirror e, TypeLookup lookup) {
+        protected TypeMirrorImpl defaultAction(TypeMirror e, TypeLookup lookup) {
             return new NoTypeImpl(lookup, MemoizedValue.obtainedEmptyList(), TypeKind.NONE);
         }
 
         @Override
-        public TypeMirror visitArray(ArrayType t, TypeLookup lookup) {
+        public TypeMirrorImpl visitArray(ArrayType t, TypeLookup lookup) {
             TypeMirror componentType = t.getComponentType();
             if (componentType.getKind().isPrimitive()
                     || isSameType(componentType, lookup.getJavaLangObject().asType())) {
@@ -424,7 +467,7 @@ final class TypeUtils {
         }
 
         @Override
-        public TypeMirror visitDeclared(DeclaredType t, TypeLookup lookup) {
+        public TypeMirrorImpl visitDeclared(DeclaredType t, TypeLookup lookup) {
             DeclaredTypeImpl tt = (DeclaredTypeImpl) t;
             TypeMirrorImpl superClass = tt.asElement().getSuperclass();
 
@@ -451,7 +494,7 @@ final class TypeUtils {
         }
 
         @Override
-        public TypeMirror visitTypeVariable(TypeVariable t, TypeLookup lookup) {
+        public TypeMirrorImpl visitTypeVariable(TypeVariable t, TypeLookup lookup) {
             TypeMirrorImpl upperBound = (TypeMirrorImpl) t.getUpperBound();
             TypeKind upperKind = upperBound.getKind();
             if (upperKind == TypeKind.TYPEVAR || (upperKind != TypeKind.INTERSECTION && upperBound.getSource() != null
@@ -791,6 +834,31 @@ final class TypeUtils {
         return IS_SAME_TYPE.visit(t1, t2);
     }
 
+    static TypeMirrorImpl getSuperType(TypeMirror t, TypeLookup tl) {
+        return GET_SUPER_TYPE.visit(t, tl);
+    }
+
+    static List<TypeMirrorImpl> getInterfaces(TypeMirror t, TypeLookup tl) {
+        return GET_INTERFACES.visit(t, tl);
+    }
+
+    static boolean isRawType(DeclaredTypeImpl type) {
+        List<TypeMirrorImpl> params = getAllTypeParameters(type);
+        List<TypeMirrorImpl> declaredParams = getAllTypeParameters(type.asElement().asType());
+
+        return !declaredParams.isEmpty() && params.isEmpty();
+    }
+
+    private static List<TypeMirrorImpl> freshTypeVariables(List<TypeMirrorImpl> types, TypeLookup lookup) {
+        return types.stream().map(t -> {
+            if (t.getKind() == TypeKind.WILDCARD) {
+                return ((WildcardTypeImpl) t).capture();
+            } else {
+                return t;
+            }
+        }).collect(toList());
+    }
+
     private static TypeMirrorImpl substitute(TypeMirrorImpl type, List<? extends TypeMirrorImpl> fromTypeParameters,
             List<? extends TypeMirrorImpl> toTypeParameters) {
         int maxIdx = Math.min(fromTypeParameters.size(), toTypeParameters.size());
@@ -909,6 +977,213 @@ final class TypeUtils {
         return true;
     }
 
+    private static TypeMirrorImpl greatestLowerBound(TypeLookup lookup, Collection<TypeMirrorImpl> types) {
+        Iterator<TypeMirrorImpl> it = types.iterator();
+        TypeMirrorImpl ret = it.next();
+        while (it.hasNext()) {
+            if (ret instanceof ErrorType) {
+                return ret;
+            }
+
+            ret = greatestLowerBound(lookup, ret, it.next());
+        }
+
+        return ret;
+    }
+
+    private static TypeMirrorImpl greatestLowerBound(TypeLookup lookup, TypeMirrorImpl a, TypeMirrorImpl b) {
+        if (b == null) {
+            return a;
+        } else if (isPrimitiveType(a) || isPrimitiveType(b)) {
+            return new MissingTypeImpl(lookup, "<invalid-primitive-bound>", null).asType();
+        } else if (isSubType(a, b, false)) {
+            return a;
+        } else if (isSubType(b, a, false)) {
+            return b;
+        }
+
+        SortedSet<TypeMirrorImpl> ac = closure(lookup, a);
+        SortedSet<TypeMirrorImpl> bc = closure(lookup, b);
+        ac.addAll(bc);
+
+        return pickGreatestLowerBound(lookup, ac, a);
+    }
+
+    private static TypeMirrorImpl pickGreatestLowerBound(TypeLookup lookup, SortedSet<TypeMirrorImpl> bounds,
+            TypeMirrorImpl fallback) {
+        minimizeClosure(bounds);
+
+        if (bounds.isEmpty()) {
+            return lookup.getJavaLangObject().asType();
+        } else if (bounds.size() == 1) {
+            return bounds.first();
+        } else {
+            // we need to construct the intersection type
+            int classCount = 0;
+            List<TypeMirrorImpl> captures = new ArrayList<>(2);
+            List<TypeMirrorImpl> lowerBounds = new ArrayList<>(2);
+            for (TypeMirrorImpl bound : bounds) {
+                if (bound.getSource() != null && bound.getSource().getKind() != ElementKind.INTERFACE) {
+                    classCount++;
+                    TypeMirrorImpl lowerBound = capturedLowerBound(bound);
+                    if (bound != lowerBound) {
+                        captures.add(bound);
+                        lowerBounds.add(lowerBound);
+                    }
+                }
+            }
+            if (classCount > 1) {
+                if (lowerBounds.isEmpty()) {
+                    String typeName;
+                    if (fallback.getSource() instanceof TypeElement) {
+                        typeName = ((TypeElement) fallback.getSource()).getQualifiedName().toString();
+                    } else {
+                        typeName = "<invalid-intersection-type>";
+                    }
+                    return new MissingTypeImpl(lookup, typeName, null).asType();
+                }
+                bounds.removeIf(b -> !captures.contains(b));
+                bounds.addAll(lowerBounds);
+                return greatestLowerBound(lookup, bounds);
+            }
+            return makeIntersectionType(lookup, bounds);
+        }
+    }
+
+    private static IntersectionTypeImpl makeIntersectionType(TypeLookup lookup, SortedSet<TypeMirrorImpl> bounds) {
+        List<TypeMirrorImpl> boundList = new ArrayList<>(bounds);
+        boolean allInterfaces = bounds.stream().reduce(true,
+                (res, b) -> res && b.getSource() != null && b.getSource().getKind() == ElementKind.INTERFACE,
+                Boolean::logicalAnd);
+
+        if (allInterfaces) {
+            boundList.add(0, lookup.getJavaLangObject().asType());
+        }
+
+        return new IntersectionTypeImpl(lookup, boundList);
+    }
+
+    private static TypeMirrorImpl capturedLowerBound(TypeMirrorImpl bound) {
+        if (bound.getKind() == TypeKind.TYPEVAR && ((TypeVariableImpl) bound).isCaptured()) {
+            return capturedLowerBound(((TypeVariableImpl) bound).getLowerBound());
+        }
+
+        return bound;
+    }
+
+    private static void minimizeClosure(SortedSet<TypeMirrorImpl> closure) {
+        List<TypeMirrorImpl> list = new ArrayList<>(closure);
+        Iterator<TypeMirrorImpl> closureIt = closure.iterator();
+        Set<TypeMirrorImpl> ignored = new HashSet<>(4);
+        for (int i = 0; i < list.size(); ++i) {
+            TypeMirrorImpl current = list.get(i);
+            closureIt.next();
+
+            boolean skip = ignored.contains(current);
+
+            if (!skip && current.getKind() == TypeKind.TYPEVAR) {
+                for (int j = i + 1; j < list.size(); ++j) {
+                    // skip the type variable if its bound has a subtype in our list
+                    if (isSubType(list.get(j), current, false)) {
+                        skip = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!skip) {
+                for (int j = i + 1; j < list.size(); ++j) {
+                    TypeMirrorImpl potentialSuperType = list.get(j);
+                    if (isSubType(current, potentialSuperType, false)) {
+                        ignored.add(potentialSuperType);
+                    }
+                }
+            } else {
+                closureIt.remove();
+            }
+        }
+    }
+
+    /**
+     * Closure is the list of all supertypes and interfaces of a class. Subclasses come first.
+     */
+    private static SortedSet<TypeMirrorImpl> closure(TypeLookup lookup, TypeMirrorImpl t) {
+        TreeSet<TypeMirrorImpl> ret = new TreeSet<>((a, b) -> {
+            if (a == b) {
+                return 0;
+            }
+
+            TypeKind ak = a.getKind();
+            TypeKind bk = b.getKind();
+
+            if (ak == bk) {
+                if (ak == TypeKind.DECLARED) {
+                    int ar = typeRank(lookup, a);
+                    int br = typeRank(lookup, b);
+                    int res = ar - br;
+                    if (res == 0) {
+                        res = ((DeclaredTypeImpl) a).asElement().getQualifiedName()
+                                .compareTo(((DeclaredTypeImpl) b).asElement().getQualifiedName());
+                    }
+
+                    return res;
+                }
+
+                if (ak == TypeKind.TYPEVAR) {
+                    return isSubType(a, b, true) ? -1 : 1;
+                }
+            }
+
+            return ak == TypeKind.TYPEVAR ? -1 : 1;
+        });
+        _closure(lookup, t, ret);
+        return ret;
+    }
+
+    private static int typeRank(TypeLookup lookup, TypeMirrorImpl type) {
+        switch (type.getKind()) {
+        case DECLARED:
+            DeclaredTypeImpl dt = (DeclaredTypeImpl) type;
+            if ("java/lang/Object".equals(dt.asElement().getInternalName())) {
+                return 0;
+            }
+            // intentional fall-through
+        case TYPEVAR:
+            int rank = typeRank(lookup, getSuperType(type, lookup));
+            for (TypeMirrorImpl i : getInterfaces(type, lookup)) {
+                int ir = typeRank(lookup, i);
+                if (ir > rank) {
+                    rank = ir;
+                }
+            }
+            return rank + 1;
+        default:
+            return 0;
+        }
+    }
+
+    private static void _closure(TypeLookup lookup, TypeMirrorImpl t, Set<TypeMirrorImpl> closure) {
+        TypeMirrorImpl superType = getSuperType(t, lookup);
+        switch (t.getKind()) {
+        case INTERSECTION:
+            _closure(lookup, superType, closure);
+            break;
+        case DECLARED:
+        case TYPEVAR:
+            closure.add(t);
+            _closure(lookup, superType, closure);
+            break;
+        default:
+            closure.add(t);
+        }
+
+        getInterfaces(t, lookup).forEach(i -> _closure(lookup, i, closure));
+    }
+
+    private static boolean isPrimitiveType(TypeMirrorImpl type) {
+        return type instanceof PrimitiveType;
+    }
+
     enum ElementNamespace {
         FIELDS, METHODS, TYPES, PACKAGES, MODULES, OTHER;
 
@@ -930,13 +1205,6 @@ final class TypeUtils {
                 return OTHER;
             }
         }
-    }
-
-    static boolean isRawType(DeclaredTypeImpl type) {
-        List<TypeMirrorImpl> params = getAllTypeParameters(type);
-        List<TypeMirrorImpl> declaredParams = getAllTypeParameters(type.asElement().asType());
-
-        return !declaredParams.isEmpty() && params.isEmpty();
     }
 
     private static final class IsSubType extends SimpleTypeVisitor8<Boolean, TypeMirrorImpl> {

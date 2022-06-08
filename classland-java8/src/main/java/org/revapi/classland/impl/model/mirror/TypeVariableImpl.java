@@ -21,6 +21,7 @@ import static org.revapi.classland.impl.util.MemoizedValue.obtained;
 
 import java.util.List;
 
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.TypeVisitor;
@@ -42,9 +43,8 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
 
     // used to construct a wildcard capture
     public TypeVariableImpl(TypeLookup lookup, @Nullable TypeMirrorImpl upperBound, @Nullable TypeMirrorImpl lowerBound,
-            MemoizedValue<AnnotationSource> annotationSource, AnnotationTargetPath path,
-            MemoizedValue<@Nullable ModuleElementImpl> typeLookupSeed) {
-        super(lookup, annotationSource, path, typeLookupSeed);
+            MemoizedValue<List<AnnotationMirrorImpl>> annos) {
+        super(lookup, annos);
         this.owner = new NoElementImpl(lookup);
         this.lowerBound = lowerBound == null ? lookup.nullType : lowerBound;
         this.upperBound = obtained(upperBound == null ? TypeMirrorFactory.createJavaLangObject(lookup) : upperBound);
@@ -91,6 +91,15 @@ public class TypeVariableImpl extends TypeMirrorImpl implements TypeVariable {
 
     public TypeVariableImpl rebind(TypeMirrorImpl lowerBound, TypeMirrorImpl upperBound) {
         return new TypeVariableImpl(owner, annos, lowerBound, upperBound);
+    }
+
+    @Override
+    public @Nullable ElementImpl getSource() {
+        return owner;
+    }
+
+    public boolean isCaptured() {
+        return this.owner.getKind() != ElementKind.TYPE_PARAMETER;
     }
 
     @Override

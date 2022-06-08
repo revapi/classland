@@ -80,8 +80,8 @@ public final class TypeElementImpl extends TypeElementBase {
     private final MemoizedValue<Map<String, VariableElementImpl.Field>> fields;
     private final MemoizedValue<GenericTypeParameters> signature;
 
-    public TypeElementImpl(TypeLookup lookup, Archive archive, String internalName, MemoizedValue<ClassNode> node,
-            PackageElementImpl pkg) {
+    public TypeElementImpl(TypeLookup lookup, @Nullable Archive archive, String internalName,
+            MemoizedValue<ClassNode> node, PackageElementImpl pkg) {
         super(lookup, archive, internalName, obtained(pkg), node.map(AnnotationSource::fromType));
         this.node = node;
 

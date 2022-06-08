@@ -104,277 +104,6 @@ abstract class BaseTypesImpl implements Types {
     private final MemoizedFunction<PrimitiveType, TypeElement> boxedClass;
     private final NoType noType;
 
-    private final TypeVisitor<TypeMirror, Void> getSuperType = new SimpleTypeVisitor8<TypeMirror, Void>() {
-        @Override
-        protected TypeMirror defaultAction(TypeMirror e, Void unused) {
-            return noType;
-        }
-
-        @Override
-        public TypeMirror visitDeclared(DeclaredType t, Void unused) {
-            // TODO implement
-            return super.visitDeclared(t, unused);
-        }
-
-        @Override
-        public TypeMirror visitTypeVariable(TypeVariable t, Void unused) {
-            // TODO implement
-            return super.visitTypeVariable(t, unused);
-        }
-
-        @Override
-        public TypeMirror visitArray(ArrayType t, Void unused) {
-            // TODO implement
-            return super.visitArray(t, unused);
-        }
-    };
-
-    // why is this not just TypeUtils.IS_SAME_TYPE?
-    private final TypeVisitor<Boolean, TypeMirror> isSameType = new SimpleTypeVisitor8<Boolean, TypeMirror>() {
-        @Override
-        public Boolean visitIntersection(IntersectionType a, TypeMirror b) {
-            // TODO implement
-            // in javactypes visitClassType() the same for intersection and union types
-            // if (t.isCompound() && s.isCompound()) {
-            // if (!visit(supertype(t), supertype(s)))
-            // return false;
-            //
-            // Map<Symbol, Type> tMap = new HashMap<>();
-            // for (Type ti : interfaces(t)) {
-            // if (tMap.containsKey(ti)) {
-            // throw new AssertionError("Malformed intersection");
-            // }
-            // tMap.put(ti.tsym, ti);
-            // }
-            // for (Type si : interfaces(s)) {
-            // if (!tMap.containsKey(si.tsym))
-            // return false;
-            // Type ti = tMap.remove(si.tsym);
-            // if (!visit(ti, si))
-            // return false;
-            // }
-            // return tMap.isEmpty();
-            // }
-
-            return super.visitIntersection(a, b);
-        }
-
-        @Override
-        public Boolean visitUnion(UnionType a, TypeMirror b) {
-            // TODO implement
-            return super.visitUnion(a, b);
-        }
-
-        @Override
-        protected Boolean defaultAction(TypeMirror a, TypeMirror b) {
-            return a == b;
-        }
-
-        @Override
-        public Boolean visitPrimitive(PrimitiveType a, TypeMirror b) {
-            return a == b || a.getKind() == b.getKind();
-        }
-
-        @Override
-        public Boolean visitArray(ArrayType a, TypeMirror b) {
-            if (a == b) {
-                return true;
-            }
-
-            return b.getKind() == ARRAY
-                    && containsTypeEquivalent(a.getComponentType(), ((ArrayType) b).getComponentType());
-        }
-
-        @Override
-        public Boolean visitDeclared(DeclaredType a, TypeMirror b) {
-            if (a == b) {
-                return true;
-            }
-
-            if (b.getKind() == WILDCARD && ((WildcardType) b).getSuperBound() != null) {
-                WildcardType wb = (WildcardType) b;
-                return visit(a, getWildcardUpperBound(wb)) && visit(a, getWildcardLowerBound(wb));
-            }
-
-            // TODO implement
-
-            return super.visitDeclared(a, b);
-        }
-
-        @Override
-        public Boolean visitError(ErrorType a, TypeMirror b) {
-            // not sure why, but this is what javac does...
-            return true;
-        }
-
-        @Override
-        public Boolean visitTypeVariable(TypeVariable a, TypeMirror b) {
-            // TODO implement
-            return super.visitTypeVariable(a, b);
-        }
-
-        @Override
-        public Boolean visitWildcard(WildcardType a, TypeMirror b) {
-            if (b.getKind() != WILDCARD) {
-                return false;
-            }
-
-            WildcardType bb = (WildcardType) b;
-
-            TypeMirror aExtends = a.getExtendsBound();
-            TypeMirror aSuper = a.getSuperBound();
-            TypeMirror bExtends = bb.getExtendsBound();
-            TypeMirror bSuper = bb.getSuperBound();
-
-            if (aExtends != null) {
-                if (bExtends == null) {
-                    bExtends = javaLangObjectType.get();
-                }
-                return visit(aExtends, bExtends);
-            } else if (aSuper != null) {
-                if (bSuper == null) {
-                    bSuper = javaLangObjectType.get();
-                }
-                return visit(aSuper, bSuper);
-            }
-
-            return bExtends == null && bSuper == null;
-        }
-
-        @Override
-        public Boolean visitExecutable(ExecutableType a, TypeMirror b) {
-            if (b.getKind() != EXECUTABLE) {
-                return false;
-            }
-
-            ExecutableType bb = (ExecutableType) b;
-
-            // TODO do we need to do this specialization?
-            // if (!a.getTypeVariables().isEmpty()) {
-            // return TypeUtils.hasSameBounds(a.getTypeVariables(), ((ExecutableType) b).getTypeVariables())
-            // && visit()
-            // }
-            return TypeUtils.hasSameArgs(a, bb) && visit(a.getReturnType(), bb.getReturnType());
-        }
-
-        @Override
-        public Boolean visitNoType(NoType a, TypeMirror b) {
-            return a.getKind() == b.getKind();
-        }
-    };
-
-    private TypeVisitor<Boolean, TypeMirror> containsType = new SimpleTypeVisitor8<Boolean, TypeMirror>() {
-        // TODO copy this from JavacTypes
-    };
-
-    private TypeVisitor<List<? extends TypeMirror>, Void> getImplementedInterfaces = new SimpleTypeVisitor8<List<? extends TypeMirror>, Void>(
-            emptyList()) {
-        @Override
-        public List<? extends TypeMirror> visitDeclared(DeclaredType t, Void unused) {
-            return ((TypeElementBase) t.asElement()).getInterfaces();
-        }
-
-        @Override
-        public List<? extends TypeMirror> visitTypeVariable(TypeVariable t, Void unused) {
-            TypeMirror bound = t.getUpperBound();
-            TypeKind boundType = bound.getKind();
-
-            switch (boundType) {
-            case INTERSECTION:
-            case UNION:
-                return getImplementedInterfaces.visit(bound);
-            default:
-                TypeElementBase el = TypeUtils.asTypeElement(bound);
-                if (el != null && el.getKind() == ElementKind.INTERFACE) {
-                    return singletonList(bound);
-                } else {
-                    return emptyList();
-                }
-            }
-        }
-    };
-
-    private TypeVisitor<Boolean, TypeMirror> isSubtype = new SimpleTypeVisitor8<Boolean, TypeMirror>(false) {
-        // TODO implement
-
-        @Override
-        public Boolean visitIntersection(IntersectionType t, TypeMirror typeMirror) {
-
-            return super.visitIntersection(t, typeMirror);
-        }
-
-        @Override
-        public Boolean visitUnion(UnionType t, TypeMirror typeMirror) {
-            return super.visitUnion(t, typeMirror);
-        }
-
-        @Override
-        public Boolean visitPrimitive(PrimitiveType t, TypeMirror typeMirror) {
-            return super.visitPrimitive(t, typeMirror);
-        }
-
-        @Override
-        public Boolean visitArray(ArrayType t, TypeMirror typeMirror) {
-            return super.visitArray(t, typeMirror);
-        }
-
-        @Override
-        public Boolean visitDeclared(DeclaredType t, TypeMirror typeMirror) {
-            return super.visitDeclared(t, typeMirror);
-        }
-
-        @Override
-        public Boolean visitError(ErrorType t, TypeMirror typeMirror) {
-            return super.visitError(t, typeMirror);
-        }
-
-        @Override
-        public Boolean visitTypeVariable(TypeVariable t, TypeMirror typeMirror) {
-            return super.visitTypeVariable(t, typeMirror);
-        }
-
-        @Override
-        public Boolean visitWildcard(WildcardType t, TypeMirror typeMirror) {
-            return super.visitWildcard(t, typeMirror);
-        }
-
-        @Override
-        public Boolean visitExecutable(ExecutableType t, TypeMirror typeMirror) {
-            return super.visitExecutable(t, typeMirror);
-        }
-    };
-
-    private TypeVisitor<List<TypeMirror>, List<TypeMirror>> getInterfaces = new SimpleTypeVisitor8<List<TypeMirror>, List<TypeMirror>>() {
-        @Override
-        public List<TypeMirror> visitIntersection(IntersectionType t, List<TypeMirror> typeMirrors) {
-            typeMirrors.addAll(t.getBounds());
-            return typeMirrors;
-        }
-
-        @Override
-        protected List<TypeMirror> defaultAction(TypeMirror e, List<TypeMirror> typeMirrors) {
-            return typeMirrors;
-        }
-
-        @Override
-        public List<TypeMirror> visitArray(ArrayType t, List<TypeMirror> typeMirrors) {
-            // TODO implement
-            return typeMirrors;
-        }
-
-        @Override
-        public List<TypeMirror> visitDeclared(DeclaredType t, List<TypeMirror> typeMirrors) {
-            // TODO implement
-            return typeMirrors;
-        }
-
-        @Override
-        public List<TypeMirror> visitError(ErrorType t, List<TypeMirror> typeMirrors) {
-            // TODO implement
-            return typeMirrors;
-        }
-    };
-
     protected BaseTypesImpl(TypeLookup lookup) {
         this.lookup = lookup;
         this.javaLangObject = memoize(lookup::getJavaLangObject);
@@ -426,28 +155,12 @@ abstract class BaseTypesImpl implements Types {
             return false;
         }
 
-        return TypeUtils.isSameType((TypeMirrorImpl) t1, (TypeMirrorImpl) t2);
+        return TypeUtils.isSameType(t1, t2);
     }
 
     @Override
     public boolean isSubtype(TypeMirror t1, TypeMirror t2) {
-        if (t1.equals(t2)) {
-            return true;
-        }
-
-        if (t2 instanceof IntersectionType) {
-            IntersectionType it2 = (IntersectionType) t2;
-            for (TypeMirror b : it2.getBounds()) {
-                if (!isSubtype(t1, b)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        // TODO implement
-
-        return isSubtype.visit(t1, t2);
+        return TypeUtils.isSubType(t1, t2, true);
     }
 
     @Override
@@ -478,8 +191,8 @@ abstract class BaseTypesImpl implements Types {
 
     @Override
     public List<? extends TypeMirror> directSupertypes(TypeMirror t) {
-        List<TypeMirror> ret = getInterfaces.visit(t, new ArrayList<>());
-        TypeMirror superType = getSuperType.visit(t);
+        List<TypeMirrorImpl> ret = TypeUtils.getInterfaces(t, lookup);
+        TypeMirrorImpl superType = TypeUtils.getSuperType(t, lookup);
         if (superType != null && superType.getKind() != NONE) {
             ret.add(0, superType);
         }
@@ -509,8 +222,7 @@ abstract class BaseTypesImpl implements Types {
     // not used in revapi
     @Override
     public TypeMirror capture(TypeMirror t) {
-        // TODO implement
-        return null;
+        return TypeUtils.capture(t, lookup);
     }
 
     @Override
@@ -557,46 +269,6 @@ abstract class BaseTypesImpl implements Types {
     @Override
     public TypeMirror asMemberOf(DeclaredType containing, Element element) {
         return TypeUtils.asMemberOf(containing, element);
-    }
-
-    private boolean containsTypeEquivalent(TypeMirror a, TypeMirror b) {
-        return isSameType(a, b) || containsType.visit(a, b) && containsType.visit(b, a);
-    }
-
-    private TypeMirror getWildcardUpperBound(TypeMirror t) {
-        if (t.getKind() == WILDCARD) {
-            WildcardType w = (WildcardType) t;
-            TypeMirror explicitBound = w.getSuperBound();
-            if (explicitBound != null) {
-                return explicitBound;
-            } else {
-                TypeMirror extendsBound = w.getExtendsBound();
-                if (extendsBound == null) {
-                    return javaLangObject.get().asType();
-                } else {
-                    return getWildcardUpperBound(extendsBound);
-                }
-            }
-        } else {
-            return t;
-        }
-    }
-
-    private TypeMirror getWildcardLowerBound(TypeMirror t) {
-        if (t.getKind() == WILDCARD) {
-            WildcardType w = (WildcardType) t;
-            TypeMirror explicitLowerBound = w.getExtendsBound();
-            TypeMirror explicitUpperBound = w.getSuperBound();
-            if (explicitLowerBound != null) {
-                return lookup.nullType;
-            } else if (explicitUpperBound == null) {
-                return javaLangObject.get().asType();
-            } else {
-                return getWildcardLowerBound(explicitUpperBound);
-            }
-        } else {
-            return t;
-        }
     }
 
     /**

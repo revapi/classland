@@ -52,6 +52,10 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
         return new WildcardTypeImpl(lookup, extendsBound, superBound, annos);
     }
 
+    public TypeVariableImpl capture() {
+        return new TypeVariableImpl(lookup, getExtendsBound(), null, annos);
+    }
+
     public boolean isExtends() {
         // we consider an unbound wildcard an extends of object
         return extendsBound != null || superBound == null;
@@ -60,6 +64,10 @@ public class WildcardTypeImpl extends TypeMirrorImpl implements WildcardType {
     public boolean isSuper() {
         // we consider an unbound wildcard a super of object
         return superBound != null || extendsBound == null;
+    }
+
+    public boolean isUnbound() {
+        return extendsBound == null && superBound == null;
     }
 
     @Override
